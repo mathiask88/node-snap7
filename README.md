@@ -36,7 +36,7 @@ s7client.ConnectTo('127.0.0.1', 0, 1, function(err) {
     
     // Read the first byte from PLC process outputs...
     s7client.ABRead(0, 1, function(err, res) {
-        if(err !== null)
+        if(err)
             return console.log(' >> ABRead failed. Code #' + err + ' - ' + s7client.ErrorText(err));
         
         // ... and write it to stdout
