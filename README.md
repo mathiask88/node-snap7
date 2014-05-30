@@ -3,7 +3,7 @@
 [![NPM](https://nodei.co/npm/node-snap7.png?downloads=true)](https://nodei.co/npm/node-snap7/) [![NPM](https://nodei.co/npm-dl/node-snap7.png?months=1)](https://nodei.co/npm/node-snap7/)
 
 ## About
-This is a node.js wrapper for snap7. Snap7 is an open source, 32/64 bit, multi-platform Ethernet communication suite for interfacing natively with Siemens S7 PLCs.
+This is a node.js wrapper for snap7. Snap7 is an open source, 32/64 bit, multi-platform Ethernet communication suite for interfacing natively with Siemens S7 PLCs (See [compatibility](http://snap7.sourceforge.net/snap7_client.html#target_compatibility)).
 
 **node-snap7 is still a work in progress.**
 
