@@ -341,7 +341,7 @@ namespace node_snap7{
 
 		v8::Local<v8::Value> argv1[1];
 		v8::Local<v8::Value> argv2[2];
-		argv2[0] = argv1[0] = (returnValue == 0 ? NanNull() : NanNew<v8::Integer>(returnValue));
+		argv2[0] = argv1[0] = (returnValue == 0 ? static_cast<v8::Local<v8::Value>>(NanNull()) : static_cast<v8::Local<v8::Value>>(NanNew<v8::Integer>(returnValue)));
 
 		switch (caller){
 		case READAREA:
