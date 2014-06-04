@@ -12,7 +12,7 @@
 
 namespace node_snap7{
 
-	enum DataIOFunction { READAREA = 1, WRITEAREA, READMULTIVARS, WRITEMULTIVARS, DBREAD, DBWRITE, MBREAD, MBWRITE, EBREAD, EBWRITE, ABREAD, ABWRITE, TMREAD, TMWRITE, CTREAD, CTWRITE };
+	enum DataIOFunction { READAREA = 1, WRITEAREA }; //, READMULTIVARS, WRITEMULTIVARS, DBREAD, DBWRITE, MBREAD, MBWRITE, EBREAD, EBWRITE, ABREAD, ABWRITE, TMREAD, TMWRITE, CTREAD, CTWRITE };
 
 	class S7Client : public node::ObjectWrap {
 	public:
@@ -86,7 +86,7 @@ namespace node_snap7{
 		ConnectionWorker(
 			NanCallback *callback,
 			S7Client *s7client,
-			char* address,
+			const char* address,
 			int rack,
 			int slot)
 			: NanAsyncWorker(callback), s7client(s7client), address(address), rack(rack), slot(slot) {}
@@ -95,8 +95,8 @@ namespace node_snap7{
 		void HandleOKCallback();
 
 	private:
-		char* address;
 		S7Client *s7client;
+		const char* address;
 		int rack;
 		int slot;
 		int returnValue;

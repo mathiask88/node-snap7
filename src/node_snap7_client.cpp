@@ -208,7 +208,7 @@ namespace node_snap7{
 
 	// Control functions
 	void ConnectionWorker::Execute(){
-		if (address == "")
+		if (strcmp(address, "") == 0)
 			returnValue = s7client->snap7Client->Connect();
 		else
 			returnValue = s7client->snap7Client->ConnectTo(address, rack, slot);
