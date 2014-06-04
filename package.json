@@ -1,7 +1,7 @@
 {
   "name": "node-snap7",
   "main":  "./lib/node-snap7.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Native node.js addon/wrapper for snap7",
   "homepage": "https://github.com/mathiask88/node-snap7",
   "repository": {
@@ -18,7 +18,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "~1.1.2",
+    "nan": "~1.2.0",
     "bindings": "~1.2.0"
   }
 }

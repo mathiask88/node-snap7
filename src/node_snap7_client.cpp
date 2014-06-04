@@ -14,6 +14,8 @@ namespace node_snap7{
 	v8::Persistent<v8::FunctionTemplate> S7Client::constructor;
 
 	void S7Client::Init(v8::Handle<v8::Object> exports) {
+		NanScope();
+
 		v8::Local<v8::FunctionTemplate> tpl = NanNew<v8::FunctionTemplate>(S7Client::New);
 
 		v8::Local<v8::String> name = NanNew<v8::String>("S7Client");
@@ -200,6 +202,7 @@ namespace node_snap7{
 
 	S7Client::~S7Client(){
 		delete snap7Client;
+		NanDisposePersistent(constructor);
 		uv_mutex_destroy(&mutex);
 	}
 
@@ -209,6 +212,8 @@ namespace node_snap7{
 			returnValue = s7client->snap7Client->Connect();
 		else
 			returnValue = s7client->snap7Client->ConnectTo(address, rack, slot);
+
+		delete[] address;
 	}
 
 	void ConnectionWorker::HandleOKCallback(){
@@ -253,7 +258,9 @@ namespace node_snap7{
 		char* remAddress = NanCString(args[0], &len);
 
 		if (!args[3]->IsFunction()){
-			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->ConnectTo(remAddress, args[1]->Int32Value(), args[2]->Int32Value()) == 0));
+			v8::Local<v8::Boolean> ret = NanNew<v8::Boolean>(s7client->snap7Client->ConnectTo(remAddress, args[1]->Int32Value(), args[2]->Int32Value()) == 0);
+			delete[] remAddress;
+			NanReturnValue(ret);
 		}
 		else{
 			NanCallback *callback = new NanCallback(args[3].As<v8::Function>());
@@ -276,7 +283,9 @@ namespace node_snap7{
 		word LocalTSAP = args[1]->Int32Value();
 		word RemoteTSAP = args[2]->Int32Value();
 
-		NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->SetConnectionParams(remAddress, LocalTSAP, RemoteTSAP) == 0));
+		v8::Local<v8::Boolean> ret = NanNew<v8::Boolean>(s7client->snap7Client->SetConnectionParams(remAddress, LocalTSAP, RemoteTSAP) == 0);
+		delete[] remAddress;
+		NanReturnValue(ret);
 	}
 
 	NAN_METHOD(S7Client::SetConnectionType){
@@ -686,7 +695,7 @@ namespace node_snap7{
 
 		if (!args[1]->IsFunction()){
 			TS7BlocksOfType BlockList;
-			int BlockNum = div(sizeof(BlockList), 2).quot;
+			int BlockNum = sizeof(BlockList) / sizeof(*BlockList);
 
 			int returnValue = s7client->snap7Client->ListBlocksOfType(args[0]->Uint32Value(), &BlockList, &BlockNum);
 
@@ -836,6 +845,7 @@ namespace node_snap7{
 				size_t len;
 				char* fillstr = NanCString(args[1], &len);
 				fill = static_cast<int>(fillstr[0]);
+				delete[] fillstr;
 			}
 			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->DBFill(args[0]->Int32Value(), fill) == 0));
 		}
@@ -1084,10 +1094,12 @@ namespace node_snap7{
 		}
 
 		if (!args[0]->IsFunction()){
-			v8::String::Utf8Value param1(args[0]->ToString());
-			char* Password = *param1;
-
-			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->SetSessionPassword(Password) == 0));
+			size_t len;
+			char* password = NanCString(args[0], &len);
+			
+			v8::Local<v8::Boolean> ret = NanNew<v8::Boolean>(s7client->snap7Client->SetSessionPassword(password) == 0);
+			delete[] password;
+			NanReturnValue(ret);
 		}
 		else{
 			NanReturnUndefined();
