@@ -345,7 +345,7 @@ namespace node_snap7{
 			argv2[0] = argv1[0] = NanNull();
 		}
 		else{
-			argv2[0] = argv1[0] = NanNew<v8::Integer>(returnValue)
+			argv2[0] = argv1[0] = NanNew<v8::Integer>(returnValue);
 		}
 
 		switch (caller){
