@@ -407,11 +407,11 @@ namespace node_snap7{
 			return NanThrowTypeError("Wrong arguments");
 
 		if (!args[6]->IsFunction()){
-			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->WriteArea(args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Int32Value(), node::Buffer::Data(args[5])) == 0));
+			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->WriteArea(args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Int32Value(), node::Buffer::Data(args[5].As<v8::Object>())) == 0));
 		}
 		else{
 			NanCallback *callback = new NanCallback(args[6].As<v8::Function>());
-			NanAsyncQueueWorker(new IOWorker(callback, s7client, WRITEAREA, args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Uint32Value(), node::Buffer::Data(args[5])));
+			NanAsyncQueueWorker(new IOWorker(callback, s7client, WRITEAREA, args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Uint32Value(), node::Buffer::Data(args[5].As<v8::Object>())));
 			NanReturnUndefined();
 		}
 	}
@@ -553,7 +553,7 @@ namespace node_snap7{
 				Items[i].DBNumber = data_obj->Get(NanNew<v8::String>("DBNumber"))->Int32Value();
 				Items[i].Start = data_obj->Get(NanNew<v8::String>("Start"))->Int32Value();
 				Items[i].Amount = data_obj->Get(NanNew<v8::String>("Amount"))->Int32Value();
-				Items[i].pdata = node::Buffer::Data(data_obj->Get(NanNew<v8::String>("Data")));
+				Items[i].pdata = node::Buffer::Data(data_obj->Get(NanNew<v8::String>("Data")).As<v8::Object>());
 			}
 
 			int returnValue = s7client->snap7Client->WriteMultiVars(Items, len);
@@ -663,7 +663,7 @@ namespace node_snap7{
 
 		PS7BlockInfo BlockInfo = new TS7BlockInfo;
 
-		int returnValue = s7client->snap7Client->GetPgBlockInfo(node::Buffer::Data(args[0]), BlockInfo, node::Buffer::Length(args[0]));
+		int returnValue = s7client->snap7Client->GetPgBlockInfo(node::Buffer::Data(args[0].As<v8::Object>()), BlockInfo, node::Buffer::Length(args[0].As<v8::Object>()));
 
 		v8::Local<v8::Object> block_info = NanNew<v8::Object>();
 		block_info->Set(NanNew<v8::String>("BlkType"), NanNew<v8::Number>(BlockInfo->BlkType));
@@ -784,7 +784,7 @@ namespace node_snap7{
 
 
 		if (!args[2]->IsFunction()){
-			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->Download(args[0]->Int32Value(), node::Buffer::Data(args[1]), node::Buffer::Length(args[1])) == 0));
+			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->Download(args[0]->Int32Value(), node::Buffer::Data(args[1].As<v8::Object>()), node::Buffer::Length(args[1].As<v8::Object>())) == 0));
 		}
 		else{
 			NanReturnUndefined();
