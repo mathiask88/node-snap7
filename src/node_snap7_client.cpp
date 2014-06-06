@@ -7,6 +7,7 @@
 #include "nan.h"
 #include <node_buffer.h>
 #include <sstream>
+#include <cstdlib>
 
 
 namespace node_snap7{
@@ -498,7 +499,7 @@ namespace node_snap7{
 				byteCount = GetByteCountFromWordLen(Items[i].WordLen);
 				if (byteCount == 0) NanReturnValue(NanFalse());
 				size = Items[i].Amount * byteCount;
-				Items[i].pdata = malloc(size);
+				Items[i].pdata = std::malloc(size);
 			}
 
 			int returnValue = s7client->snap7Client->ReadMultiVars(Items, len);
@@ -515,14 +516,14 @@ namespace node_snap7{
 					res_obj->Set(NanNew<v8::String>("Buffer"), NanNewBufferHandle(static_cast<char*>(Items[i].pdata), size));
 
 					res_arr->Set(i, res_obj);
-					free(Items[i].pdata);
+					std::free(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(res_arr);
 			}
 			else{
 				for (int i = 0; i < len; i++){
-					free(Items[i].pdata);
+					std::free(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(NanFalse());
