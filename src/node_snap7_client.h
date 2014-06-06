@@ -111,10 +111,10 @@ namespace node_snap7{
 			int area,
 			int DB,
 			int start,
-			int size,
-			int len,
+			int amount,
+			int WordLen,
 			char* bufferData)
-			: NanAsyncWorker(callback), s7client(s7client), caller(caller), area(area), DB(DB), start(start), size(size), len(len), bufferData(bufferData) {}
+			: NanAsyncWorker(callback), s7client(s7client), caller(caller), area(area), DB(DB), start(start), amount(amount), WordLen(WordLen), bufferData(bufferData) {}
 		~IOWorker() {}
 		void Execute();
 		void HandleOKCallback();
@@ -125,8 +125,8 @@ namespace node_snap7{
 		int area;
 		int DB;
 		int start;
-		int size;
-		int len;
+		int amount;
+		int WordLen;
 		char* bufferData;
 		int returnValue;
 	};

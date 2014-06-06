@@ -206,6 +206,24 @@ namespace node_snap7{
 		uv_mutex_destroy(&mutex);
 	}
 
+	int GetByteCountFromWordLen(int WordLen){
+		switch (WordLen){
+		case S7WLBit:
+		case S7WLByte:
+			return 1;
+		case S7WLWord:
+		case S7WLCounter:
+		case S7WLTimer:
+			return 2;
+		case S7WLReal:
+		case S7WLDWord:
+			return 4;
+		default:
+			NanThrowRangeError("Unknown wordlen");
+			return 0;
+		}
+	}
+
 	// Control functions
 	void ConnectionWorker::Execute(){
 		if (strcmp(address, "") == 0)
@@ -331,8 +349,8 @@ namespace node_snap7{
 		uv_mutex_lock(&s7client->mutex);
 
 		switch (caller){
-		case READAREA: returnValue = s7client->snap7Client->ReadArea(area, DB, start, size, len, bufferData);  break;
-		case WRITEAREA: returnValue = s7client->snap7Client->WriteArea(area, DB, start, size, len, bufferData); break;
+		case READAREA: returnValue = s7client->snap7Client->ReadArea(area, DB, start, amount, WordLen, bufferData);  break;
+		case WRITEAREA: returnValue = s7client->snap7Client->WriteArea(area, DB, start, amount, WordLen, bufferData); break;
 		}
 	}
 
@@ -348,6 +366,7 @@ namespace node_snap7{
 			argv2[0] = argv1[0] = NanNew<v8::Integer>(returnValue);
 		}
 
+		int size = amount * GetByteCountFromWordLen(WordLen);
 		switch (caller){
 		case READAREA:
 			argv2[1] = NanNewBufferHandle(bufferData, size);
@@ -372,9 +391,13 @@ namespace node_snap7{
 		if (!args[0]->IsNumber() || !args[1]->IsNumber() || !args[2]->IsNumber() || !args[3]->IsNumber() || !args[4]->IsNumber())
 			return NanThrowTypeError("Wrong arguments");
 
+		int amount = args[3]->Int32Value();
+		int byteCount = GetByteCountFromWordLen(args[4]->Int32Value());
+		if (byteCount == 0) NanReturnValue(NanFalse());
+		int size = amount * byteCount;
+		char* bufferData = new char[size];
+
 		if (!args[5]->IsFunction()){
-			int size = args[3]->Int32Value();
-			char* bufferData = new char[size];
 			int returnValue = s7client->snap7Client->ReadArea(args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Int32Value(), bufferData);
 
 			if (returnValue == 0){
@@ -390,8 +413,7 @@ namespace node_snap7{
 		}
 		else{
 			NanCallback *callback = new NanCallback(args[5].As<v8::Function>());
-			char* buf = new char[args[3]->Uint32Value()];
-			NanAsyncQueueWorker(new IOWorker(callback, s7client, READAREA, args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Uint32Value(), buf));
+			NanAsyncQueueWorker(new IOWorker(callback, s7client, READAREA, args[0]->Int32Value(), args[1]->Int32Value(), args[2]->Int32Value(), args[3]->Int32Value(), args[4]->Uint32Value(), bufferData));
 			NanReturnUndefined();
 		}
 	}
@@ -461,34 +483,46 @@ namespace node_snap7{
 		}
 		if (!args[1]->IsFunction()){
 			PS7DataItem Items = new TS7DataItem[len];
+			v8::Local<v8::Object> data_obj;
+			int byteCount;
+			int size;
 			for (int i = 0; i < len; i++){
-				v8::Local<v8::Object> data_obj = data_arr->Get(i)->ToObject();
+				data_obj = data_arr->Get(i)->ToObject();
 
 				Items[i].Area = data_obj->Get(NanNew<v8::String>("Area"))->Int32Value();
 				Items[i].WordLen = data_obj->Get(NanNew<v8::String>("WordLen"))->Int32Value();
 				Items[i].DBNumber = data_obj->Get(NanNew<v8::String>("DBNumber"))->Int32Value();
 				Items[i].Start = data_obj->Get(NanNew<v8::String>("Start"))->Int32Value();
 				Items[i].Amount = data_obj->Get(NanNew<v8::String>("Amount"))->Int32Value();
-				Items[i].pdata = new char[Items[i].Amount];
+
+				byteCount = GetByteCountFromWordLen(Items[i].WordLen);
+				if (byteCount == 0) NanReturnValue(NanFalse());
+				size = Items[i].Amount * byteCount;
+				Items[i].pdata = malloc(size);
 			}
 
 			int returnValue = s7client->snap7Client->ReadMultiVars(Items, len);
 
 			if (returnValue == 0){
 				v8::Handle<v8::Array> res_arr = NanNew<v8::Array>(len);
+				v8::Local<v8::Object> res_obj;
 				for (int i = 0; i < len; i++){
-					v8::Local<v8::Object> res_obj = NanNew<v8::Object>();
+					res_obj = NanNew<v8::Object>();
 					res_obj->Set(NanNew<v8::String>("Result"), NanNew<v8::Integer>(Items[i].Result));
-					res_obj->Set(NanNew<v8::String>("Buffer"), NanNewBufferHandle(static_cast<char*>(Items[i].pdata), Items[i].Amount));
+
+					byteCount = GetByteCountFromWordLen(Items[i].WordLen);
+					size = byteCount * Items[i].Amount;
+					res_obj->Set(NanNew<v8::String>("Buffer"), NanNewBufferHandle(static_cast<char*>(Items[i].pdata), size));
+
 					res_arr->Set(i, res_obj);
-					delete[] Items[i].pdata;
+					free(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(res_arr);
 			}
 			else{
 				for (int i = 0; i < len; i++){
-					delete[] Items[i].pdata;
+					free(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(NanFalse());
@@ -545,8 +579,9 @@ namespace node_snap7{
 		}
 		if (!args[1]->IsFunction()){
 			PS7DataItem Items = new TS7DataItem[len];
+			v8::Local<v8::Object> data_obj;
 			for (int i = 0; i < len; i++){
-				v8::Local<v8::Object> data_obj = data_arr->Get(i)->ToObject();
+				data_obj = data_arr->Get(i)->ToObject();
 
 				Items[i].Area = data_obj->Get(NanNew<v8::String>("Area"))->Int32Value();
 				Items[i].WordLen = data_obj->Get(NanNew<v8::String>("WordLen"))->Int32Value();
@@ -560,8 +595,9 @@ namespace node_snap7{
 
 			if (returnValue == 0){
 				v8::Handle<v8::Array> res_arr = NanNew<v8::Array>(len);
+				v8::Local<v8::Object> res_obj;
 				for (int i = 0; i < len; i++){
-					v8::Local<v8::Object> res_obj = NanNew<v8::Object>();
+					res_obj = NanNew<v8::Object>();
 					res_obj->Set(NanNew<v8::String>("Result"), NanNew<v8::Integer>(Items[i].Result));
 					res_arr->Set(i, res_obj);
 				}
@@ -569,9 +605,6 @@ namespace node_snap7{
 				NanReturnValue(res_arr);
 			}
 			else{
-				for (int i = 0; i < len; i++){
-					delete[] Items[i].pdata;
-				}
 				delete[] Items;
 				NanReturnValue(NanFalse());
 			}
@@ -1101,7 +1134,7 @@ namespace node_snap7{
 		if (!args[0]->IsFunction()){
 			size_t len;
 			char* password = NanCString(args[0], &len);
-			
+
 			v8::Local<v8::Boolean> ret = NanNew<v8::Boolean>(s7client->snap7Client->SetSessionPassword(password) == 0);
 			delete[] password;
 			NanReturnValue(ret);
