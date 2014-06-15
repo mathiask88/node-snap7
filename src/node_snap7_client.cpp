@@ -255,8 +255,9 @@ namespace node_snap7{
 			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->Connect() == 0));
 		}
 		else{
+			char* address = new char(0);
 			NanCallback *callback = new NanCallback(args[0].As<v8::Function>());
-			NanAsyncQueueWorker(new ConnectionWorker(callback, s7client, "", 0, 0));
+			NanAsyncQueueWorker(new ConnectionWorker(callback, s7client, address, 0, 0));
 			NanReturnUndefined();
 		}
 	}
@@ -733,15 +734,16 @@ namespace node_snap7{
 		}
 
 		if (!args[1]->IsFunction()){
-			TS7BlocksOfType BlockList;
-			int BlockNum = sizeof(BlockList) / sizeof(*BlockList);
-
-			int returnValue = s7client->snap7Client->ListBlocksOfType(args[0]->Uint32Value(), &BlockList, &BlockNum);
+			int BlockNum = sizeof(TS7BlocksOfType) / sizeof(PS7BlocksOfType);
+			PS7BlocksOfType BlockList = new TS7BlocksOfType[BlockNum];
+			
+			int returnValue = s7client->snap7Client->ListBlocksOfType(args[0]->Uint32Value(), BlockList, &BlockNum);
 
 			v8::Local<v8::Array> block_list = NanNew<v8::Array>(BlockNum);
 			for (int i = 0; i < BlockNum; i++) {
-				block_list->Set(i, NanNew<v8::Integer>(BlockList[i]));
+				block_list->Set(i, NanNew<v8::Integer>(*BlockList[i]));
 			}
+			delete[] BlockList;
 
 			if (returnValue == 0)
 				NanReturnValue(block_list);
