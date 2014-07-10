@@ -7,7 +7,7 @@
 #define __node_snap7_h__
 
 #include <node.h>
-#include "nan.h"
+#include <nan.h>
 #include "snap7.h"
 
 namespace node_snap7{

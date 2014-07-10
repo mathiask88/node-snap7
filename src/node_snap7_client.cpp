@@ -3,12 +3,9 @@
 * MIT +no-false-attribs License <https://github.com/mathiask88/node-snap7/blob/master/LICENSE>
 */
 
-#include "./node_snap7_client.h"
-#include "nan.h"
-#include <node_buffer.h>
 #include <sstream>
-#include <cstdlib>
-
+#include "node_snap7_client.h"
+#include <node_buffer.h>
 
 namespace node_snap7{
 
@@ -500,7 +497,7 @@ namespace node_snap7{
 				byteCount = GetByteCountFromWordLen(Items[i].WordLen);
 				if (byteCount == 0) NanReturnValue(NanFalse());
 				size = Items[i].Amount * byteCount;
-				Items[i].pdata = std::malloc(size);
+				Items[i].pdata = new char[size];
 			}
 
 			int returnValue = s7client->snap7Client->ReadMultiVars(Items, len);
@@ -517,14 +514,14 @@ namespace node_snap7{
 					res_obj->Set(NanNew<v8::String>("Buffer"), NanNewBufferHandle(static_cast<char*>(Items[i].pdata), size));
 
 					res_arr->Set(i, res_obj);
-					std::free(Items[i].pdata);
+					delete[] static_cast<char*>(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(res_arr);
 			}
 			else{
 				for (int i = 0; i < len; i++){
-					std::free(Items[i].pdata);
+					delete[] static_cast<char*>(Items[i].pdata);
 				}
 				delete[] Items;
 				NanReturnValue(NanFalse());
@@ -698,7 +695,7 @@ namespace node_snap7{
 
 		PS7BlockInfo BlockInfo = new TS7BlockInfo;
 
-		int returnValue = s7client->snap7Client->GetPgBlockInfo(node::Buffer::Data(args[0].As<v8::Object>()), BlockInfo, node::Buffer::Length(args[0].As<v8::Object>()));
+		int returnValue = s7client->snap7Client->GetPgBlockInfo(node::Buffer::Data(args[0].As<v8::Object>()), BlockInfo, static_cast<int>(node::Buffer::Length(args[0].As<v8::Object>())));
 
 		v8::Local<v8::Object> block_info = NanNew<v8::Object>();
 		block_info->Set(NanNew<v8::String>("BlkType"), NanNew<v8::Number>(BlockInfo->BlkType));
@@ -820,7 +817,7 @@ namespace node_snap7{
 
 
 		if (!args[2]->IsFunction()){
-			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->Download(args[0]->Int32Value(), node::Buffer::Data(args[1].As<v8::Object>()), node::Buffer::Length(args[1].As<v8::Object>())) == 0));
+			NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->Download(args[0]->Int32Value(), node::Buffer::Data(args[1].As<v8::Object>()), static_cast<int>(node::Buffer::Length(args[1].As<v8::Object>()))) == 0));
 		}
 		else{
 			NanReturnUndefined();
