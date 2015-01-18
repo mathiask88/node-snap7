@@ -480,8 +480,8 @@ Returns a textual explanation of a given error number.
  - `errNum`
 
 ## Licence & copyright
-Copyright (c) 2014, Mathias Küsel
+Copyright (c) 2015, Mathias Küsel
 
-node-snap7 is licensed under an MIT +no-false-attribs license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
+node-snap7 is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
 
 node-snap7 builds on the excellent work of the snap7 framework from Davide Nardella. Snap7 is issued under the GPL/LGPLv3 (see ```./deps/snap7/gpl.txt ./deps/snap7/lgpl-3.0.txt```).

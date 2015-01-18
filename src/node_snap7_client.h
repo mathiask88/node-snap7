@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014, Mathias Küsel
- * MIT +no-false-attribs License <https://github.com/mathiask88/node-snap7/blob/master/LICENSE>
+ * Copyright (c) 2015, Mathias Küsel
+ * MIT License <https://github.com/mathiask88/node-snap7/blob/master/LICENSE>
  */
 
 #ifndef SRC_NODE_SNAP7_CLIENT_H_
