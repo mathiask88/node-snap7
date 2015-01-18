@@ -1,3 +1,54 @@
+======================================================================[2015-01-01]
+Version 1.3.0 - Platform / Comfort release (fully compatible with 1.0.0)
+----------------------------------------------------------------------------------
+
+Platform
+- Runtime Big-Endian architecture support. No compilers swithes are needed.
+- Sun Sparc and Mips BE architectures are now supported.
+
+Comfort
+- Added WinForm.net demos (C# and VB)
+- Improved documentation (added .NET chapter for beginners *please read it*)
+  Added also a chapter about Siemens data format.
+- Added Helper class/functions
+
+==================================================================================
+[Added]
+
+
+- Helper class/function to insert/extract S7 typed vars from a byte[] buffer. 
+  You will find them into the wrappers (.net/Pascal/C++)
+- Solaris Sparc support
+  (Thanks to Rolf Stalder for makefiles)
+- .Net Winform small demos
+- .Net solution for rebuilding snap7.net.cs
+
+
+[Improved]
+
+- Unix, now the client doesn't need root priviledges to perform the SmartConnect.
+  (Thanks to Rolf Stalder)
+- Solaris now uses standard pthreads.
+  (Thanks to Rolf Stalder)
+- Read/WriteMultiVars now checks in advance if the data fits into the PDU size.
+- .net S7Client.ReadMultivars (and Write) was improved.
+  (Thanks to LanceL who made it)
+- S7Client now checks if it's connected before do anything.
+  (Thanks to Mathias Küsel for reporting it)
+
+
+[Latest OS]
+
+- Tested with Ubuntu 14.10 (32/64)
+- Tested with Windows 10 Technical Preview (32/64)
+
+
+[fixed]
+
+- Fixed some Typo errors into snap7.net.cs
+- Fixed a small bug into Read/WriteMultiVars
+
+
 ======================================================================[2014-04-17]
 Version 1.2.1 - Bugfix/Small changes release (fully compatible with 1.0.0)
 ----------------------------------------------------------------------------------
@@ -151,3 +202,7 @@ Version 1.0.0
 - First public release.
 
 ==================================================================================
+
+
+
+

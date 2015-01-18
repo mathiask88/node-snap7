@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, 2014 Davide Nardella                                    |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -35,7 +35,5 @@
 longword SysGetTick();
 void SysSleep(longword Delay_ms);
 longword DeltaTime(longword &Elapsed);
-word SwapWord(word Value);
-longword SwapDWord(longword Value);
 
 #endif // snap_sysutils_h

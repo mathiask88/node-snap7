@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, Davide Nardella                                         |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -380,6 +380,8 @@ int TSnap7MicroClient::opReadMultiVars()
     };
 
     IsoSize=RPSize+sizeof(TS7ReqHeader);
+	if (IsoSize>PDULength) 
+		return errCliSizeOverPDU;
     Result=isoExchangeBuffer(0,IsoSize);
     // Function level error
     if (Answer->Error!=0)
@@ -535,8 +537,8 @@ int TSnap7MicroClient::opWriteMultiVars()
 
         memcpy(ReqData[c]->Data, Item->pdata, Size);
 
-        if ((Size % 2)!=0)
-        	Size++; // Skip fill byte for Odd frame
+		if ((Size % 2) != 0 && (ItemsCount - c != 1))
+			Size++; // Skip fill byte for Odd frame (except for the last one)
 
         Offset+=(4+Size); // next item
         Item++;
@@ -545,6 +547,8 @@ int TSnap7MicroClient::opWriteMultiVars()
     PDUH_out->DataLen=SwapWord(word(Offset));
 
     IsoSize=RPSize+sizeof(TS7ReqHeader)+int(Offset);
+	if (IsoSize>PDULength) 
+		return errCliSizeOverPDU;
     Result=isoExchangeBuffer(0,IsoSize);
     // Function level error
     if (Answer->Error!=0)
@@ -869,7 +873,7 @@ int TSnap7MicroClient::opAgBlockInfo()
     {
         if (ResParams->ErrNo==0)
         {
-            if (SwapWord(ResData->Length)<78)
+            if (SwapWord(ResData->Length)<40) // 78
                 return errCliInvalidPlcAnswer;
             if (ResData->RetVal==0xFF) // <-- 0xFF means Result OK
             {
@@ -1352,7 +1356,7 @@ int TSnap7MicroClient::opDownload()
                 Answer   =PS7ResHeader23(&PDU.Payload);
                 ResParams=PResDownloadParams(pbyte(Answer)+ResHeaderSize23);
                 ResData  =PResDownloadDataHeader(pbyte(ResParams)+sizeof(TResDownloadParams));
-                Target   =pbyte(ResData)+sizeof(PResDownloadDataHeader);
+                Target   =pbyte(ResData)+sizeof(TResDownloadDataHeader);
                 Source   =pbyte(&opData)+Offset;
 
                 Result=isoRecvBuffer(0,Size);
@@ -1459,7 +1463,7 @@ int TSnap7MicroClient::opDownload()
                 // Init Params
                 ReqParams->Fun = pduControl;
                 ReqParams->Uk7[0]=0x00;
-                ReqParams->Uk7[1]=0x01;
+                ReqParams->Uk7[1]=0x00;
                 ReqParams->Uk7[2]=0x00;
                 ReqParams->Uk7[3]=0x00;
                 ReqParams->Uk7[4]=0x00;

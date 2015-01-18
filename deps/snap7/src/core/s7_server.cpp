@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, 2014 Davide Nardella                                    |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -207,12 +207,12 @@ bool TS7Worker::PerformPDURequest(int &Size)
              break;
         case pduFuncWrite   : Result=PerformFunctionWrite();
              break;
-        case pduNegotiate   : Result=PerformFunctionNegotiate();
+		case pduNegotiate   : Result=PerformFunctionNegotiate();
              break;
         case pduStart       :
         case pduStop        : Result=PerformFunctionControl(PDUFun);
              break;
-        case pduStartUpload :
+		case pduStartUpload :
         case pduUpload      :
         case pduEndUpload   : Result=PerformFunctionUpload();
              break;
@@ -327,7 +327,6 @@ word TS7Worker::ReadArea(PResFunReadItem ResItemData, PReqFunReadItem ReqItemPar
     PS7Area P;
 	word DBNum;
     longword Start, Size, ASize;
-	longword OriginalSize;
     longword *PAdd;
     byte BitIndex, ByteVal;
     int Multiplier;
@@ -368,11 +367,7 @@ word TS7Worker::ReadArea(PResFunReadItem ResItemData, PReqFunReadItem ReqItemPar
         return RA_OutOfRange(ResItemData, EV);
 
     // Calcs size
-    Size=Multiplier*SwapWord(ReqItemPar->Length);
-	OriginalSize=Size;
-    // S7 doesn't xfer odd byte amount
-	if ( Size % 2 != 0)
-	   Size++;
+    Size=Multiplier*SwapWord(ReqItemPar->Length);   
 	EV.EvSize=Size;
 
     // The sum of the items must not exceed the PDU size negotiated
@@ -381,8 +376,8 @@ word TS7Worker::ReadArea(PResFunReadItem ResItemData, PReqFunReadItem ReqItemPar
     else
         PDURemainder-=Size;
 
-    // More then 1 bit is not supported by S7 CPU (we use OriginalSize and not Size)
-    if ((ReqItemPar->TransportSize==S7WLBit) && (OriginalSize>1))
+    // More then 1 bit is not supported by S7 CPU 
+    if ((ReqItemPar->TransportSize==S7WLBit) && (Size>1))
         return RA_OutOfRange(ResItemData, EV);
 
 	// Calcs the start point
@@ -502,6 +497,11 @@ bool TS7Worker::PerformFunctionRead()
 	{
 		ResData[c]=PResFunReadItem(pbyte(ResParams)+Offset);
 		ItemSize=ReadArea(ResData[c],&ReqParams->Items[c],PDURemainder, EV);
+
+        // S7 doesn't xfer odd byte amount
+        if ((c<ItemsCount-1) && (ItemSize % 2 != 0))
+	      ItemSize++;
+		
         Offset+=(ItemSize+4);
         // For multiple items we have to create multiple events
         if (ItemsCount>1)
@@ -726,48 +726,47 @@ bool TS7Worker::PerformFunctionWrite()
 //==============================================================================
 bool TS7Worker::PerformFunctionNegotiate()
 {
-    PReqFunNegotiateParams ReqParams;
-    PResFunNegotiateParams ResParams;
-    word ReqLen;
-    TS7Answer23 Answer;
-    int Size;
+	PReqFunNegotiateParams ReqParams;
+	PResFunNegotiateParams ResParams;
+	word ReqLen;
+	TS7Answer23 Answer;
+	int Size;
 
-    // Setup pointers
-    ReqParams=PReqFunNegotiateParams(pbyte(PDUH_in)+sizeof(TS7ReqHeader));
-    ResParams=PResFunNegotiateParams(pbyte(&Answer)+sizeof(TS7ResHeader23));
-    // Prepares the answer
-    Answer.Header.P=0x32;
-    Answer.Header.PDUType=0x03;
+	// Setup pointers
+	ReqParams=PReqFunNegotiateParams(pbyte(PDUH_in)+sizeof(TS7ReqHeader));
+	ResParams=PResFunNegotiateParams(pbyte(&Answer)+sizeof(TS7ResHeader23));
+	// Prepares the answer
+	Answer.Header.P=0x32;
+	Answer.Header.PDUType=0x03;
 	Answer.Header.AB_EX=0x0000;
 	Answer.Header.Sequence=PDUH_in->Sequence;
-    Answer.Header.ParLen=SwapWord(sizeof(TResFunNegotiateParams));
-    Answer.Header.DataLen=0x0000;
-    Answer.Header.Error=0x0000;
-    // Params point at the end of the header
-    ResParams->FunNegotiate=pduNegotiate;
-    ResParams->Unknown=0x0;
-    // We offer the same
-    ResParams->ParallelJobs_1=ReqParams->ParallelJobs_1;
-    ResParams->ParallelJobs_2=ReqParams->ParallelJobs_2;
+	Answer.Header.ParLen=SwapWord(sizeof(TResFunNegotiateParams));
+	Answer.Header.DataLen=0x0000;
+	Answer.Header.Error=0x0000;
+	// Params point at the end of the header
+	ResParams->FunNegotiate=pduNegotiate;
+	ResParams->Unknown=0x0;
+	// We offer the same
+	ResParams->ParallelJobs_1=ReqParams->ParallelJobs_1;
+	ResParams->ParallelJobs_2=ReqParams->ParallelJobs_2;
 
-    // 480 is the minimum to manage our SZL packets in a single telegram
-    // Maximum is our Iso Payload size
-    ReqLen=SwapWord(ReqParams->PDULength);
-    if (ReqLen<480)
-        ResParams->PDULength=SwapWord(480);
-    else
-        if (ReqLen>IsoPayload_Size)
-            ResParams->PDULength=SwapWord(IsoPayload_Size);
-        else
-            ResParams->PDULength=ReqParams->PDULength;
+	// Maximum is our Iso Payload size
+	ReqLen=SwapWord(ReqParams->PDULength);
+	if (ReqLen<MinPduSize)
+		ResParams->PDULength=SwapWord(MinPduSize);
+	else
+		if (ReqLen>IsoPayload_Size)
+			ResParams->PDULength=SwapWord(IsoPayload_Size);
+		else
+			ResParams->PDULength=ReqParams->PDULength;
 
-    FPDULength=SwapWord(ReqParams->PDULength); // Stores the value
-    // Sends the answer
-    Size=sizeof(TS7ResHeader23) + sizeof(TResFunNegotiateParams);
-    isoSendBuffer(&Answer, Size);
-    // Store the event
-    DoEvent(evcNegotiatePDU, evrNoError, FPDULength, 0, 0, 0);
-    return true;
+	FPDULength=SwapWord(ResParams->PDULength); // Stores the value
+	// Sends the answer
+	Size=sizeof(TS7ResHeader23) + sizeof(TResFunNegotiateParams);
+	isoSendBuffer(&Answer, Size);
+	// Store the event
+	DoEvent(evcNegotiatePDU, evrNoError, FPDULength, 0, 0, 0);
+	return true;
 }
 //==============================================================================
 // FUNCTION CONTROL
@@ -1189,34 +1188,60 @@ void TS7Worker::SZLSystemState()
     SZL.ResParams->Err =0x0000;
     memcpy(SZL.ResData,&SZLNotAvail,sizeof(SZLSysState));
     isoSendBuffer(&SZL.Answer,28);
-    SZL.SZLDone=true;
+	SZL.SZLDone=true;
 
 }
 void TS7Worker::SZLData(void *P, int len)
 {
-    SZL.Answer.Header.DataLen=SwapWord(word(len));
-    SZL.ResParams->Err  =0x0000;
-    SZL.ResParams->resvd=0x0000; // this is the end, no more packets
-    memcpy(SZL.ResData, P, len);
-    isoSendBuffer(&SZL.Answer,22+len);
-    SZL.SZLDone=true;
+	int MaxSzl=FPDULength-22;
+
+	if (len>MaxSzl) {
+		len=MaxSzl;
+	}
+
+	SZL.Answer.Header.DataLen=SwapWord(word(len));
+	SZL.ResParams->Err  =0x0000;
+	SZL.ResParams->resvd=0x0000; // this is the end, no more packets
+	memcpy(SZL.ResData, P, len);
+
+	SZL.ResData[2]=((len-4)>>8) & 0xFF;
+	SZL.ResData[3]=(len-4) & 0xFF;
+
+	isoSendBuffer(&SZL.Answer,22+len);
+	SZL.SZLDone=true;
 }
 // this block is dynamic (contains date/time and cpu status)
 void TS7Worker::SZL_ID424()
 {
-    PS7Time PTime;
-    pbyte PStatus;
+	PS7Time PTime;
+	pbyte PStatus;
 
-    SZL.Answer.Header.DataLen=SwapWord(sizeof(SZL_ID_0424_IDX_XXXX));
-    SZL.ResParams->Err  =0x0000;
-    PTime=PS7Time(pbyte(SZL.ResData)+24);
-    PStatus =pbyte(SZL.ResData)+15;
-    memcpy(SZL.ResData,&SZL_ID_0424_IDX_XXXX,sizeof(SZL_ID_0424_IDX_XXXX));
-    FillTime(PTime);
-    *PStatus=FServer->CpuStatus;
-    SZL.SZLDone=true;
-    isoSendBuffer(&SZL.Answer,22+sizeof(SZL_ID_0424_IDX_XXXX));
+	SZL.Answer.Header.DataLen=SwapWord(sizeof(SZL_ID_0424_IDX_XXXX));
+	SZL.ResParams->Err  =0x0000;
+	PTime=PS7Time(pbyte(SZL.ResData)+24);
+	PStatus =pbyte(SZL.ResData)+15;
+	memcpy(SZL.ResData,&SZL_ID_0424_IDX_XXXX,sizeof(SZL_ID_0424_IDX_XXXX));
+	FillTime(PTime);
+	*PStatus=FServer->CpuStatus;
+	SZL.SZLDone=true;
+	isoSendBuffer(&SZL.Answer,22+sizeof(SZL_ID_0424_IDX_XXXX));
 }
+
+void TS7Worker::SZL_ID131_IDX003()
+{
+	word len = sizeof(SZL_ID_0131_IDX_0003);
+	SZL.Answer.Header.DataLen=SwapWord(len);
+	SZL.ResParams->Err  =0x0000;
+	SZL.ResParams->resvd=0x0000; // this is the end, no more packets
+	memcpy(SZL.ResData, &SZL_ID_0131_IDX_0003, len);
+    // Set the max consistent data window to PDU size
+	SZL.ResData[18]=((FPDULength)>>8) & 0xFF;
+	SZL.ResData[19]=(FPDULength) & 0xFF;
+
+	isoSendBuffer(&SZL.Answer,22+len);
+	SZL.SZLDone=true;
+}
+
 bool TS7Worker::PerformGroupSZL()
 {
   SZL.SZLDone=false;
@@ -1292,7 +1317,7 @@ bool TS7Worker::PerformGroupSZL()
     case 0x0F95 : SZLData(&SZL_ID_0F95_IDX_XXXX,sizeof(SZL_ID_0F95_IDX_XXXX));break;
     case 0x00A0 : SZLData(&SZL_ID_00A0_IDX_XXXX,sizeof(SZL_ID_00A0_IDX_XXXX));break;
     case 0x0FA0 : SZLData(&SZL_ID_0FA0_IDX_XXXX,sizeof(SZL_ID_0FA0_IDX_XXXX));break;
-    case 0x0017 : SZLData(&SZL_ID_0017_IDX_XXXX,sizeof(SZL_ID_0017_IDX_XXXX));break;
+	case 0x0017 : SZLData(&SZL_ID_0017_IDX_XXXX,sizeof(SZL_ID_0017_IDX_XXXX));break;
     case 0x0F17 : SZLData(&SZL_ID_0F17_IDX_XXXX,sizeof(SZL_ID_0F17_IDX_XXXX));break;
     case 0x0018 : SZLData(&SZL_ID_0018_IDX_XXXX,sizeof(SZL_ID_0018_IDX_XXXX));break;
     case 0x0F18 : SZLData(&SZL_ID_0F18_IDX_XXXX,sizeof(SZL_ID_0F18_IDX_XXXX));break;
@@ -1330,7 +1355,7 @@ bool TS7Worker::PerformGroupSZL()
                     case 0x0000 : SZLData(&SZL_ID_0692_IDX_0000,sizeof(SZL_ID_0692_IDX_0000));break;
                     default     : SZLNotAvailable();break;
                   };break;
-    case 0x0094 : switch(SZL.Index){
+	case 0x0094 : switch(SZL.Index){
                     case 0x0000 : SZLData(&SZL_ID_0094_IDX_0000,sizeof(SZL_ID_0094_IDX_0000));break;
                     default     : SZLNotAvailable();break;
                   };break;
@@ -1368,7 +1393,7 @@ bool TS7Worker::PerformGroupSZL()
                     case 0x0001 : SZLData(&SZL_ID_0113_IDX_0001,sizeof(SZL_ID_0113_IDX_0001));break;
                     default     : SZLNotAvailable();break;
                   };break;
-    case 0x0115 : switch(SZL.Index){
+	case 0x0115 : switch(SZL.Index){
                     case 0x0800 : SZLData(&SZL_ID_0115_IDX_0800,sizeof(SZL_ID_0115_IDX_0800));break;
                     default     : SZLNotAvailable();break;
                   };break;
@@ -1404,9 +1429,9 @@ bool TS7Worker::PerformGroupSZL()
                     default     : SZLNotAvailable();break;
                   };break;
     case 0x0131 : switch(SZL.Index){
-                    case 0x0001 : SZLData(&SZL_ID_0131_IDX_0001,sizeof(SZL_ID_0131_IDX_0001));break;
-                    case 0x0002 : SZLData(&SZL_ID_0131_IDX_0002,sizeof(SZL_ID_0131_IDX_0002));break;
-                    case 0x0003 : SZLData(&SZL_ID_0131_IDX_0003,sizeof(SZL_ID_0131_IDX_0003));break;
+					case 0x0001 : SZLData(&SZL_ID_0131_IDX_0001,sizeof(SZL_ID_0131_IDX_0001));break;
+					case 0x0002 : SZLData(&SZL_ID_0131_IDX_0002,sizeof(SZL_ID_0131_IDX_0002));break;
+					case 0x0003 : SZL_ID131_IDX003();break;
                     case 0x0004 : SZLData(&SZL_ID_0131_IDX_0004,sizeof(SZL_ID_0131_IDX_0004));break;
                     case 0x0005 : SZLData(&SZL_ID_0131_IDX_0005,sizeof(SZL_ID_0131_IDX_0005));break;
                     case 0x0006 : SZLData(&SZL_ID_0131_IDX_0006,sizeof(SZL_ID_0131_IDX_0006));break;

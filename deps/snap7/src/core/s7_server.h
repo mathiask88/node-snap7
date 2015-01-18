@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, 2014 Davide Nardella                                    |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -35,7 +35,7 @@
 // The DB table size is 12*MaxDB bytes
 
 #define MaxDB 2048    // Like a S7 318
-
+#define MinPduSize 240
 //---------------------------------------------------------------------------
 // Server Interface errors
 const longword errSrvDBNullPointer      = 0x00200000; // Pssed null as PData
@@ -185,9 +185,10 @@ protected:
     bool PerformGroupSZL();
     // Subfunctions (called by PerformGroupSZL)
     void SZLNotAvailable();
-    void SZLSystemState();
-    void SZLData(void *P, int len);
-    void SZL_ID424();
+	void SZLSystemState();
+	void SZLData(void *P, int len);
+	void SZL_ID424();
+	void SZL_ID131_IDX003();
 public:
     TSnap7Server *FServer;
     int FPDULength;

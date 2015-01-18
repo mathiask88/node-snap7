@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, Davide Nardella                                         |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -30,6 +30,30 @@
 
 static SocketsLayer SocketsLayerInitializer;
 
+//---------------------------------------------------------------------------
+//  Base class endian aware
+//---------------------------------------------------------------------------
+TSnapBase::TSnapBase()
+{
+	int x = 1;
+	LittleEndian=*(char *)&x == 1;
+}
+//---------------------------------------------------------------------------
+word TSnapBase::SwapWord(word Value)
+{
+	if (LittleEndian)
+		return  ((Value >> 8) & 0xFF) | ((Value << 8) & 0xFF00);
+	else
+	    return Value;
+}
+//---------------------------------------------------------------------------
+longword TSnapBase::SwapDWord(longword Value)
+{
+	if (LittleEndian)
+		return (Value >> 24) | ((Value << 8) & 0x00FF0000) | ((Value >> 8) & 0x0000FF00) | (Value << 24);
+	else
+		return Value;
+}
 //---------------------------------------------------------------------------
 void Msg_CloseSocket(socket_t FSocket)
 {
@@ -261,6 +285,9 @@ bool TMsgSocket::CanWrite(int Timeout)
     int64_t x;
     fd_set FDset;
 
+	if(FSocket == INVALID_SOCKET)
+		return false;
+
     TimeV.tv_usec = (Timeout % 1000) * 1000;
     TimeV.tv_sec = Timeout / 1000;
 
@@ -282,7 +309,10 @@ bool TMsgSocket::CanRead(int Timeout)
     int64_t x;
     fd_set FDset;
 
-    TimeV.tv_usec = (Timeout % 1000) * 1000;
+	if(FSocket == INVALID_SOCKET)
+		return false;
+
+	TimeV.tv_usec = (Timeout % 1000) * 1000;
     TimeV.tv_sec = Timeout / 1000;
 
     FD_ZERO(&FDset);
@@ -297,6 +327,95 @@ bool TMsgSocket::CanRead(int Timeout)
     return (x > 0);
 }
 //---------------------------------------------------------------------------
+#ifdef NON_BLOCKING_CONNECT
+//
+// Non blocking connection (UNIX) Thanks to Rolf Stalder
+//
+int TMsgSocket::SckConnect()
+{
+	int n, flags, err;
+	socklen_t len;
+	fd_set rset, wset;
+	struct timeval tval;
+
+ 	SetSin(RemoteSin, RemoteAddress, RemotePort);
+
+	if (LastTcpError == 0) {
+		CreateSocket();
+		if (LastTcpError == 0) {
+			flags = fcntl(FSocket, F_GETFL, 0);
+			if (flags >= 0) {
+				if (fcntl(FSocket, F_SETFL, flags | O_NONBLOCK)  != -1) {
+					n = connect(FSocket, (struct sockaddr*)&RemoteSin, sizeof(RemoteSin));
+					if (n < 0) {
+						if (errno != EINPROGRESS) {
+							LastTcpError = GetLastSocketError();
+						}
+						else {
+							// still connecting ... 
+							FD_ZERO(&rset);
+							FD_SET(FSocket, &rset);
+							wset = rset;
+							tval.tv_sec = PingTimeout / 1000;
+							tval.tv_usec = (PingTimeout % 1000) * 1000;
+
+							n = select(FSocket+1, &rset, &wset, NULL, 
+							           (PingTimeout ? &tval : NULL));
+							if (n == 0) {
+								// timeout
+								LastTcpError = WSAEHOSTUNREACH;
+							}
+							else {
+								if (FD_ISSET(FSocket, &rset) || FD_ISSET(FSocket, &wset)) {
+									err = 0;
+									len = sizeof(err);						
+									if (getsockopt(
+									      FSocket, SOL_SOCKET, SO_ERROR, &err, &len) == 0) {
+										if (err) {
+											 LastTcpError = err;
+										}
+										else {
+											if (fcntl(FSocket, F_SETFL, flags) != -1) {
+												GetLocal();
+												ClientHandle = LocalSin.sin_addr.s_addr;
+											}
+											else {
+												LastTcpError = GetLastSocketError();
+											}
+										}
+									}
+									else {
+										LastTcpError = GetLastSocketError();
+									}
+								}
+								else {
+									LastTcpError = -1;
+								}
+							}
+						} // still connecting
+					} 
+					else if (n == 0) { 
+						// connected immediatly
+						GetLocal();
+						ClientHandle = LocalSin.sin_addr.s_addr;
+					}
+				}
+				else {
+					LastTcpError = GetLastSocketError();
+				} // fcntl(F_SETFL)
+			}
+			else {
+				LastTcpError = GetLastSocketError();
+			} // fcntl(F_GETFL)
+		} //valid socket 
+	} // LastTcpError==0
+	Connected=LastTcpError==0;
+ 	return LastTcpError;
+}
+#else
+//
+// Regular connection (Windows)
+//
 int TMsgSocket::SckConnect()
 {
     int Result;
@@ -323,6 +442,7 @@ int TMsgSocket::SckConnect()
     Connected=LastTcpError==0;
     return LastTcpError;
 }
+#endif
 //---------------------------------------------------------------------------
 void TMsgSocket::SckDisconnect()
 {

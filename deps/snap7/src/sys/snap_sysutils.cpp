@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.1 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
-|  Copyright (C) 2013, 2014 Davide Nardella                                    |
+|  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -27,7 +27,8 @@
 #include "snap_sysutils.h"
 
 #ifdef OS_OSX
-int clock_gettime(int clk_id, struct timespec* t) {
+int clock_gettime(int clk_id, struct timespec* t) 
+{
     struct timeval now;
     int rv = gettimeofday(&now, NULL);
     if (rv) return rv;
@@ -69,35 +70,4 @@ longword DeltaTime(longword &Elapsed)
     if (TheTime<Elapsed)
         Elapsed=0;
     return TheTime-Elapsed;
-}
-//---------------------------------------------------------------------------
-word SwapWord(word Value)
-{
-    return  ((Value >> 8) & 0xFF) | ((Value << 8) & 0xFF00);
-}
-//---------------------------------------------------------------------------
-longword SwapDWord(longword Value)
-{
-    #pragma pack(1)
-	typedef struct {
-        union {
-            struct {
-                byte b1, b2, b3, b4;
-            } bb; // to be ISO C++ compliant we cannot have unnamed struct
-            longword Value;
-        };
-    }lw;
-    #pragma pack()
-
-    lw Result;
-    byte tmp;
-
-    Result.Value=Value;
-    tmp=Result.bb.b4;
-    Result.bb.b4=Result.bb.b1;
-    Result.bb.b1=tmp;
-    tmp=Result.bb.b3;
-    Result.bb.b3=Result.bb.b2;
-    Result.bb.b2=tmp;
-    return Result.Value;
 }
