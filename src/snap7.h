@@ -1,5 +1,5 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.2.0 |
+|  PROJECT SNAP7                                                         1.3.0 |
 |==============================================================================|
 |  Copyright (C) 2013, 2014 Davide Nardella                                    |
 |  All rights reserved.                                                        |
@@ -143,9 +143,15 @@ extern "C" {
 // Exact length types regardless of platform/processor
 typedef uint8_t    byte;
 typedef uint16_t   word;
+typedef int16_t    smallint;
 typedef uint32_t   longword;
+typedef int32_t    longint;
 typedef byte       *pbyte;
 typedef word       *pword;
+typedef longword   *plongword;
+typedef smallint   *psmallint;
+typedef longint    *plongint;
+typedef float      *pfloat;
 typedef uintptr_t  S7Object; // multi platform/processor object reference
                              // DON'T CONFUSE IT WITH AN OLE OBJECT, IT'S SIMPLY
                              // AN INTEGER VALUE (32 OR 64 BIT) USED AS HANDLE.
@@ -727,6 +733,28 @@ int S7API Par_GetStats(S7Object Partner, longword *BytesSent, longword *BytesRec
 int S7API Par_GetLastError(S7Object Partner, int *LastError);
 int S7API Par_GetStatus(S7Object Partner, int *Status);
 int S7API Par_ErrorText(int Error, char *Text, int TextLen);
+
+//******************************************************************************
+//                           HELPER DATA ACCESS FUNCTIONS
+//******************************************************************************
+// GET 
+bool GetBitAt(void *Buffer, int Pos, int Bit);
+byte GetByteAt(void *Buffer, int Pos);
+word GetWordAt(void *Buffer, int Pos);
+smallint GetIntAt(void *Buffer, int Pos);
+longword GetDWordAt(void *Buffer, int Pos);
+longint GetDIntAt(void *Buffer, int Pos);
+float GetRealAt(void *Buffer, int Pos);
+struct tm GetDateTimeAt(void *Buffer, int Pos);
+// SET
+void SetBitAt(void *Buffer, int Pos, int Bit, bool Value);
+void SetByteAt(void *Buffer, int Pos, byte Value);
+void SetWordAt(void *Buffer, int Pos, word Value);
+void SetIntAt(void *Buffer, int Pos, smallint Value);
+void SetDWordAt(void *Buffer, int Pos, longword Value);
+void SetDIntAt(void *Buffer, int Pos, longint Value);
+void SetRealAt(void *Buffer, int Pos, float Value);
+void SetDateTimeAt(void *Buffer, int Pos, tm Value);
 
 
 #pragma pack()
