@@ -6,9 +6,9 @@
 #ifndef SRC_NODE_SNAP7_CLIENT_H_
 #define SRC_NODE_SNAP7_CLIENT_H_
 
+#include "./snap7.h"
 #include <node.h>
 #include <nan.h>
-#include "./snap7.h"
 
 namespace node_snap7 {
 

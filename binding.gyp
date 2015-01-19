@@ -18,9 +18,6 @@
 							'AdditionalOptions': [ '/EHsc' ]
 						}
 					}
-				}],
-				['OS=="win" and target_arch=="ia32"', {
-					'defines': [ '_USE_32BIT_TIME_T' ]
 				}]
 			],
 			'dependencies': [
