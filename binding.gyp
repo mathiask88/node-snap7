@@ -3,7 +3,7 @@
         "target_name": "node_snap7",
         "include_dirs": [
             "<!(node -e \"require('nan')\")",
-			"./src"
+            "./src"
         ],
         "sources": [
             "./src/node_snap7.cpp",
