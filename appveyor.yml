@@ -25,10 +25,10 @@ environment:
     - nodejs_version: "1.0"
       GYP_MSVS_VERSION: "2010"
 
-  # Build on both platforms
-  platform:
-    - x86
-    - x64
+# Build on both platforms
+platform:
+  - x86
+  - x64
 
 # Install scripts. (runs after repo cloning)
 install:
