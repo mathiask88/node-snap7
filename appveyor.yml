@@ -10,10 +10,14 @@ environment:
     # io.js
     - nodejs_version: "1.0"
 
-# Build on both platforms
-platform:
-  - x86
-  - x64
+  # Build on both platforms
+  platform:
+    - x86
+    - x64
+
+  GYP_MSVS_VERSION:
+    - "2013"
+    - "2010"
 
 # Install scripts. (runs after repo cloning)
 install:
@@ -32,3 +36,6 @@ test_script:
 
 # Don't actually build.
 build: off
+
+# Set build version format here instead of in the admin panel.
+version: "{build}"
