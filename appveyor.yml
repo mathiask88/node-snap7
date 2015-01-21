@@ -1,17 +1,25 @@
 # http://www.appveyor.com/docs/appveyor-yml
 
-# Test against these versions of Node.js.
+# Test against these versions of Node.js and io.js
 environment:
   matrix:
+    # node.js
     - nodejs_version: "0.8"
     - nodejs_version: "0.10"
     - nodejs_version: "0.11"
+	# io.js
+	- nodejs_version: "1.0"
+
+# Build on both platforms
+platform:
+  - x86
+  - x64
 
 # Install scripts. (runs after repo cloning)
 install:
-  # Get the latest stable version of Node 0.STABLE.latest
-  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version)
-  # Typical npm stuff.
+  # Get the latest version of $env:nodejs_version
+  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
+  # Install modules
   - npm install --loglevel=verbose
 
 # Post-install test scripts.
@@ -19,13 +27,8 @@ test_script:
   # Output useful info for debugging.
   - node --version
   - npm --version
-  # We test multiple Windows shells because of Node.js stdout buffering issues:
-  # https://github.com/joyent/node/issues/3584
-  - ps: "npm test # PowerShell" # Pass comment to PS for easier debugging
-  - cmd: npm test
+  # run tests
+  - npm test
 
 # Don't actually build.
 build: off
-
-# Set build version format here instead of in the admin panel.
-version: "{build}"
