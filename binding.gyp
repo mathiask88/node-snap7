@@ -17,7 +17,8 @@
                     "VCCLCompilerTool": {
                         "AdditionalOptions": ["/EHsc"]
                     }
-                }
+                },
+				"msbuild_toolset": "v120"
             }]
         ],
         "dependencies": [
@@ -54,7 +55,8 @@
                     "VCCLCompilerTool": {
                         "AdditionalOptions": ["/EHsc"]
                     }
-                }
+                },
+				"msbuild_toolset": "v120"
             }]
         ]
     }]
