@@ -23,8 +23,8 @@ install:
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
   # Install latest NPM only for node.js versions until built in node-gyp adds io.js support
   # Update is required for node.js 0.8 because built in npm(node-gyp) does not know VS2013
-  - IF NOT %nodejs_version% == "1.0" npm -g install npm
-  - IF NOT %nodejs_version% == "1.0" set PATH=%APPDATA%\npm;%PATH%
+  - IF NOT %nodejs_version% == 1.0 npm -g install npm
+  - IF NOT %nodejs_version% == 1.0 set PATH=%APPDATA%\npm;%PATH%
   # Install modules
   - npm install --msvs_version=%MSVS_VERSION% --loglevel=verbose
 
