@@ -7,23 +7,23 @@ environment:
     - nodejs_version: "0.8"
       MSVS_VER: 2013
     - nodejs_version: "0.8"
-      MSVS_VER: 2010
+      MSVS_VER: 2010e
 
     - nodejs_version: "0.10"
       MSVS_VER: 2013
     - nodejs_version: "0.10"
-      MSVS_VER: 2010
+      MSVS_VER: 2010e
 
     - nodejs_version: "0.11"
       MSVS_VER: 2013
     - nodejs_version: "0.11"
-      MSVS_VER: 2010
+      MSVS_VER: 2010e
 
     # io.js
     - nodejs_version: "1.0"
       MSVS_VER: 2013
     - nodejs_version: "1.0"
-      MSVS_VER: 2010
+      MSVS_VER: 2010e
 
 # Build on both platforms
 platform:
@@ -34,9 +34,9 @@ platform:
 install:
   # Get the latest version of $env:nodejs_version
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
-  # Install latest NPM
-  - npm -g install npm
-  - set PATH=%APPDATA%\npm;%PATH%
+  # Install latest NPM only for node.js versions until built in node-gyp adds io.js support
+  # Update is required for node.js 0.8 because built in npm(node-gyp) does not know VS2013
+  - IF NOT %nodejs_version% == "1.0" npm -g install npm && set PATH=%APPDATA%\npm;%PATH%
   # Install modules
   - npm install --msvs_version=%MSVS_VER% --loglevel=verbose
 
