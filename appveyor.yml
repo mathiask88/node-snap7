@@ -5,25 +5,25 @@ environment:
   matrix:
     # node.js
     - nodejs_version: "0.8"
-      GYP_MSVS_VERSION: "2013"
+      msvs_version: 2013
     - nodejs_version: "0.8"
-      GYP_MSVS_VERSION: "2010"
+      msvs_version: 2010
 
     - nodejs_version: "0.10"
-      GYP_MSVS_VERSION: "2013"
+      msvs_version: 2013
     - nodejs_version: "0.10"
-      GYP_MSVS_VERSION: "2010"
+      msvs_version: 2010
 
     - nodejs_version: "0.11"
-      GYP_MSVS_VERSION: "2013"
+      msvs_version: 2013
     - nodejs_version: "0.11"
-      GYP_MSVS_VERSION: "2010"
+      msvs_version: 2010
 
     # io.js
     - nodejs_version: "1.0"
-      GYP_MSVS_VERSION: "2013"
+      msvs_version: 2013
     - nodejs_version: "1.0"
-      GYP_MSVS_VERSION: "2010"
+      msvs_version: 2010
 
 # Build on both platforms
 platform:
@@ -35,7 +35,7 @@ install:
   # Get the latest version of $env:nodejs_version
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
   # Install modules
-  - npm install --loglevel=verbose
+  - npm install --msvs_version=$env:msvs_version --loglevel=verbose
 
 # Post-install test scripts.
 test_script:
