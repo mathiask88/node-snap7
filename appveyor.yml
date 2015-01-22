@@ -5,26 +5,37 @@ environment:
   matrix:
     # node.js
     - nodejs_version: "0.8"
+      MSVS_VER: 2013
+    - nodejs_version: "0.8"
+      MSVS_VER: 2010
+
     - nodejs_version: "0.10"
+      MSVS_VER: 2013
+    - nodejs_version: "0.10"
+      MSVS_VER: 2010
+
     - nodejs_version: "0.11"
+      MSVS_VER: 2013
+    - nodejs_version: "0.11"
+      MSVS_VER: 2010
+
     # io.js
     - nodejs_version: "1.0"
+      MSVS_VER: 2013
+    - nodejs_version: "1.0"
+      MSVS_VER: 2010
 
 # Build on both platforms
 platform:
   - x86
   - x64
-  
-msvs_version:
-  - 2013
-  - 2010
 
 # Install scripts. (runs after repo cloning)
 install:
   # Get the latest version of $env:nodejs_version
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
   # Install modules
-  - npm install --msvs_version=$env:msvs_version --loglevel=verbose
+  - npm install --msvs_version=MSVS_VER --loglevel=verbose
 
 # Post-install test scripts.
 test_script:
