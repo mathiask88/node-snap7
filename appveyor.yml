@@ -34,6 +34,9 @@ platform:
 install:
   # Get the latest version of $env:nodejs_version
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
+  # Install latest NPM
+  - npm -g install npm
+  - set PATH=%APPDATA%\npm;%PATH%
   # Install modules
   - npm install --msvs_version=%MSVS_VER% --loglevel=verbose
 
