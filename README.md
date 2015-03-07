@@ -319,15 +319,15 @@ This is function allows to write different kind of variables into a PLC in a sin
 
 ----------
 
-#### <a name="list-blocks"></a>S7Client.ListBlocks()
+#### <a name="list-blocks"></a>S7Client.ListBlocks([callback])
 This function returns the AG blocks amount divided by type.
 
-#### <a name="list-blocks-of-type"></a>S7Client.ListBlocksOfType(blockType)
+#### <a name="list-blocks-of-type"></a>S7Client.ListBlocksOfType(blockType, [callback])
 This function returns the AG list of a specified block type.
 
  - `blockType`
 
-#### <a name="get-ag-blockinfo"></a>S7Client.GetAgBlockInfo(blockType, blockNum)
+#### <a name="get-ag-blockinfo"></a>S7Client.GetAgBlockInfo(blockType, blockNum, [callback])
 Returns detailed information about an AG given block.
 This function is very useful if you need to read or write data in a DB which you do not know the size in advance (see MC7Size field)
 
@@ -391,66 +391,66 @@ Fills a DB in AG with a given byte without the need of specifying its size.
 
 ----------
 
-#### <a name="get-plc-datetime"></a>S7Client.GetPlcDateTime()
+#### <a name="get-plc-datetime"></a>S7Client.GetPlcDateTime([callback])
 Reads PLC date and time.
 
-#### <a name="set-plc-datetime"></a>S7Client.SetPlcDateTime(dateTime)
+#### <a name="set-plc-datetime"></a>S7Client.SetPlcDateTime(dateTime, [callback])
 Sets the PLC date and time.
 
  - `dateTime`
  
-#### <a name="set-plc-system-datetime"></a>S7Client.SetPlcSystemDateTime()
+#### <a name="set-plc-system-datetime"></a>S7Client.SetPlcSystemDateTime([callback])
 Sets the PLC date and time in accord to the PC system Date/Time.
 
 ### <a name="systeminfo-functions"></a>API - System info functions
 
 ----------
 
-#### <a name="read-szl"></a>S7Client.ReadSZL()
+#### <a name="read-szl"></a>S7Client.ReadSZL([callback])
 Reads a partial list of given ID and INDEX.
 
-#### <a name="read-szl-list"></a>S7Client.ReadSZLList()
+#### <a name="read-szl-list"></a>S7Client.ReadSZLList([callback])
 Reads the directory of the partial lists.
 
-#### <a name="get-order-code"></a>S7Client.GetOrderCode()
+#### <a name="get-order-code"></a>S7Client.GetOrderCode([callback])
 Gets CPU order code and version info.
 
-#### <a name="get-cpu-info"></a>S7Client.GetCpuInfo()
+#### <a name="get-cpu-info"></a>S7Client.GetCpuInfo([callback])
 Gets CPU module name, serial number and other info.
 
-#### <a name="get-cp-info"></a>S7Client.GetCpInfo()
+#### <a name="get-cp-info"></a>S7Client.GetCpInfo([callback])
 Gets CP (communication processor) info.
 
 ### <a name="control-functions"></a>API - PLC control functions
 
 ----------
 
-#### <a name="plc-hot-start"></a>S7Client.PlcHotStart()
+#### <a name="plc-hot-start"></a>S7Client.PlcHotStart([callback])
 Puts the CPU in RUN mode performing an HOT START.
 
-#### <a name="plc-cold-start"></a>S7Client.PlcColdStart()
+#### <a name="plc-cold-start"></a>S7Client.PlcColdStart([callback])
 Puts the CPU in RUN mode performing a COLD START.
 
-#### <a name="plc-stop"></a>S7Client.PlcStop()
+#### <a name="plc-stop"></a>S7Client.PlcStop([callback])
 Puts the CPU in STOP mode.
 
-#### <a name="copy-ram-to-rom"></a>S7Client.CopyRamToRom(timeout)
+#### <a name="copy-ram-to-rom"></a>S7Client.CopyRamToRom(timeout, [callback])
 Performs the Copy Ram to Rom action.
 
-#### <a name="compress"></a>S7Client.Compress(timeout)
+#### <a name="compress"></a>S7Client.Compress(timeout, [callback])
 Performs the Memory compress action.
 
 ### <a name="security-functions"></a>API - Security functions
 
 ----------
 
-#### <a name="set-session-password"></a>S7Client.SetSessionPassword(password)
+#### <a name="set-session-password"></a>S7Client.SetSessionPassword(password, [callback])
 Send the password to the PLC to meet its security level.
 
-#### <a name="clear-session-password"></a>S7Client.ClearSessionPassword
+#### <a name="clear-session-password"></a>S7Client.ClearSessionPassword([callback])
 Clears the password set for the current session (logout).
 
-#### <a name="get-protection"></a>S7Client.GetProtection()
+#### <a name="get-protection"></a>S7Client.GetProtection([callback])
 Gets the CPU protection level info.
 
 ### <a name="properties"></a>API - Properties
@@ -468,7 +468,7 @@ Returns the last job result.
 #### <a name="pdu-length"></a>S7Client.PduLength()
 Returns info about the PDU length.
 
-#### <a name="plc-status"></a>S7Client.PlcStatus()
+#### <a name="plc-status"></a>S7Client.PlcStatus([callback])
 Returns the CPU status (running/stopped).
 
 #### <a name="connected"></a>S7Client.Connected()

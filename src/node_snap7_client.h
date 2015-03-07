@@ -12,11 +12,18 @@
 
 namespace node_snap7 {
 
-enum DataIOFunction { READAREA = 1, WRITEAREA };
+enum DataIOFunction { READAREA = 1, WRITEAREA, READMULTI, WRITEMULTI
+  , PLCSTATUS, GETPROTECTION, CLEARSESSIONPW, SETSESSIONPW, PLCSTOP
+  , PLCCOLDSTART, PLCHOTSTART, GETCPINFO, GETCPUINFO, GETORDERCODE
+  , SETPLCSYSTEMDATETIME, GETPLCDATETIME, COMPRESS, COPYRAMTOROM
+  , SETPLCDATETIME, DBFILL, DBGET, DELETEBLOCK, DOWNLOAD, FULLUPLOAD
+  , UPLOAD, LISTBLOCKSOFTYPE, GETAGBLOCKINFO, LISTBLOCKS, CONNECT
+  , CONNECTTO, READSZLLIST, READSZL
+};
 
 class S7Client : public node::ObjectWrap {
  public:
-  S7Client() {}
+  S7Client();
   static void Init(v8::Handle<v8::Object> exports);
   static NAN_METHOD(New);
   // Control functions
@@ -73,6 +80,19 @@ class S7Client : public node::ObjectWrap {
   static NAN_METHOD(Connected);
 
   static NAN_METHOD(ErrorText);
+  // Internal Helper functions
+  static int GetByteCountFromWordLen(int WordLen);
+  v8::Local<v8::Array> S7DataItemToArray(PS7DataItem Items, int len
+    , bool readMulti);
+  v8::Local<v8::Object> S7ProtectionToObject(PS7Protection S7Protection);
+  v8::Local<v8::Object> S7CpInfoToObject(PS7CpInfo CpInfo);
+  v8::Local<v8::Object> S7CpuInfoToObject(PS7CpuInfo CpuInfo);
+  v8::Local<v8::Object> S7OrderCodeToObject(PS7OrderCode OrderCode);
+  v8::Local<v8::Object> S7BlockInfoToObject(PS7BlockInfo BlockInfo);
+  v8::Local<v8::Object> S7BlocksListToObject(PS7BlocksList BlocksList);
+  v8::Local<v8::Array> S7BlocksOfTypeToArray(PS7BlocksOfType BlocksList
+    , int count);
+  v8::Local<v8::Array> S7SZLListToArray(PS7SZLList SZLList, int count);
 
   uv_mutex_t mutex;
   TS7Client *snap7Client;
@@ -82,59 +102,55 @@ class S7Client : public node::ObjectWrap {
   static v8::Persistent<v8::FunctionTemplate> constructor;
 };
 
-class ConnectionWorker : public NanAsyncWorker {
- public:
-  ConnectionWorker(
-    NanCallback *callback,
-    S7Client *s7client,
-    NanUtf8String *address,
-    int rack,
-    int slot)
-    : NanAsyncWorker(callback), s7client(s7client), address(address)
-    , rack(rack), slot(slot) {}
-  ~ConnectionWorker() {}
-
-  void Execute();
-  void HandleOKCallback();
-
- private:
-  S7Client *s7client;
-  NanUtf8String *address;
-  int rack;
-  int slot;
-  int returnValue;
-};
-
 class IOWorker : public NanAsyncWorker {
  public:
-  IOWorker(
-    NanCallback *callback,
-    S7Client *s7client,
-    DataIOFunction caller,
-    int area,
-    int DB,
-    int start,
-    int amount,
-    int WordLen,
-    char *bufferData)
+  // No args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller)
+      : NanAsyncWorker(callback), s7client(s7client), caller(caller) {}
+  // 1 args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , void *arg1)
     : NanAsyncWorker(callback), s7client(s7client), caller(caller)
-    , area(area), DB(DB), start(start), amount(amount), WordLen(WordLen)
-    , bufferData(bufferData) {}
+    , pData(arg1) {}
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , int arg1)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , int1(arg1) {}
+  // 2 args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , void *arg1, int arg2)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , pData(arg1), int1(arg2) {}
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , int arg1, int arg2)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , int1(arg1), int2(arg2) {}
+  // 3 args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , void *arg1, int arg2, int arg3)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , pData(arg1), int1(arg2), int2(arg3) {}
+  // 4 args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , void *arg1, int arg2, int arg3, int arg4)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , pData(arg1), int1(arg2), int2(arg3), int3(arg4) {}
+  // 6 args
+  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+    , void *arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
+    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    , pData(arg1), int1(arg2), int2(arg3), int3(arg4), int4(arg5), int5(arg6) {}
+
   ~IOWorker() {}
 
+ private:
   void Execute();
   void HandleOKCallback();
 
- private:
   S7Client *s7client;
   DataIOFunction caller;
-  int area;
-  int DB;
-  int start;
-  int amount;
-  int WordLen;
-  char *bufferData;
-  int returnValue;
+  void *pData;
+  int int1, int2, int3, int4, int5, returnValue;
 };
 
 }  // namespace node_snap7
