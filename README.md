@@ -203,7 +203,7 @@ This is the main function to write data into a PLC.
 
 #### <a name="dbread"></a>S7Client.DBRead(dbNumber, start, size, [callback])
 This is a lean function of `ReadArea()` to read PLC DB.  
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaDB` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `ReadArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
 
  - `dbNumber`
  - `start`
@@ -212,7 +212,7 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaDB` and `wor
 
 #### <a name="dbwrite"></a>S7Client.DBWrite(dbNumber, start, size, buffer, [callback])
 This is a lean function of `WriteArea()` to write PLC DB.  
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
 
  - `dbNumber`
  - `start`
@@ -222,7 +222,7 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wo
  
 #### <a name="abread"></a>S7Client.ABRead(start, size, [callback])
 This is a lean function of `ReadArea()` to read PLC process outputs.  
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
@@ -230,7 +230,7 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wor
  
 #### <a name="abwrite"></a>S7Client.ABWrite(start, size, buffer, [callback])
 This is a lean function of `WriteArea()` to write PLC process outputs.  
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
@@ -239,7 +239,7 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wo
  
 #### <a name="ebread"></a>S7Client.EBRead(start, size, [callback])
 This is a lean function of `ReadArea()` to read PLC process inputs.  
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
@@ -247,7 +247,7 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wor
  
 #### <a name="ebwrite"></a>S7Client.EBWrite(start, size, buffer, [callback])
 This is a lean function of `WriteArea()` to write PLC process inputs.  
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
@@ -256,7 +256,7 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wo
  
 #### <a name="mbread"></a>S7Client.MBRead(start, size, [callback])
 This is a lean function of `ReadArea()` to read PLC Merkers.  
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
@@ -264,7 +264,7 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wor
  
 #### <a name="mbwrite"></a>S7Client.MBWrite(start, size, buffer, [callback])
 This is a lean function of `WriteArea()` to write PLC Merkers.  
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaMK` and `wordLen = S7Client.S7WLBytes`.
+It simply internally calls `WriteArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
 
  - `start`
  - `size`
