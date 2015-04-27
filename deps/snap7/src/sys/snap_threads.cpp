@@ -84,6 +84,10 @@ TSnapThread::~TSnapThread()
         Terminate();
         Join();
     };
+#ifdef OS_WINDOWS
+	if (Started)
+		CloseHandle(th);
+#endif
 }
 //---------------------------------------------------------------------------
 void TSnapThread::ThreadCreate() 

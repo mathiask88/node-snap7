@@ -212,7 +212,7 @@ private:
 protected:
     int DBCount;
     int DBLimit;
-    PS7Area DB[MaxDB-1]; // DB
+    PS7Area DB[MaxDB]; // DB
     PS7Area HA[5];     // MK,PE,PA,TM,CT
     PS7Area FindDB(word DBNumber);
     PWorkerSocket CreateWorkerSocket(socket_t Sock);

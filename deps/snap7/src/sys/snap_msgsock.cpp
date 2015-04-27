@@ -267,8 +267,12 @@ int TMsgSocket::WaitForData(int Size, int Timeout)
 void TMsgSocket::SetSocketOptions()
 {
     int NoDelay = 1;
+	int KeepAlive = 1;
     LastTcpError=0;
     SockCheck(setsockopt(FSocket, IPPROTO_TCP, TCP_NODELAY,(char*)&NoDelay, sizeof(NoDelay)));
+
+	if (LastTcpError==0)
+        SockCheck(setsockopt(FSocket, SOL_SOCKET, SO_KEEPALIVE,(char*)&KeepAlive, sizeof(KeepAlive)));
 }
 //---------------------------------------------------------------------------
 int TMsgSocket::SockCheck(int SockResult)

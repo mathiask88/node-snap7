@@ -73,6 +73,9 @@ int TSnap7MicroClient::opReadArea()
      // First check : params bounds
      if ((Job.Number<0) || (Job.Number>65535) || (Job.Start<0) || (Job.Amount<1))
         return errCliInvalidParams;
+     // Second check : transport size
+	 if ((Job.WordLen==S7WLBit) && (Job.Amount>1))
+        return errCliInvalidTransportSize;
      // Request Params size
      RPSize    =sizeof(TReqFunReadItem)+2; // 1 item + FunRead + ItemsCount
      // Setup pointers (note : PDUH_out and PDU.Payload are the same pointer)
@@ -181,6 +184,9 @@ int TSnap7MicroClient::opWriteArea()
      // First check : params bounds
      if ((Job.Number<0) || (Job.Number>65535) || (Job.Start<0) || (Job.Amount<1))
         return errCliInvalidParams;
+     // Second check : transport size
+	 if ((Job.WordLen==S7WLBit) && (Job.Amount>1))
+        return errCliInvalidTransportSize;
 
      RHSize =sizeof(TS7ReqHeader)+    // Request header
              2+                       // FunWrite+ItemCount (of TReqFunWriteParams)
@@ -382,7 +388,11 @@ int TSnap7MicroClient::opReadMultiVars()
     IsoSize=RPSize+sizeof(TS7ReqHeader);
 	if (IsoSize>PDULength) 
 		return errCliSizeOverPDU;
-    Result=isoExchangeBuffer(0,IsoSize);
+	Result=isoExchangeBuffer(0,IsoSize);
+
+	if (Result!=0)
+        return Result;
+
     // Function level error
     if (Answer->Error!=0)
     	return CpuError(SwapWord(Answer->Error));
@@ -550,9 +560,13 @@ int TSnap7MicroClient::opWriteMultiVars()
 	if (IsoSize>PDULength) 
 		return errCliSizeOverPDU;
     Result=isoExchangeBuffer(0,IsoSize);
-    // Function level error
-    if (Answer->Error!=0)
-        return CpuError(SwapWord(Answer->Error));
+
+	if (Result!=0)
+		return Result;
+
+	// Function level error
+	if (Answer->Error!=0)
+		return CpuError(SwapWord(Answer->Error));
 
     if (ResParams->ItemCount!=ItemsCount)
         return errCliInvalidPlcAnswer;
@@ -1198,7 +1212,7 @@ int TSnap7MicroClient::opUpload()
         if (Full)
         {
             opSize=int(Offset);
-            if (opSize<92)
+            if (opSize<78)
                 Result=errCliInvalidDataSizeRecvd;
         }
         else

@@ -51,6 +51,7 @@ class TSnap7Client: public TSnap7MicroClient
 {
 private:
     TClientThread *FThread;
+	bool ThreadCreated;
     void CloseThread();
     void OpenThread();
     void StartAsyncJob();
