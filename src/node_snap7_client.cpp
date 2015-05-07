@@ -1504,8 +1504,8 @@ NAN_METHOD(S7Client::DBGet) {
       delete[] bufferData;
       NanReturnValue(ret_buf);
     } else {
-      NanReturnValue(NanFalse());
       delete[] bufferData;
+      NanReturnValue(NanFalse());
     }
   } else {
     NanCallback *callback = new NanCallback(args[2].As<v8::Function>());
@@ -1732,7 +1732,7 @@ v8::Local<v8::Object> S7Client::S7CpInfoToObject(PS7CpInfo CpInfo) {
   NanEscapableScope();
 
   v8::Local<v8::Object> cp_info = NanNew<v8::Object>();
-  cp_info->Set(NanNew<v8::String>("MaxPduLengt")
+  cp_info->Set(NanNew<v8::String>("MaxPduLength")
     , NanNew<v8::Number>(CpInfo->MaxPduLengt));
   cp_info->Set(NanNew<v8::String>("MaxConnections")
     , NanNew<v8::Number>(CpInfo->MaxConnections));
@@ -1980,8 +1980,12 @@ NAN_METHOD(S7Client::ExecTime) {
   NanScope();
   S7Client *s7client = ObjectWrap::Unwrap<S7Client>(args.Holder());
 
-  NanReturnValue(NanNew<v8::Integer>(
-    s7client->snap7Client->ExecTime()));
+  int returnValue = s7client->snap7Client->ExecTime();
+  if (returnValue == errLibInvalidObject) {
+    NanReturnValue(NanFalse());
+  } else {
+    NanReturnValue(NanNew<v8::Integer>(returnValue));
+  }
 }
 
 NAN_METHOD(S7Client::LastError) {
@@ -1996,16 +2000,24 @@ NAN_METHOD(S7Client::PDURequested) {
   NanScope();
   S7Client *s7client = ObjectWrap::Unwrap<S7Client>(args.Holder());
 
-  NanReturnValue(NanNew<v8::Integer>(
-    s7client->snap7Client->PDURequested()));
+  int returnValue = s7client->snap7Client->PDURequested();
+  if (returnValue == 0) {
+    NanReturnValue(NanFalse());
+  } else {
+    NanReturnValue(NanNew<v8::Integer>(returnValue));
+  }
 }
 
 NAN_METHOD(S7Client::PDULength) {
   NanScope();
   S7Client *s7client = ObjectWrap::Unwrap<S7Client>(args.Holder());
-
-  NanReturnValue(NanNew<v8::Integer>(
-    s7client->snap7Client->PDULength()));
+  
+  int returnValue = s7client->snap7Client->PDULength();
+  if (returnValue == 0) {
+    NanReturnValue(NanFalse());
+  } else {
+    NanReturnValue(NanNew<v8::Integer>(returnValue));
+  }
 }
 
 NAN_METHOD(S7Client::PlcStatus) {
