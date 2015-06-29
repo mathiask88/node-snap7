@@ -12,12 +12,7 @@
         ],
         "conditions": [
             ["OS=='win'", {
-                "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
-                "msvs_settings": {
-                    "VCCLCompilerTool": {
-                        "AdditionalOptions": ["/EHsc"]
-                    }
-                }
+                "libraries": ["-lws2_32.lib", "-lwinmm.lib"]
             }]
         ],
         "dependencies": [
@@ -47,13 +42,21 @@
         ],
         "conditions": [
             ["OS=='linux'", {
-                "cflags_cc": ["-O3", "-fPIC", "-pedantic", "-fexceptions"]
+                "cflags_cc": ["-fPIC", "-pedantic", "-fexceptions"],
+                "cflags_cc!": ["-fno-exceptions"]
             }],
             ["OS=='win'", {
                 "msvs_settings": {
                     "VCCLCompilerTool": {
-                        "AdditionalOptions": ["/EHsc"]
+                        "ExceptionHandling": 1 # /Ehsc
                     }
+                }
+            }],
+            ["OS=='mac'", {
+                "xcode_settings": {
+                    "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+                    "GCC_DYNAMIC_NO_PIC": "NO",
+                    "OTHER_CFLAGS": ["-pedantic"]
                 }
             }]
         ]
