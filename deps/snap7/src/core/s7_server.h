@@ -36,6 +36,7 @@
 
 #define MaxDB 2048    // Like a S7 318
 #define MinPduSize 240
+#define CPU315PduSize 240
 //---------------------------------------------------------------------------
 // Server Interface errors
 const longword errSrvDBNullPointer      = 0x00200000; // Pssed null as PData
@@ -119,7 +120,6 @@ private:
 	int DBCnt;
     byte LastBlk;
     TSZL SZL;
-    TS7Buffer Buffer;
     byte BCD(word Value);
     // Checks the consistence of the incoming PDU
     bool CheckPDU_in(int PayloadSize);
@@ -200,13 +200,24 @@ typedef TS7Worker *PS7Worker;
 //------------------------------------------------------------------------------
 // S7 SERVER CLASS
 //------------------------------------------------------------------------------
+extern "C"
+{
+	typedef int (S7API *pfn_RWAreaCallBack)(void *usrPtr, int Sender, int Operation, PS7Tag PTag, void *pUsrData);
+}
+const int OperationRead  = 0;
+const int OperationWrite = 1;
+
 class TSnap7Server : public TCustomMsgServer
 {
 private:
     // Read Callback related
     pfn_SrvCallBack OnReadEvent;
-    void *FReadUsrPtr;
-    void DisposeAll();
+	pfn_RWAreaCallBack OnRWArea;
+	// Critical section to lock Read/Write Hook Area
+	PSnapCriticalSection CSRWHook;
+	void *FReadUsrPtr;
+	void *FRWAreaUsrPtr;
+	void DisposeAll();
     int FindFirstFreeDB();
     int IndexOfDB(word DBNumber);
 protected:
@@ -216,6 +227,8 @@ protected:
     PS7Area HA[5];     // MK,PE,PA,TM,CT
     PS7Area FindDB(word DBNumber);
     PWorkerSocket CreateWorkerSocket(socket_t Sock);
+	bool ResourceLess;
+	word ForcePDU;
     int RegisterDB(word Number, void *pUsrData, word Size);
     int RegisterSys(int AreaCode, void *pUsrData, word Size);
     int UnregisterDB(word DBNumber);
@@ -223,6 +236,8 @@ protected:
     // The Read event
     void DoReadEvent(int Sender, longword Code, word RetCode, word Param1,
       word Param2, word Param3, word Param4);
+	bool DoReadArea(int Sender, int Area, int DBNumber, int Start, int Size, int WordLen, void *pUsrData);
+	bool DoWriteArea(int Sender, int Area, int DBNumber, int Start, int Size, int WordLen, void *pUsrData);
 public:
     int WorkInterval;
     byte CpuStatus;
@@ -237,6 +252,7 @@ public:
     int UnlockArea(int AreaCode, word DBNumber);
     // Sets Event callback
     int SetReadEventsCallBack(pfn_SrvCallBack PCallBack, void *UsrPtr);
+	int SetRWAreaCallBack(pfn_RWAreaCallBack PCallBack, void *UsrPtr);
     friend class TS7Worker;
 };
 typedef TSnap7Server *PSnap7Server;

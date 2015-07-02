@@ -161,6 +161,7 @@ EXPORTSPEC int S7API Srv_SetMask(S7Object Server, int MaskKind, longword Mask);
 EXPORTSPEC int S7API Srv_SetEventsCallback(S7Object Server, pfn_SrvCallBack pCallback, void *usrPtr);
 EXPORTSPEC int S7API Srv_SetReadEventsCallback(S7Object Server, pfn_SrvCallBack pCallback, void *usrPtr);
 EXPORTSPEC int S7API Srv_EventText(TSrvEvent &Event, char *Text, int TextLen);
+EXPORTSPEC int S7API Srv_SetRWAreaCallback(S7Object Server, pfn_RWAreaCallBack pCallback, void *usrPtr);
 // Misc
 EXPORTSPEC int S7API Srv_GetStatus(S7Object Server, int &ServerStatus, int &CpuStatus, int &ClientsCount);
 EXPORTSPEC int S7API Srv_SetCpuStatus(S7Object Server, int CpuStatus);

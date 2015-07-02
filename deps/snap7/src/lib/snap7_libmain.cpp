@@ -988,6 +988,14 @@ int S7API Srv_SetReadEventsCallback(S7Object Server, pfn_SrvCallBack pCallback, 
 	else
 		return errLibInvalidObject;
 }
+//---------------------------------------------------------------------------
+int S7API Srv_SetRWAreaCallback(S7Object Server, pfn_RWAreaCallBack pCallback, void *usrPtr)
+{
+	if (Server)
+		return PSnap7Server(Server)->SetRWAreaCallBack(pCallback, usrPtr);
+	else
+		return errLibInvalidObject;
+}
 //***************************************************************************
 // PARTNER
 //***************************************************************************

@@ -40,7 +40,7 @@ TMsgEventQueue::TMsgEventQueue(const int Capacity, const int BlockSize)
 //---------------------------------------------------------------------------
 TMsgEventQueue::~TMsgEventQueue() 
 {
-    delete Buffer;
+    delete[] Buffer;
 }
 //---------------------------------------------------------------------------
 void TMsgEventQueue::Flush() 

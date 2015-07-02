@@ -267,6 +267,15 @@ typedef tm *PTimeStruct;
 //==============================================================================
 #pragma pack(1)
 
+// Tag Struct
+typedef struct{
+	int Area;
+	int DBNumber;
+	int Start;
+	int Size;
+	int WordLen;
+}TS7Tag, *PS7Tag;
+
 // Incoming header, it will be mapped onto IsoPDU payload
 typedef struct {
 	byte    P;        // Telegram ID, always 32
