@@ -685,6 +685,8 @@ void IOWorker::Execute() {
         , static_cast<PS7SZL>(pData), &int3);
       break;
   }
+  
+  uv_mutex_unlock(&s7client->mutex);
 }
 
 void IOWorker::HandleOKCallback() {
@@ -908,8 +910,6 @@ void IOWorker::HandleOKCallback() {
       callback->Call(2, argv2);
       break;
   }
-
-  uv_mutex_unlock(&s7client->mutex);
 }
 
 NAN_METHOD(S7Client::ReadArea) {
