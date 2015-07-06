@@ -48,7 +48,8 @@
             ["OS=='win'", {
                 "msvs_settings": {
                     "VCCLCompilerTool": {
-                        "ExceptionHandling": 1 # /Ehsc
+                        "ExceptionHandling": 1,
+                        "AdditionalOptions": ["/EHsc"] # ExceptionHandling=1 is not enough for some versions
                     }
                 }
             }],
