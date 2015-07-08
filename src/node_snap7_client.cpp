@@ -525,7 +525,7 @@ NAN_METHOD(S7Client::SetParam) {
   }
 
   int pData = args[1]->Int32Value();
-  NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->GetParam(
+  NanReturnValue(NanNew<v8::Boolean>(s7client->snap7Client->SetParam(
       args[0]->Int32Value(), &pData) == 0));
 }
 
