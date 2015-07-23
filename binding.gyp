@@ -51,7 +51,8 @@
                         "ExceptionHandling": 1,
                         "AdditionalOptions": ["/EHsc"] # ExceptionHandling=1 is not enough for some versions
                     }
-                }
+                },
+                "defines!": ["_HAS_EXCEPTIONS=0"]
             }],
             ["OS=='mac'", {
                 "xcode_settings": {
