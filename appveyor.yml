@@ -31,19 +31,20 @@ install:
   # Update is required for node.js 0.8 because built in npm(node-gyp) does not know VS2013
   - ps: >-
       If($env:nodejs_version.Length -ne 1) {
-        npm -g install npm
-        set $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
+        npm -g install npm 2>&1>$null
+        $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
       }
-  # Install modules
-  - npm install --msvs_version=%MSVS_VERSION%
+      # Install modules
+      npm install --msvs_version=$env:MSVS_VERSION
 
 # Post-install test scripts.
 test_script:
   # Output useful info for debugging.
-  - node --version
-  - npm --version
-  # run tests
-  - npm test
+  - ps: >-
+      node --version
+      npm --version
+      # run tests
+      npm test
 
 # Don't actually build.
 build: off
