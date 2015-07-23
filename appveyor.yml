@@ -34,17 +34,16 @@ install:
         npm -g install npm 2>&1>$null
         $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
       }
-      # Install modules
-      npm install --msvs_version=$env:MSVS_VERSION
+  # Output useful info for debugging.
+  - ps: node --version
+  - ps: npm --version
+  # Install modules
+  - ps: npm install --msvs_version=$env:MSVS_VERSION
 
 # Post-install test scripts.
 test_script:
-  # Output useful info for debugging.
-  - ps: >-
-      node --version
-      npm --version
-      # run tests
-      npm test
+  # run tests
+  - ps: npm test
 
 # Don't actually build.
 build: off
