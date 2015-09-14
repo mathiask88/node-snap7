@@ -1,6 +1,6 @@
 sudo: false
 
-language: cpp
+language: node_js
 
 env:
   matrix:
