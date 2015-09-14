@@ -21,10 +21,10 @@ enum DataIOFunction { READAREA = 1, WRITEAREA, READMULTI, WRITEMULTI
   , CONNECTTO, READSZLLIST, READSZL
 };
 
-class S7Client : public node::ObjectWrap {
+class S7Client : public Nan::ObjectWrap {
  public:
   S7Client();
-  static void Init(v8::Handle<v8::Object> exports);
+  static NAN_MODULE_INIT(Init);
   static NAN_METHOD(New);
   // Control functions
   static NAN_METHOD(Connect);
@@ -94,51 +94,55 @@ class S7Client : public node::ObjectWrap {
     , int count);
   v8::Local<v8::Array> S7SZLListToArray(PS7SZLList SZLList, int count);
 
+  static void FreeCallback(char *data, void* hint);
+  static void FreeCallbackSZL(char *data, void* hint);
+
+
   uv_mutex_t mutex;
   TS7Client *snap7Client;
 
  private:
   ~S7Client();
-  static v8::Persistent<v8::FunctionTemplate> constructor;
+  static Nan::Persistent<v8::FunctionTemplate> constructor;
 };
 
-class IOWorker : public NanAsyncWorker {
+class IOWorker : public Nan::AsyncWorker {
  public:
   // No args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller)
-      : NanAsyncWorker(callback), s7client(s7client), caller(caller) {}
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller)
+      : Nan::AsyncWorker(callback), s7client(s7client), caller(caller) {}
   // 1 args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , void *arg1)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1) {}
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , int arg1)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , int1(arg1) {}
   // 2 args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2) {}
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , int arg1, int arg2)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , int1(arg1), int2(arg2) {}
   // 3 args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3) {}
   // 4 args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4) {}
   // 6 args
-  IOWorker(NanCallback *callback, S7Client *s7client, DataIOFunction caller
+  IOWorker(Nan::Callback *callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
-    : NanAsyncWorker(callback), s7client(s7client), caller(caller)
+    : Nan::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4), int4(arg5), int5(arg6) {}
 
   ~IOWorker() {}

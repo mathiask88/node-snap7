@@ -5,10 +5,12 @@
 
 #include <node_snap7_client.h>
 
-extern "C" {
-  void InitAll(v8::Handle<v8::Object> exports) {
-    node_snap7::S7Client::Init(exports);
-  }
+namespace node_snap7 {
+
+NAN_MODULE_INIT(InitAll) {
+  S7Client::Init(target);
 }
 
 NODE_MODULE(node_snap7, InitAll)
+
+}  // namespace node_snap7
