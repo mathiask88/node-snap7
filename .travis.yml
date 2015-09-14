@@ -1,6 +1,6 @@
 sudo: false
 
-language: node_js
+language: cpp
 
 env:
   matrix:
@@ -31,3 +31,6 @@ install:
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
   - $CXX --version
   - npm/.bin/npm install
+
+script:
+  - npm test
