@@ -1057,7 +1057,7 @@ void IOWorker::HandleOKCallback() {
           static_cast<char*>(pData)
         , int4 * s7client->GetByteCountFromWordLen(int5)
         , S7Client::FreeCallback,
-        nullptr).ToLocalChecked();
+        NULL).ToLocalChecked();
     } else {
       argv2[1] = Nan::Null();
       delete[] static_cast<char*>(pData);
@@ -1165,7 +1165,7 @@ void IOWorker::HandleOKCallback() {
             static_cast<char*>(pData)
           , int2
           , S7Client::FreeCallback
-          , nullptr).ToLocalChecked();
+          , NULL).ToLocalChecked();
       } else {
         argv2[1] = Nan::Null();
         delete[] static_cast<char*>(pData);
@@ -1180,7 +1180,7 @@ void IOWorker::HandleOKCallback() {
             static_cast<char*>(pData)
           , int3
           , S7Client::FreeCallback
-          , nullptr).ToLocalChecked();
+          , NULL).ToLocalChecked();
       } else {
         argv2[1] = Nan::Null();
         delete[] static_cast<char*>(pData);
@@ -1241,7 +1241,7 @@ void IOWorker::HandleOKCallback() {
             reinterpret_cast<char*>(static_cast<PS7SZL>(pData))
           , int3
           , S7Client::FreeCallbackSZL
-          , nullptr).ToLocalChecked();
+          , NULL).ToLocalChecked();
       } else {
         argv2[1] = Nan::Null();
         delete static_cast<PS7SZL>(pData);
@@ -1278,7 +1278,7 @@ NAN_METHOD(S7Client::ReadArea) {
           bufferData
         , size
         , S7Client::FreeCallback
-        , nullptr).ToLocalChecked();
+        , NULL).ToLocalChecked();
       info.GetReturnValue().Set(ret);
     } else {
       delete[] bufferData;
@@ -1438,7 +1438,7 @@ v8::Local<v8::Array> S7Client::S7DataItemToArray(
               static_cast<char*>(Items[i].pdata)
             , size
             , S7Client::FreeCallback
-            , nullptr).ToLocalChecked());
+            , NULL).ToLocalChecked());
       } else {
         delete[] static_cast<char*>(Items[i].pdata);
         Nan::Set(res_obj, Nan::New<v8::String>("Data").ToLocalChecked(), Nan::Null());
@@ -1742,7 +1742,7 @@ NAN_METHOD(S7Client::Upload) {
           bufferData
         , size
         , S7Client::FreeCallback
-        , nullptr).ToLocalChecked();
+        , NULL).ToLocalChecked();
       info.GetReturnValue().Set(ret_buf);
     } else {
       delete[] bufferData;
@@ -1775,7 +1775,7 @@ NAN_METHOD(S7Client::FullUpload) {
           bufferData
         , size
         , S7Client::FreeCallback
-        , nullptr).ToLocalChecked();
+        , NULL).ToLocalChecked();
       info.GetReturnValue().Set(ret_buf);
     } else {
       delete[] bufferData;
@@ -1846,7 +1846,7 @@ NAN_METHOD(S7Client::DBGet) {
           bufferData
         , size
         , S7Client::FreeCallback
-        , nullptr).ToLocalChecked();
+        , NULL).ToLocalChecked();
       info.GetReturnValue().Set(ret_buf);
     } else {
       delete[] bufferData;
@@ -2101,7 +2101,7 @@ NAN_METHOD(S7Client::ReadSZL) {
           reinterpret_cast<char*>(SZL)
         , size
         , S7Client::FreeCallbackSZL
-        , nullptr).ToLocalChecked();
+        , NULL).ToLocalChecked();
 
       info.GetReturnValue().Set(ret_buf);
     } else {
