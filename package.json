@@ -18,7 +18,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "~2.0.9",
+    "nan": "~2.1.0",
     "bindings": "~1.2.1"
   }
 }
