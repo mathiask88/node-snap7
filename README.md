@@ -111,8 +111,8 @@ s7client.ConnectTo('192.168.1.12', 0, 1, function(err) {
  - [Properties](#properties)
      - [ExecTime()](#exec-time)
      - [LastError()](#last-error)
-     - [PduRequested()](#pdu-requested)
-     - [PduLength()](#pdu-length)
+     - [PDURequested()](#pdu-requested)
+     - [PDULength()](#pdu-length)
      - [PlcStatus()](#plc-status)
      - [Connected()](#connected)
      - [ErrorText()](#error-text)
@@ -884,10 +884,10 @@ Returns the last job execution time in milliseconds or `false`on error.
 #### <a name="last-error"></a>S7Client.LastError()
 Returns the last job result.
 
-#### <a name="pdu-requested"></a>S7Client.PduRequested()
+#### <a name="pdu-requested"></a>S7Client.PDURequested()
 Returns the PDU length requested by the client or `false` on error. The requested PDU length can be modified with [SetParam()](#set-param).
 
-#### <a name="pdu-length"></a>S7Client.PduLength()
+#### <a name="pdu-length"></a>S7Client.PDULength()
 Returns the PDU length negotiated between the client and the PLC during the connection or `false` on error.
 
 It’s useful to know the PDU negotiated when we need to call `ReadMultivar()` or `WriteMultiVar()`. All other data transfer functions handle this information by themselves and split the telegrams automatically if needed.
