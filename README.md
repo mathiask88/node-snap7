@@ -17,14 +17,16 @@ Install with:
 
     npm install node-snap7
 
-Requirements:  
+Requirements:
 
  - Windows:
     - Visual Studio 2010 Express or higher e.g [Visual Studio 2013 Express](http://www.microsoft.com/visualstudio/eng/2013-downloads#d-2013-express)
-    - [Python 2.7](http://www.python.org/download/releases/2.7.6/)
+    - [Python 2.7](https://www.python.org/downloads/release/python-2711/)
  - Linux:
-     - gcc & make
-     - [Python 2.7](http://www.python.org/download/releases/2.7.6/)
+     - gcc/g++ & make
+     - [Python 2.7](https://www.python.org/downloads/release/python-2711/)
+
+Building for Node.js 4.x or higher requires C++11 features so the minimum is VS2013 / gcc4.8
 
 ## Special thanks to
 - Davide Nardella for creating snap7
@@ -38,12 +40,12 @@ var s7client = new snap7.S7Client();
 s7client.ConnectTo('192.168.1.12', 0, 1, function(err) {
     if(err)
         return console.log(' >> Connection failed. Code #' + err + ' - ' + s7client.ErrorText(err));
-    
+
     // Read the first byte from PLC process outputs...
     s7client.ABRead(0, 1, function(err, res) {
         if(err)
             return console.log(' >> ABRead failed. Code #' + err + ' - ' + s7client.ErrorText(err));
-        
+
         // ... and write it to stdout
         console.log(res)
     });
@@ -122,10 +124,10 @@ s7client.ConnectTo('192.168.1.12', 0, 1, function(err) {
 ----------
 
 #### <a name="connect"></a>S7Client.Connect([callback])
-Connects the client to the PLC with the parameters specified in the previous call of `ConnectTo()` or `SetConnectionParams()`.  
+Connects the client to the PLC with the parameters specified in the previous call of `ConnectTo()` or `SetConnectionParams()`.
 
  - The optional `callback` parameter will be executed after connection attempt
- 
+
 If `callback` is **not** set the function is **blocking** and  returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
 
@@ -161,7 +163,7 @@ Sets the connection resource type, i.e the way in which the Clients connects to 
 | `S7Client.CONNTYPE_BASIC` | 0x03..0x10 | S7 Basic
 
 #### <a name="disconnect"></a>S7Client.Disconnect()
-Disconnects “gracefully” the Client from the PLC.  
+Disconnects “gracefully” the Client from the PLC.
 
 Returns `true` on success or `false` on error.
 
@@ -169,7 +171,7 @@ Returns `true` on success or `false` on error.
 Reads an internal Client object parameter.
 
  - `paramNumber` One from the parameter list below
-    
+
 | Name                   | Value | Description |
 |:-----------------------|:-----:|:------------|
 | `S7Client.RemotePort`  | 2     | Socket remote Port
@@ -188,7 +190,7 @@ Sets an internal Client object parameter.
 
  - `paramNumber` One from the parameter list above
  - `value` New parameter value
- 
+
 Returns `true` on success or `false` on error.
 
 ### <a name="data-functions"></a>API - Data I/O functions
@@ -246,7 +248,7 @@ If `callback` is set the function is **non-blocking** and an `error` argument is
 | `S7Client.S7WLTimer`   | 0x1D  | Timer (16 bit)
 
 #### <a name="dbread"></a>S7Client.DBRead(dbNumber, start, size, [callback])
-This is a lean function of `ReadArea()` to read PLC DB.  
+This is a lean function of `ReadArea()` to read PLC DB.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
 
  - `dbNumber` DB number
@@ -258,7 +260,7 @@ If `callback` is **not** set the function is **blocking** and returns a `buffer`
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
 
 #### <a name="dbwrite"></a>S7Client.DBWrite(dbNumber, start, size, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC DB.  
+This is a lean function of `WriteArea()` to write PLC DB.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
 
  - `dbNumber` DB number
@@ -269,9 +271,9 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wo
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="abread"></a>S7Client.ABRead(start, size, [callback])
-This is a lean function of `ReadArea()` to read PLC process outputs.  
+This is a lean function of `ReadArea()` to read PLC process outputs.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -280,9 +282,9 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wor
 
 If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="abwrite"></a>S7Client.ABWrite(start, size, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC process outputs.  
+This is a lean function of `WriteArea()` to write PLC process outputs.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -292,9 +294,9 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wo
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="ebread"></a>S7Client.EBRead(start, size, [callback])
-This is a lean function of `ReadArea()` to read PLC process inputs.  
+This is a lean function of `ReadArea()` to read PLC process inputs.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -303,9 +305,9 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wor
 
 If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="ebwrite"></a>S7Client.EBWrite(start, size, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC process inputs.  
+This is a lean function of `WriteArea()` to write PLC process inputs.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -315,9 +317,9 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wo
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="mbread"></a>S7Client.MBRead(start, size, [callback])
-This is a lean function of `ReadArea()` to read PLC Merkers.  
+This is a lean function of `ReadArea()` to read PLC Merkers.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -326,9 +328,9 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wor
 
 If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="mbwrite"></a>S7Client.MBWrite(start, size, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC Merkers.  
+This is a lean function of `WriteArea()` to write PLC Merkers.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
 
  - `start` Offset to start
@@ -338,9 +340,9 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaMK` and `wo
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="tmread"></a>S7Client.TMRead(start, amount, [callback])
-This is a lean function of `ReadArea()` to read PLC Timers.  
+This is a lean function of `ReadArea()` to read PLC Timers.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaTM` and `wordLen = S7Client.S7WLTimer`.
 
  - `start` Offset to start
@@ -349,9 +351,9 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaTM` and `wor
 
 If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="tmwrite"></a>S7Client.TMWrite(start, amount, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC Timers.  
+This is a lean function of `WriteArea()` to write PLC Timers.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaTM` and `wordLen = S7Client.S7WLTimer`.
 
  - `start` Offset to start
@@ -363,7 +365,7 @@ If `callback` is **not** set the function is **blocking** and returns `true` on 
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
 
 #### <a name="ctread"></a>S7Client.CTRead(start, amount, [callback])
-This is a lean function of `ReadArea()` to read PLC Counters.  
+This is a lean function of `ReadArea()` to read PLC Counters.
 It simply internally calls `ReadArea()` with `area = S7Client.S7AreaCT` and `wordLen = S7Client.S7WLCounter`.
 
  - `start` Offset to start
@@ -372,9 +374,9 @@ It simply internally calls `ReadArea()` with `area = S7Client.S7AreaCT` and `wor
 
 If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="ctwrite"></a>S7Client.CTWrite(start, amount, buffer, [callback])
-This is a lean function of `WriteArea()` to write PLC Counters.  
+This is a lean function of `WriteArea()` to write PLC Counters.
 It simply internally calls `WriteArea()` with `area = S7Client.S7AreaCT` and `wordLen = S7Client.S7WLCounter`.
 
  - `start` Offset to start
@@ -384,7 +386,7 @@ It simply internally calls `WriteArea()` with `area = S7Client.S7AreaCT` and `wo
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-  
+
 #### <a name="read-multi-vars"></a>S7Client.ReadMultiVars(multiVars, [callback])
 This is function allows to read different kind of variables from a PLC in a single call. With it you can read DB, Inputs, Outputs, Merkers, Timers and Counters.
 
@@ -515,7 +517,7 @@ If `callback` is **not** set the function is **blocking** and returns an `array`
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
 
 Each item of the result array will contain a block number.
- 
+
 <a name="table-blocktype"></a>
 
 | BlockType              | Value | Description |
@@ -579,7 +581,7 @@ Example:
 | `S7Client.BlockLangSCL`   | 0x04  | SCL
 | `S7Client.BlockLangDB`    | 0x05  | DB
 | `S7Client.BlockLangGRAPH` | 0x06  | GRAPH
- 
+
 #### <a name="get-pg-blockinfo"></a>S7Client.GetPgBlockInfo(buffer)
 Returns detailed information about a block present in a user buffer. This function is usually used in conjunction with `FullUpload()`.
 An uploaded block saved to disk, could be loaded in a user buffer and checked with this function.
@@ -587,7 +589,7 @@ An uploaded block saved to disk, could be loaded in a user buffer and checked wi
  - `buffer` User buffer
 
 Returns an `object` (see [example](#example-blockinfo) above) on success or `false`on error.
- 
+
 ### <a name="block-functions"></a>API - Block oriented functions
 
 ----------
@@ -601,7 +603,7 @@ Uploads a block from AG. The whole block (including header and footer) is copied
 
 If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="upload"></a>S7Client.Upload(blockType, blockNum, [callback])
 Uploads a block body from AG. Only the block body (but header and footer) is copied into the user buffer.
 
@@ -611,7 +613,7 @@ Uploads a block body from AG. Only the block body (but header and footer) is cop
 
 If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
- 
+
 #### <a name="download"></a>S7Client.Download(blockNum, buffer, [callback])
 Downloads a block into AG. A whole block (including header and footer) must be available into the user buffer.
 
@@ -623,19 +625,19 @@ If `callback` is **not** set the function is **blocking** and returns `true` on 
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
 
 If the parameter `blockNum` is `-1`, the block number is not changed else the block is downloaded with the provided number (just like a “Download As…”).
- 
+
 #### <a name="delete"></a>S7Client.Delete(blockType, blockNum, [callback])
 Deletes a block into AG.
 
     !!! There is no undo function available !!!
-    
+
  - `blockType` Type of block (see table [above](#table-blocktype))
  - `blockNum` Number of block
  - The optional `callback` parameter will be executed after completion
 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="dbget"></a>S7Client.DBGet(dbNumber, [callback])
 Uploads a DB from AG. This function is equivalent to `Upload()` with `BlockType = Block_DB` but it uses a different approach so it’s not subject to the security level set.
 
@@ -648,7 +650,7 @@ If `callback` is **not** set the function is **blocking** and returns a `Buffer`
 If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
 
 This function first gathers the DB size via `GetAgBlockInfo()` then calls `DBRead()`.
- 
+
 #### <a name="dbfill"></a>S7Client.DBFill(dbNumber, fillChar, [callback])
 Fills a DB in AG with a given byte without the need of specifying its size.
 
@@ -691,7 +693,7 @@ The `dateTime` argument can be a javascript `Date()` object or an object with th
 
 If `callback` is **not** set the function is **blocking** and returns a `true` on success or `false` on error.
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
- 
+
 #### <a name="set-plc-system-datetime"></a>S7Client.SetPlcSystemDateTime([callback])
 Sets the PLC date and time in accord to the PC system Date/Time.
 
@@ -805,7 +807,7 @@ If `callback` is set the function is **non-blocking** and an `error` argument is
 
 #### <a name="copy-ram-to-rom"></a>S7Client.CopyRamToRom(timeout, [callback])
 Performs the Copy Ram to Rom action.
- 
+
  - `timeout` Maximum time expected to complete the operation (ms)
  - The optional `callback` parameter will be executed after completion or on timeout
 
@@ -817,7 +819,7 @@ The CPU must be in STOP mode.
 
 #### <a name="compress"></a>S7Client.Compress(timeout, [callback])
 Performs the Memory compress action.
- 
+
  - `timeout` Maximum time expected to complete the operation (ms)
  - The optional `callback` parameter will be executed after completion or on timeout
 
