@@ -917,7 +917,7 @@ Returns a textual explanation of a given error number.
  - `errNum` Error number
 
 ## Licence & copyright
-Copyright (c) 2015, Mathias Küsel
+Copyright (c) 2016, Mathias Küsel
 
 node-snap7 is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
 
