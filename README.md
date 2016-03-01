@@ -216,7 +216,7 @@ This is the main function to write data into a PLC.
  - `area` Area identifier (see table [below](#table-area))
  - `dbNumber` DB number if area = S7AreaDB, otherwise ignored
  - `start` Offset to start
- - `amount` Amount of **words** to read
+ - `amount` Amount of **words** to write
  - `wordLen` Word size (see table [below](#table-wordlen))
  - `buffer` User buffer
  - The optional `callback` parameter will be executed after write
