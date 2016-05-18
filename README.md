@@ -2,7 +2,7 @@
 
 [![NPM](https://nodei.co/npm/node-snap7.png?downloads=true)](https://nodei.co/npm/node-snap7/) [![NPM](https://nodei.co/npm-dl/node-snap7.png?months=1)](https://nodei.co/npm/node-snap7/)
 
-**Current node-snap7 version:** 0.2.2
+**Current node-snap7 version:** 0.2.3
 **Current snap7 version:** 1.4.0
 
 **Build status:** Linux [![Build Status](https://travis-ci.org/mathiask88/node-snap7.svg?branch=master)](https://travis-ci.org/mathiask88/node-snap7) Windows [![Build status](https://ci.appveyor.com/api/projects/status/ca1kepectsn3wkrc)](https://ci.appveyor.com/project/mathiask88/node-snap7)
