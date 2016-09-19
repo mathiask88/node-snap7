@@ -239,177 +239,177 @@ NAN_MODULE_INIT(S7Client::Init) {
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliTooManyItems").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliTooManyItems)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidWordLen").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidWordLen)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliPartialDataWritten").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliPartialDataWritten)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliSizeOverPDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliSizeOverPDU)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidPlcAnswer").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidPlcAnswer)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliAddressOutOfRange").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliAddressOutOfRange)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidTransportSize").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidTransportSize)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliWriteDataSizeMismatch").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliWriteDataSizeMismatch)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliItemNotAvailable").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliItemNotAvailable)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidValue").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidValue)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliCannotStartPLC").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliCannotStartPLC)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliAlreadyRun").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliAlreadyRun)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliCannotStopPLC").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliCannotStopPLC)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliCannotCopyRamToRom").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliCannotCopyRamToRom)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliCannotCompress").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliCannotCompress)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliAlreadyStop").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliAlreadyStop)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliFunNotAvailable").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliFunNotAvailable)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliUploadSequenceFailed").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliUploadSequenceFailed)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidDataSizeRecvd").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidDataSizeRecvd)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidBlockType").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidBlockType)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidBlockNumber").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidBlockNumber)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidBlockSize").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidBlockSize)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliDownloadSequenceFailed").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliDownloadSequenceFailed)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInsertRefused").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInsertRefused)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliDeleteRefused").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliDeleteRefused)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliNeedPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliNeedPassword)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidPassword)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliNoPasswordToSetOrClear").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliNoPasswordToSetOrClear)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliJobTimeout").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliJobTimeout)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliPartialDataRead").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliPartialDataRead)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliBufferTooSmall").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliBufferTooSmall)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliFunctionRefused").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliFunctionRefused)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliDestroying").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliDestroying)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliInvalidParamNumber").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliInvalidParamNumber)
     , v8::ReadOnly);
   Nan::SetPrototypeTemplate(
       tpl
     , Nan::New<v8::String>("errCliCannotChangeParam").ToLocalChecked()
-    , Nan::New<v8::Integer>(errNegotiatingPDU)
+    , Nan::New<v8::Integer>(errCliCannotChangeParam)
     , v8::ReadOnly);
 
   // Client Connection Type
