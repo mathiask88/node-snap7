@@ -12,7 +12,8 @@
         ],
         "conditions": [
             ["OS=='win'", {
-                "libraries": ["-lws2_32.lib", "-lwinmm.lib"]
+                "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
+                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"]
             }]
         ],
         "dependencies": [
@@ -52,7 +53,8 @@
                         "AdditionalOptions": ["/EHsc"] # ExceptionHandling=1 is not enough for some versions
                     }
                 },
-                "defines!": ["_HAS_EXCEPTIONS=0"]
+                "defines!": ["_HAS_EXCEPTIONS=0"],
+                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"]
             }],
             ["OS=='mac'", {
                 "xcode_settings": {
