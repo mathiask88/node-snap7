@@ -706,7 +706,8 @@ NAN_METHOD(S7Client::New) {
   } else {
     v8::Local<v8::FunctionTemplate> constructorHandle;
     constructorHandle = Nan::New<v8::FunctionTemplate>(constructor);
-  info.GetReturnValue().Set(constructorHandle->GetFunction()->NewInstance());
+  info.GetReturnValue().Set(
+    Nan::NewInstance(constructorHandle->GetFunction()).ToLocalChecked());
   }
 }
 
