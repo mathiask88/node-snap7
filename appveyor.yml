@@ -31,11 +31,10 @@ install:
       } Else {
         Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
       }
-  # Install latest NPM only for node.js versions until built in node-gyp adds io.js support
-  # Update is required for node.js 0.8 because built in npm(node-gyp) does not know VS2013
+  # Install latest NPM@2 for node.js 0.8, 0.10 and 0.12 because built in npm(node-gyp) does not know VS2013
   - ps: >-
       If($env:nodejs_version.Length -ne 1) {
-        npm -g install npm 2>&1>$null
+        npm -g install npm@2 2>&1>$null
         $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
       }
   # Output useful info for debugging.
