@@ -1,5 +1,5 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.3.0 |
+|  PROJECT SNAP7                                                         1.4.1 |
 |==============================================================================|
 |  Copyright (C) 2013, 2015 Davide Nardella                                    |
 |  All rights reserved.                                                        |
@@ -31,8 +31,8 @@
 #endif
 
 // Visual Studio needs this to use the correct time_t size
-#if defined (_WIN32) && !defined(_WIN64)
-# define _USE_32BIT_TIME_T 
+#if defined (_WIN32) && !defined(_WIN64) && !defined(_EMBEDDING_VS2013UP)
+  # define _USE_32BIT_TIME_T 
 #endif
 
 // Linux, BSD and Solaris define "unix", OSX doesn't, even though it derives from BSD

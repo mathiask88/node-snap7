@@ -38,10 +38,10 @@
 // Thanks to Rolf Stalder that made it ;)
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_UNIX
-	#define NON_BLOCKING_CONNECT
+    #define NON_BLOCKING_CONNECT
 #endif
 #ifdef NON_BLOCKING_CONNECT
-	#include <fcntl.h>
+    #include <fcntl.h>
 #endif
 //----------------------------------------------------------------------------
 /*

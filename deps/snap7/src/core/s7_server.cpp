@@ -325,12 +325,13 @@ word TS7Worker::ReadArea(PResFunReadItem ResItemData, PReqFunReadItem ReqItemPar
      int &PDURemainder, TEv &EV)
 {
     PS7Area P;
-	word DBNum, Elements;
+	word DBNum = 0;
+	word Elements;
     longword Start, Size, ASize, AStart;
     longword *PAdd;
     byte BitIndex, ByteVal;
 	int Multiplier;
-    void *Source;
+    void *Source = NULL;
     PSnapCriticalSection pcs;
 
     P=NULL;
@@ -427,7 +428,7 @@ word TS7Worker::ReadArea(PResFunReadItem ResItemData, PReqFunReadItem ReqItemPar
 
 	if (FServer->ResourceLess)
 	{
-		memset(&ResItemData->Data, 0, IsoPayload_Size - 17);
+		memset(&ResItemData->Data, 0, Size);
 		if (!FServer->DoReadArea(ClientHandle, EV.EvArea, EV.EvIndex, AStart, Elements, ReqItemPar->TransportSize, &ResItemData->Data))
 			return RA_NotFound(ResItemData, EV);
 	}
@@ -588,11 +589,12 @@ byte TS7Worker::WriteArea(PReqFunWriteDataItem ReqItemData, PReqFunWriteItem Req
 {
 	int Multiplier;
     PS7Area P = NULL;
-	word DBNum, Elements;
+	word DBNum = 0;
+	word Elements;
     longword *PAdd;
 	PSnapCriticalSection pcs;
 	longword Start, Size, ASize, DataLen, AStart;
-	pbyte Target;
+	pbyte Target = NULL;
 	byte BitIndex;
 
     EV.EvStart   =0;

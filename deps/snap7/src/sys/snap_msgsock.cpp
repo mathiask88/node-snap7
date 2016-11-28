@@ -502,6 +502,7 @@ int TMsgSocket::SckListen()
     SockCheck(listen(FSocket ,SOMAXCONN));
     return LastTcpError;
 }
+//---------------------------------------------------------------------------
 bool TMsgSocket::Ping(char *Host)
 {
     return Pinger->Ping(Host, PingTimeout);
@@ -509,7 +510,10 @@ bool TMsgSocket::Ping(char *Host)
 //---------------------------------------------------------------------------
 bool TMsgSocket::Ping(sockaddr_in Addr)
 {
-    return Pinger->Ping(Addr.sin_addr.s_addr, PingTimeout);
+	if (PingTimeout == 0)
+		return true;
+	else
+        return Pinger->Ping(Addr.sin_addr.s_addr, PingTimeout);
 }
 //---------------------------------------------------------------------------
 socket_t TMsgSocket::SckAccept()
@@ -635,7 +639,9 @@ static int PingKind;
 
 static char const *iphlpapi = "\\iphlpapi.dll";
 #pragma pack(1)
-typedef byte TTxBuffer[40];
+
+//typedef byte TTxBuffer[40];
+typedef byte TTxBuffer[32];
 #pragma pack()
 
 typedef HANDLE (__stdcall *pfn_IcmpCreateFile)();
@@ -884,7 +890,6 @@ bool RawSocketsCheck()
 
     return Result;
 }
-
 //---------------------------------------------------------------------------
 // Sockets init
 // - Winsock Startup (Windows)
