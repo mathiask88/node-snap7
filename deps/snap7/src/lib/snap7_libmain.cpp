@@ -541,7 +541,8 @@ int S7API Cli_GetPduLength(S7Object Client, int &Requested, int &Negotiated)
 int S7API Cli_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
-		strncpy(Text,ErrCliText(Error).c_str(),TextLen);
+		ErrCliText(Error, Text, TextLen);
+		Text[TextLen] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -892,10 +893,11 @@ int S7API Srv_SetCpuStatus(S7Object Server, int CpuStatus)
 int S7API Srv_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
-	    strncpy(Text,ErrSrvText(Error).c_str(),TextLen);
+		ErrSrvText(Error, Text, TextLen);
+		Text[TextLen] = '\0';
 	}
 	catch (...){
-        return errLibInvalidParam;
+		return errLibInvalidParam;
 	}
 	return 0;
 }
@@ -903,7 +905,8 @@ int S7API Srv_ErrorText(int Error, char *Text, int TextLen)
 int S7API Srv_EventText(TSrvEvent &Event, char *Text, int TextLen)
 {
 	try{
-		strncpy(Text,EvtSrvText(Event).c_str(),TextLen);
+		EvtSrvText(Event, Text, TextLen);
+		//Text[TextLen] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -1182,7 +1185,7 @@ int S7API Par_GetStatus(S7Object Partner, int &Status)
 int S7API Par_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
-		strncpy(Text,ErrParText(Error).c_str(),TextLen);
+		ErrParText(Error, Text, TextLen);
 	}
 	catch (...){
 		return errLibInvalidParam;

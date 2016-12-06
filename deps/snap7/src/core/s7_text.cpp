@@ -53,465 +53,736 @@ static char* itoa(int value, char* result, int base) {
 }
 #endif
 //---------------------------------------------------------------------------
-BaseString NumToString(int Value, int Base, unsigned int Len)
+char* NumToString(int Value, int Base, int Len, char* Result)
 {
-	char CNumber[50];
-	BaseString result;
-	itoa(Value,CNumber,Base);
-	result.assign(CNumber);
-	if (Len>0)
+	char CNumber[64];
+	char Pad[65] = "0000000000000000000000000000000000000000000000000000000000000000";
+	itoa(Value, CNumber, Base);
+	
+	if (Len > 0)
 	{
-		while (result.length()<Len)
-            result="0"+result;
+		int Delta = Len - strlen(CNumber); // Len is max 8 in this program
+		if (Delta > 0)
+		{
+			strncpy(Result, Pad, Delta);
+			Result[Delta] = '\0';
+			strcat(Result, CNumber);
+		}
+		else
+			strcpy(Result, CNumber);
 	}
-	return result;
+	else
+		strcpy(Result, CNumber);
+
+	return Result;
 }
 //---------------------------------------------------------------------------
-BaseString IntToString(int Value)
+char* IntToString(int Value, char* Result)
 {
-	return NumToString(Value, 10, 0);
+	return NumToString(Value, 10, 0, Result);
 }
 //---------------------------------------------------------------------------
-BaseString TimeToString(time_t dt)
+char* TimeToString(time_t dt, char* Result)
 {
-    char dts[50];
-    BaseString Result;
-    struct tm * DateTime = localtime (&dt);
-    if (DateTime!=NULL) {
-        strftime(dts,50,"%Y-%m-%d %H:%M:%S",DateTime);
-        Result.assign(dts);
-        return Result;
-    }
-    else
-        return "";
+	struct tm * DateTime = localtime(&dt);
+	if (DateTime != NULL) 
+		strftime(Result, 50, "%Y-%m-%d %H:%M:%S", DateTime);
+	else
+		*Result = '\0';
+	return Result;
 }
+
 //---------------------------------------------------------------------------
-BaseString IpAddressToString(int IP)
+char* IpAddressToString(int IP, char* Result)
 {
-    in_addr Addr;
-    BaseString Result;
-    Addr.s_addr=IP;
-    Result.assign(inet_ntoa(Addr));
-    return Result;
+	in_addr Addr;
+	Addr.s_addr = IP;
+	strcpy(Result, inet_ntoa(Addr));
+	return Result;
 }
 //---------------------------------------------------------------------------
 #define WSAEINVALIDADDRESS   12001
 
-static BaseString TcpTextOf(int Error)
+char* TcpTextOf(int Error, char* Result)
 {
-    switch (Error)
-    {
-	case 0:                   return "";
-	case WSAEINTR:            return " TCP : Interrupted system call";
-	case WSAEBADF:            return " TCP : Bad file number";
-	case WSAEACCES:           return " TCP : Permission denied";
-	case WSAEFAULT:           return " TCP : Bad address";
-	case WSAEINVAL:           return " TCP : Invalid argument";
-	case WSAEMFILE:           return " TCP : Too many open files";
-	case WSAEWOULDBLOCK:      return " TCP : Operation would block";
-	case WSAEINPROGRESS:      return " TCP : Operation now in progress";
-	case WSAEALREADY:         return " TCP : Operation already in progress";
-	case WSAENOTSOCK:         return " TCP : Socket operation on non socket";
-	case WSAEDESTADDRREQ:     return " TCP : Destination address required";
-	case WSAEMSGSIZE:         return " TCP : Message too long";
-	case WSAEPROTOTYPE:       return " TCP : Protocol wrong type for Socket";
-	case WSAENOPROTOOPT:      return " TCP : Protocol not available";
-	case WSAEPROTONOSUPPORT:  return " TCP : Protocol not supported";
-	case WSAESOCKTNOSUPPORT:  return " TCP : Socket not supported";
-	case WSAEOPNOTSUPP:       return " TCP : Operation not supported on Socket";
-	case WSAEPFNOSUPPORT:     return " TCP : Protocol family not supported";
-	case WSAEAFNOSUPPORT:     return " TCP : Address family not supported";
-	case WSAEADDRINUSE:       return " TCP : Address already in use";
-	case WSAEADDRNOTAVAIL:    return " TCP : Can't assign requested address";
-	case WSAENETDOWN:         return " TCP : Network is down";
-	case WSAENETUNREACH:      return " TCP : Network is unreachable";
-	case WSAENETRESET:        return " TCP : Network dropped connection on reset";
-	case WSAECONNABORTED:     return " TCP : Software caused connection abort";
-	case WSAECONNRESET:       return " TCP : Connection reset by peer";
-	case WSAENOBUFS:          return " TCP : No Buffer space available";
-	case WSAEISCONN:          return " TCP : Socket is already connected";
-	case WSAENOTCONN:         return " TCP : Socket is not connected";
-	case WSAESHUTDOWN:        return " TCP : Can't send after Socket shutdown";
-	case WSAETOOMANYREFS:     return " TCP : Too many references:can't splice";
-	case WSAETIMEDOUT:        return " TCP : Connection timed out";
-	case WSAECONNREFUSED:     return " TCP : Connection refused";
-	case WSAELOOP:            return " TCP : Too many levels of symbolic links";
-	case WSAENAMETOOLONG:     return " TCP : File name is too long";
-	case WSAEHOSTDOWN:        return " TCP : Host is down";
-	case WSAEHOSTUNREACH:     return " TCP : Unreachable peer";
-	case WSAENOTEMPTY:        return " TCP : Directory is not empty";
-	case WSAEUSERS:           return " TCP : Too many users";
-	case WSAEDQUOT:           return " TCP : Disk quota exceeded";
-	case WSAESTALE:           return " TCP : Stale NFS file handle";
-	case WSAEREMOTE:          return " TCP : Too many levels of remote in path";
+	switch (Error)
+	{
+	case 0:                   *Result='\0';break;
+	case WSAEINTR:            strcpy(Result," TCP : Interrupted system call\0");break;
+	case WSAEBADF:            strcpy(Result," TCP : Bad file number\0");break;
+	case WSAEACCES:           strcpy(Result," TCP : Permission denied\0");break;
+	case WSAEFAULT:           strcpy(Result," TCP : Bad address\0");break;
+	case WSAEINVAL:           strcpy(Result," TCP : Invalid argument\0");break;
+	case WSAEMFILE:           strcpy(Result," TCP : Too many open files\0");break;
+	case WSAEWOULDBLOCK:      strcpy(Result," TCP : Operation would block\0");break;
+	case WSAEINPROGRESS:      strcpy(Result," TCP : Operation now in progress\0");break;
+	case WSAEALREADY:         strcpy(Result," TCP : Operation already in progress\0");break;
+	case WSAENOTSOCK:         strcpy(Result," TCP : Socket operation on non socket\0");break;
+	case WSAEDESTADDRREQ:     strcpy(Result," TCP : Destination address required\0");break;
+	case WSAEMSGSIZE:         strcpy(Result," TCP : Message too long\0");break;
+	case WSAEPROTOTYPE:       strcpy(Result," TCP : Protocol wrong type for Socket\0");break;
+	case WSAENOPROTOOPT:      strcpy(Result," TCP : Protocol not available\0");break;
+	case WSAEPROTONOSUPPORT:  strcpy(Result," TCP : Protocol not supported\0");break;
+	case WSAESOCKTNOSUPPORT:  strcpy(Result," TCP : Socket not supported\0");break;
+	case WSAEOPNOTSUPP:       strcpy(Result," TCP : Operation not supported on Socket\0");break;
+	case WSAEPFNOSUPPORT:     strcpy(Result," TCP : Protocol family not supported\0");break;
+	case WSAEAFNOSUPPORT:     strcpy(Result," TCP : Address family not supported\0");break;
+	case WSAEADDRINUSE:       strcpy(Result," TCP : Address already in use\0");break;
+	case WSAEADDRNOTAVAIL:    strcpy(Result," TCP : Can't assign requested address\0");break;
+	case WSAENETDOWN:         strcpy(Result," TCP : Network is down\0");break;
+	case WSAENETUNREACH:      strcpy(Result," TCP : Network is unreachable\0");break;
+	case WSAENETRESET:        strcpy(Result," TCP : Network dropped connection on reset\0");break;
+	case WSAECONNABORTED:     strcpy(Result," TCP : Software caused connection abort\0");break;
+	case WSAECONNRESET:       strcpy(Result," TCP : Connection reset by peer\0");break;
+	case WSAENOBUFS:          strcpy(Result," TCP : No Buffer space available\0");break;
+	case WSAEISCONN:          strcpy(Result," TCP : Socket is already connected\0");break;
+	case WSAENOTCONN:         strcpy(Result," TCP : Socket is not connected\0");break;
+	case WSAESHUTDOWN:        strcpy(Result," TCP : Can't send after Socket shutdown\0");break;
+	case WSAETOOMANYREFS:     strcpy(Result," TCP : Too many references:can't splice\0");break;
+	case WSAETIMEDOUT:        strcpy(Result," TCP : Connection timed out\0");break;
+	case WSAECONNREFUSED:     strcpy(Result," TCP : Connection refused\0");break;
+	case WSAELOOP:            strcpy(Result," TCP : Too many levels of symbolic links\0");break;
+	case WSAENAMETOOLONG:     strcpy(Result," TCP : File name is too long\0");break;
+	case WSAEHOSTDOWN:        strcpy(Result," TCP : Host is down\0");break;
+	case WSAEHOSTUNREACH:     strcpy(Result," TCP : Unreachable peer\0");break;
+	case WSAENOTEMPTY:        strcpy(Result," TCP : Directory is not empty\0");break;
+	case WSAEUSERS:           strcpy(Result," TCP : Too many users\0");break;
+	case WSAEDQUOT:           strcpy(Result," TCP : Disk quota exceeded\0");break;
+	case WSAESTALE:           strcpy(Result," TCP : Stale NFS file handle\0");break;
+	case WSAEREMOTE:          strcpy(Result," TCP : Too many levels of remote in path\0");break;
 	#ifdef OS_WINDOWS
-	case WSAEPROCLIM:         return " TCP : Too many processes";
-	case WSASYSNOTREADY:      return " TCP : Network subsystem is unusable";
-	case WSAVERNOTSUPPORTED:  return " TCP : Winsock DLL cannot support this application";
-	case WSANOTINITIALISED:   return " TCP : Winsock not initialized";
-	case WSAEDISCON:          return " TCP : Disconnect";
-	case WSAHOST_NOT_FOUND:   return " TCP : Host not found";
-	case WSATRY_AGAIN:        return " TCP : Non authoritative - host not found";
-	case WSANO_RECOVERY:      return " TCP : Non recoverable error";
-	case WSANO_DATA:          return " TCP : Valid name, no data record of requested type";
+	case WSAEPROCLIM:         strcpy(Result," TCP : Too many processes\0");break;
+	case WSASYSNOTREADY:      strcpy(Result," TCP : Network subsystem is unusable\0");break;
+	case WSAVERNOTSUPPORTED:  strcpy(Result," TCP : Winsock DLL cannot support this application\0");break;
+	case WSANOTINITIALISED:   strcpy(Result," TCP : Winsock not initialized\0");break;
+	case WSAEDISCON:          strcpy(Result," TCP : Disconnect\0");break;
+	case WSAHOST_NOT_FOUND:   strcpy(Result," TCP : Host not found\0");break;
+	case WSATRY_AGAIN:        strcpy(Result," TCP : Non authoritative - host not found\0");break;
+	case WSANO_RECOVERY:      strcpy(Result," TCP : Non recoverable error\0");break;
+	case WSANO_DATA:          strcpy(Result," TCP : Valid name, no data record of requested type\0");break;
 	#endif
-	case WSAEINVALIDADDRESS:  return " TCP : Invalid address";
-	default:                  return " TCP : Other Socket error ("+IntToString(Error)+")";
-    }
+	case WSAEINVALIDADDRESS:  strcpy(Result," TCP : Invalid address\0");break;
+	default:
+		{
+			char CNumber[16];
+			strcpy(Result, " TCP : Other Socket error (");
+			strcat(Result, IntToString(Error, CNumber));
+			strcat(Result, ")");
+			break;
+		}
+	}
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString IsoTextOf(int Error)
+char* IsoTextOf(int Error, char* Result)
 {
-    switch (Error)
-    {
-        case 0 :                     return "";
-        case errIsoConnect:          return " ISO : Connection error";
-        case errIsoDisconnect:       return " ISO : Disconnect error";
-        case errIsoInvalidPDU:       return " ISO : Bad PDU format";
-        case errIsoInvalidDataSize:  return " ISO : Datasize passed to send/recv buffer is invalid";
-        case errIsoNullPointer:      return " ISO : Null passed as pointer";
-        case errIsoShortPacket:      return " ISO : A short packet received";
-        case errIsoTooManyFragments: return " ISO : Too many packets without EoT flag";
-        case errIsoPduOverflow:      return " ISO : The sum of fragments data exceded maximum packet size";
-        case errIsoSendPacket:       return " ISO : An error occurred during send";
-        case errIsoRecvPacket:       return " ISO : An error occurred during recv";
-        case errIsoInvalidParams:    return " ISO : Invalid connection params (wrong TSAPs)";
-        default:                     return " ISO : Unknown error (0x"+NumToString(Error, 16, 8)+")";
-    }
-}
-//---------------------------------------------------------------------------
-static BaseString CliTextOf(int Error)
-{
-    switch (Error)
-    {
-      case 0 :                            return "";
-      case errNegotiatingPDU            : return "CPU : Error in PDU negotiation";
-      case errCliInvalidParams          : return "CLI : invalid param(s) supplied";
-      case errCliJobPending             : return "CLI : Job pending";
-      case errCliTooManyItems           : return "CLI : too may items (>20) in multi read/write";
-      case errCliInvalidWordLen         : return "CLI : invalid WordLength";
-      case errCliPartialDataWritten     : return "CLI : Partial data written";
-      case errCliSizeOverPDU            : return "CPU : total data exceeds the PDU size";
-      case errCliInvalidPlcAnswer       : return "CLI : invalid CPU answer";
-      case errCliAddressOutOfRange      : return "CPU : Address out of range";
-      case errCliInvalidTransportSize   : return "CPU : Invalid Transport size";
-      case errCliWriteDataSizeMismatch  : return "CPU : Data size mismatch";
-      case errCliItemNotAvailable       : return "CPU : Item not available";
-      case errCliInvalidValue           : return "CPU : Invalid value supplied";
-      case errCliCannotStartPLC         : return "CPU : Cannot start PLC";
-      case errCliAlreadyRun             : return "CPU : PLC already RUN";
-      case errCliCannotStopPLC          : return "CPU : Cannot stop PLC";
-      case errCliCannotCopyRamToRom     : return "CPU : Cannot copy RAM to ROM";
-      case errCliCannotCompress         : return "CPU : Cannot compress";
-      case errCliAlreadyStop            : return "CPU : PLC already STOP";
-      case errCliFunNotAvailable        : return "CPU : Function not available";
-      case errCliUploadSequenceFailed   : return "CPU : Upload sequence failed";
-      case errCliInvalidDataSizeRecvd   : return "CLI : Invalid data size received";
-      case errCliInvalidBlockType       : return "CLI : Invalid block type";
-      case errCliInvalidBlockNumber     : return "CLI : Invalid block number";
-      case errCliInvalidBlockSize       : return "CLI : Invalid block size";
-      case errCliDownloadSequenceFailed : return "CPU : Download sequence failed";
-      case errCliInsertRefused          : return "CPU : block insert refused";
-      case errCliDeleteRefused          : return "CPU : block delete refused";
-      case errCliNeedPassword           : return "CPU : Function not authorized for current protection level";
-      case errCliInvalidPassword        : return "CPU : Invalid password";
-      case errCliNoPasswordToSetOrClear : return "CPU : No password to set or clear";
-      case errCliJobTimeout             : return "CLI : Job Timeout";
-      case errCliFunctionRefused        : return "CLI : function refused by CPU (Unknown error)";
-      case errCliPartialDataRead        : return "CLI : Partial data read";
-      case errCliBufferTooSmall         : return "CLI : The buffer supplied is too small to accomplish the operation";
-      case errCliDestroying             : return "CLI : Cannot perform (destroying)";
-      case errCliInvalidParamNumber     : return "CLI : Invalid Param Number";
-      case errCliCannotChangeParam      : return "CLI : Cannot change this param now";
-	  default                           : return "CLI : Unknown error (0x"+NumToString(Error, 16, 8)+")";
-    };
-}
-//---------------------------------------------------------------------------
-static BaseString SrvTextOf(int Error)
-{
-    switch (Error)
-    {
-        case 0 :                       return "";
-        case errSrvCannotStart       : return "SRV : Server cannot start";
-        case errSrvDBNullPointer     : return "SRV : Null passed as area pointer";
-        case errSrvAreaAlreadyExists : return "SRV : Cannot register area since already exists";
-        case errSrvUnknownArea       : return "SRV : Unknown Area code";
-        case errSrvInvalidParams     : return "SRV : Invalid param(s) supplied";
-        case errSrvTooManyDB         : return "SRV : DB Limit reached";
-        case errSrvInvalidParamNumber: return "SRV : Invalid Param Number";
-        case errSrvCannotChangeParam : return "SRV : Cannot change this param now";
-        default : return "SRV : Unknown error (0x"+NumToString(Error,16,8)+")";
-    };
-}
-//---------------------------------------------------------------------------
-static BaseString ParTextOf(int Error)
-{
-    switch(Error)
-    {
-        case 0 :                       return "";
-        case errParAddressInUse      : return "PAR : Local address already in use";
-        case errParNoRoom            : return "PAR : No more partners available";
-        case errServerNoRoom         : return "PAR : No more servers available";
-        case errParInvalidParams     : return "PAR : Invalid parameter supplied";
-        case errParNotLinked         : return "PAR : Cannot perform, Partner not linked";
-        case errParBusy              : return "PAR : Cannot perform, Partner Busy";
-        case errParFrameTimeout      : return "PAR : Frame timeout";
-        case errParInvalidPDU        : return "PAR : Invalid PDU received";
-        case errParSendTimeout       : return "PAR : Send timeout";
-        case errParRecvTimeout       : return "PAR : Recv timeout";
-        case errParSendRefused       : return "PAR : Send refused by peer";
-        case errParNegotiatingPDU    : return "PAR : Error negotiating PDU";
-        case errParSendingBlock      : return "PAR : Error Sending Block";
-        case errParRecvingBlock      : return "PAR : Error Receiving Block";
-        case errParBindError         : return "PAR : Error Binding";
-        case errParDestroying        : return "PAR : Cannot perform (destroying)";
-        case errParInvalidParamNumber: return "PAR : Invalid Param Number";
-        case errParCannotChangeParam : return "PAR : Cannot change this param now";
-        case errParBufferTooSmall    : return "PAR : The buffer supplied is too small to accomplish the operation";
-        default : return "PAR : Unknown error (0x"+NumToString(Error,16,8)+")";
-    }
-
-}
-//---------------------------------------------------------------------------
-BaseString ErrCliText(int Error)
-{
-    if (Error!=0)
-    {
 	switch (Error)
 	{
-	    case errLibInvalidParam  : return "LIB : Invalid param supplied";
-	    case errLibInvalidObject : return "LIB : Invalid object supplied";
-	    default :
-		    return CliTextOf(Error & ErrS7Mask)+IsoTextOf(Error & ErrIsoMask)+TcpTextOf(Error & ErrTcpMask);
+		case 0 :                     *Result='\0';break;
+		case errIsoConnect:          strcpy(Result," ISO : Connection error\0");break;
+		case errIsoDisconnect:       strcpy(Result," ISO : Disconnect error\0");break;
+		case errIsoInvalidPDU:       strcpy(Result," ISO : Bad PDU format\0");break;
+		case errIsoInvalidDataSize:  strcpy(Result," ISO : Datasize passed to send/recv buffer is invalid\0");break;
+		case errIsoNullPointer:      strcpy(Result," ISO : Null passed as pointer\0");break;
+		case errIsoShortPacket:      strcpy(Result," ISO : A short packet received\0");break;
+		case errIsoTooManyFragments: strcpy(Result," ISO : Too many packets without EoT flag\0");break;
+		case errIsoPduOverflow:      strcpy(Result," ISO : The sum of fragments data exceded maximum packet size\0");break;
+		case errIsoSendPacket:       strcpy(Result," ISO : An error occurred during send\0");break;
+		case errIsoRecvPacket:       strcpy(Result," ISO : An error occurred during recv\0");break;
+		case errIsoInvalidParams:    strcpy(Result," ISO : Invalid connection params (wrong TSAPs)\0");break;
+		default:
+		{
+			char CNumber[16];
+			strcpy(Result, " ISO : Unknown error (0x");
+			strcat(Result, NumToString(Error, 16, 8, CNumber));
+			strcat(Result, ")");
+			break;
+		}
 	}
-    }
-    else
-        return "OK";
+	return Result;
 }
 //---------------------------------------------------------------------------
-BaseString ErrSrvText(int Error)
+char* CliTextOf(int Error, char* Result)
 {
-    if (Error!=0)
-    {
 	switch (Error)
 	{
-	    case errLibInvalidParam  : return "LIB : Invalid param supplied";
-	    case errLibInvalidObject : return "LIB : Invalid object supplied";
-	    default :
-		    return SrvTextOf(Error & ErrS7Mask)+IsoTextOf(Error & ErrIsoMask)+TcpTextOf(Error & ErrTcpMask);
-	}
-    }
-    else
-        return "OK";
+	  case 0 :                            *Result='\0';break;
+	  case errNegotiatingPDU            : strcpy(Result,"CPU : Error in PDU negotiation\0");break;
+	  case errCliInvalidParams          : strcpy(Result,"CLI : invalid param(s) supplied\0");break;
+	  case errCliJobPending             : strcpy(Result,"CLI : Job pending\0");break;
+	  case errCliTooManyItems           : strcpy(Result,"CLI : too may items (>20) in multi read/write\0");break;
+	  case errCliInvalidWordLen         : strcpy(Result,"CLI : invalid WordLength\0");break;
+	  case errCliPartialDataWritten     : strcpy(Result,"CLI : Partial data written\0");break;
+	  case errCliSizeOverPDU            : strcpy(Result,"CPU : total data exceeds the PDU size\0");break;
+	  case errCliInvalidPlcAnswer       : strcpy(Result,"CLI : invalid CPU answer\0");break;
+	  case errCliAddressOutOfRange      : strcpy(Result,"CPU : Address out of range\0");break;
+	  case errCliInvalidTransportSize   : strcpy(Result,"CPU : Invalid Transport size\0");break;
+	  case errCliWriteDataSizeMismatch  : strcpy(Result,"CPU : Data size mismatch\0");break;
+	  case errCliItemNotAvailable       : strcpy(Result,"CPU : Item not available\0");break;
+	  case errCliInvalidValue           : strcpy(Result,"CPU : Invalid value supplied\0");break;
+	  case errCliCannotStartPLC         : strcpy(Result,"CPU : Cannot start PLC\0");break;
+	  case errCliAlreadyRun             : strcpy(Result,"CPU : PLC already RUN\0");break;
+	  case errCliCannotStopPLC          : strcpy(Result,"CPU : Cannot stop PLC\0");break;
+	  case errCliCannotCopyRamToRom     : strcpy(Result,"CPU : Cannot copy RAM to ROM\0");break;
+	  case errCliCannotCompress         : strcpy(Result,"CPU : Cannot compress\0");break;
+	  case errCliAlreadyStop            : strcpy(Result,"CPU : PLC already STOP\0");break;
+	  case errCliFunNotAvailable        : strcpy(Result,"CPU : Function not available\0");break;
+	  case errCliUploadSequenceFailed   : strcpy(Result,"CPU : Upload sequence failed\0");break;
+	  case errCliInvalidDataSizeRecvd   : strcpy(Result,"CLI : Invalid data size received\0");break;
+	  case errCliInvalidBlockType       : strcpy(Result,"CLI : Invalid block type\0");break;
+	  case errCliInvalidBlockNumber     : strcpy(Result,"CLI : Invalid block number\0");break;
+	  case errCliInvalidBlockSize       : strcpy(Result,"CLI : Invalid block size\0");break;
+	  case errCliDownloadSequenceFailed : strcpy(Result,"CPU : Download sequence failed\0");break;
+	  case errCliInsertRefused          : strcpy(Result,"CPU : block insert refused\0");break;
+	  case errCliDeleteRefused          : strcpy(Result,"CPU : block delete refused\0");break;
+	  case errCliNeedPassword           : strcpy(Result,"CPU : Function not authorized for current protection level\0");break;
+	  case errCliInvalidPassword        : strcpy(Result,"CPU : Invalid password\0");break;
+	  case errCliNoPasswordToSetOrClear : strcpy(Result,"CPU : No password to set or clear\0");break;
+	  case errCliJobTimeout             : strcpy(Result,"CLI : Job Timeout\0");break;
+	  case errCliFunctionRefused        : strcpy(Result,"CLI : function refused by CPU (Unknown error)\0");break;
+	  case errCliPartialDataRead        : strcpy(Result,"CLI : Partial data read\0");break;
+	  case errCliBufferTooSmall         : strcpy(Result,"CLI : The buffer supplied is too small to accomplish the operation\0");break;
+	  case errCliDestroying             : strcpy(Result,"CLI : Cannot perform (destroying)\0");break;
+	  case errCliInvalidParamNumber     : strcpy(Result,"CLI : Invalid Param Number\0");break;
+	  case errCliCannotChangeParam      : strcpy(Result,"CLI : Cannot change this param now\0");break;
+	  default                           :
+	  {
+		  char CNumber[16];
+		  strcpy(Result, "CLI : Unknown error (0x");
+		  strcat(Result, NumToString(Error, 16, 8, CNumber));
+		  strcat(Result, ")");
+		  break;
+	  }
+	};
+	return Result;
 }
 //---------------------------------------------------------------------------
-BaseString ErrParText(int Error)
+char* SrvTextOf(int Error, char* Result)
 {
-    if (Error!=0)
-    {
 	switch (Error)
 	{
-	    case errLibInvalidParam  : return "LIB : Invalid param supplied";
-	    case errLibInvalidObject : return "LIB : Invalid object supplied";
-	    default :
-		    return ParTextOf(Error & ErrS7Mask)+IsoTextOf(Error &ErrIsoMask)+TcpTextOf(Error &ErrTcpMask);
+	case 0:                        *Result = '\0'; break;
+	case errSrvCannotStart:        strcpy(Result, "SRV : Server cannot start\0"); break;
+	case errSrvDBNullPointer:      strcpy(Result, "SRV : Null passed as area pointer\0"); break;
+	case errSrvAreaAlreadyExists:  strcpy(Result, "SRV : Cannot register area since already exists\0"); break;
+	case errSrvUnknownArea:        strcpy(Result, "SRV : Unknown Area code\0"); break;
+	case errSrvInvalidParams:      strcpy(Result, "SRV : Invalid param(s) supplied\0"); break;
+	case errSrvTooManyDB:          strcpy(Result, "SRV : DB Limit reached\0"); break;
+	case errSrvInvalidParamNumber: strcpy(Result, "SRV : Invalid Param Number\0"); break;
+	case errSrvCannotChangeParam:  strcpy(Result, "SRV : Cannot change this param now\0");break;
+	default: 
+		{
+			char CNumber[16];
+			strcpy(Result, "SRV : Unknown error (0x");
+			strcat(Result, NumToString(Error, 16, 8, CNumber));
+			strcat(Result, ")");
+			break;
+		}
+	};
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* ParTextOf(int Error, char* Result)
+{
+	switch(Error)
+	{
+		case 0: *Result = '\0'; break;
+		case errParAddressInUse      : strcpy(Result, "PAR : Local address already in use");break;
+		case errParNoRoom            : strcpy(Result, "PAR : No more partners available");break;
+		case errServerNoRoom         : strcpy(Result, "PAR : No more servers available");break;
+		case errParInvalidParams     : strcpy(Result, "PAR : Invalid parameter supplied");break;
+		case errParNotLinked         : strcpy(Result, "PAR : Cannot perform, Partner not linked");break;
+		case errParBusy              : strcpy(Result, "PAR : Cannot perform, Partner Busy");break;
+		case errParFrameTimeout      : strcpy(Result, "PAR : Frame timeout");break;
+		case errParInvalidPDU        : strcpy(Result, "PAR : Invalid PDU received");break;
+		case errParSendTimeout       : strcpy(Result, "PAR : Send timeout");break;
+		case errParRecvTimeout       : strcpy(Result, "PAR : Recv timeout");break;
+		case errParSendRefused       : strcpy(Result, "PAR : Send refused by peer");break;
+		case errParNegotiatingPDU    : strcpy(Result, "PAR : Error negotiating PDU");break;
+		case errParSendingBlock      : strcpy(Result, "PAR : Error Sending Block");break;
+		case errParRecvingBlock      : strcpy(Result, "PAR : Error Receiving Block");break;
+		case errParBindError         : strcpy(Result, "PAR : Error Binding");break;
+		case errParDestroying        : strcpy(Result, "PAR : Cannot perform (destroying)");break;
+		case errParInvalidParamNumber: strcpy(Result, "PAR : Invalid Param Number");break;
+		case errParCannotChangeParam : strcpy(Result, "PAR : Cannot change this param now");break;
+		case errParBufferTooSmall    : strcpy(Result, "PAR : The buffer supplied is too small to accomplish the operation");break;
+		default:
+		{
+			char CNumber[16];
+			strcpy(Result, "PAR : Unknown error (0x");
+			strcat(Result, NumToString(Error, 16, 8, CNumber));
+			strcat(Result, ")");
+			break;
+		}
 	}
-    }
-    else
-        return "OK";
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* ErrCliText(int Error, char * Result, int TextLen)
+{
+	char TcpError[128];
+	char IsoError[128];
+	char CliError[256];
+	if (Error != 0)
+	{
+		switch (Error)
+		{
+			case errLibInvalidParam  : strncpy(Result,"LIB : Invalid param supplied\0",TextLen);break;
+			case errLibInvalidObject: strncpy(Result, "LIB : Invalid object supplied\0", TextLen); break;
+			default :
+			{
+				CliTextOf(Error & ErrS7Mask, CliError);
+				strcat(CliError, IsoTextOf(Error & ErrIsoMask, IsoError));
+				strcat(CliError, TcpTextOf(Error & ErrTcpMask, TcpError));
+				strncpy(Result, CliError, TextLen);
+			}
+		}
+	}
+	else
+		strncpy(Result, "OK\0", TextLen);
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* ErrSrvText(int Error, char* Result, int TextLen)
+{
+	char TcpError[128];
+	char IsoError[128];
+	char SrvError[256];
+	if (Error != 0)
+	{
+		switch (Error)
+		{
+		case errLibInvalidParam: strncpy(Result, "LIB : Invalid param supplied\0", TextLen); break;
+		case errLibInvalidObject: strncpy(Result, "LIB : Invalid object supplied\0", TextLen); break;
+		default:
+		{
+			SrvTextOf(Error & ErrS7Mask, SrvError);
+			strcat(SrvError, IsoTextOf(Error & ErrIsoMask, IsoError));
+			strcat(SrvError, TcpTextOf(Error & ErrTcpMask, TcpError));
+			strncpy(Result, SrvError, TextLen);
+		}
+		}
+	}
+	else
+		strncpy(Result, "OK\0", TextLen);
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* ErrParText(int Error, char* Result, int TextLen)
+{
+	char TcpError[128];
+	char IsoError[128];
+	char ParError[256];
+	if (Error != 0)
+	{
+		switch (Error)
+		{
+		case errLibInvalidParam: strncpy(Result, "LIB : Invalid param supplied\0", TextLen); break;
+		case errLibInvalidObject: strncpy(Result, "LIB : Invalid object supplied\0", TextLen); break;
+		default:
+		{
+			ParTextOf(Error & ErrS7Mask, ParError);
+			strcat(ParError, IsoTextOf(Error & ErrIsoMask, IsoError));
+			strcat(ParError, TcpTextOf(Error & ErrTcpMask, TcpError));
+			strncpy(Result, ParError, TextLen);
+		}
+		}
+	}
+	else
+		strncpy(Result, "OK\0", TextLen);
+	return Result;
 }
 //---------------------------------------------------------------------------
 //                               SERVER EVENTS TEXT
 //---------------------------------------------------------------------------
-static BaseString SenderText(TSrvEvent &Event)
+char* SenderText(TSrvEvent &Event, char* Result)
 {
-  if (Event.EvtSender!=0)
-    return TimeToString(Event.EvtTime)+" ["+IpAddressToString(Event.EvtSender)+"] ";
-  else
-    return TimeToString(Event.EvtTime)+" Server ";
+	char Buf[64];
+	char Add[16];
+	TimeToString(Event.EvtTime, Buf);
+	if (Event.EvtSender != 0)
+	{
+		strcat(Buf, " [");
+		strcat(Buf, IpAddressToString(Event.EvtSender, Add));
+		strcat(Buf, "] ");
+	}
+	else
+		strcat(Buf, " Server ");
+	strcpy(Result, Buf);
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString TcpServerEventText(TSrvEvent &Event)
+char* TcpServerEventText(TSrvEvent &Event, char* Result)
 {
-    BaseString S;
-    switch (Event.EvtCode)
+    char S[256];
+	char Buf[128];
+	
+	strcpy(S, SenderText(Event, Buf));
+
+	switch (Event.EvtCode)
     {
-      case evcServerStarted       : S="started";break;
-      case evcServerStopped       : S="stopped";break;
-      case evcListenerCannotStart : S="Cannot start listener - Socket Error : "+TcpTextOf(Event.EvtRetCode);break;
-      case evcClientAdded         : S="Client added";break;
-      case evcClientRejected      : S="Client refused";break;
-      case evcClientNoRoom        : S="A client was refused due to maximum connections number";break;
-      case evcClientException     : S="Client exception";break;
-      case evcClientDisconnected  : S="Client disconnected by peer";break;
-      case evcClientTerminated    : S="Client terminated";break;
-      case evcClientsDropped      : S=IntToString(Event.EvtParam1)+" clients have been dropped bacause unresponsive";break;
-      default :                     S="Unknown event ("+IntToString(Event.EvtCode)+")";break;
+      case evcServerStarted       : strcat(S,"started");break;
+      case evcServerStopped       : strcat(S,"stopped");break;
+	  case evcListenerCannotStart:
+		  strcat(S, "Cannot start listener - Socket Error : ");
+		  strcat(S, TcpTextOf(Event.EvtRetCode,Buf));  
+		  break;
+      case evcClientAdded         : strcat(S,"Client added");break;
+      case evcClientRejected      : strcat(S,"Client refused");break;
+      case evcClientNoRoom        : strcat(S,"A client was refused due to maximum connections number");break;
+      case evcClientException     : strcat(S,"Client exception");break;
+      case evcClientDisconnected  : strcat(S,"Client disconnected by peer");break;
+      case evcClientTerminated    : strcat(S,"Client terminated");break;
+	  case evcClientsDropped:
+		  strcat(S, IntToString(Event.EvtParam1, Buf));
+		  strcat(S, " clients have been dropped bacause unresponsive");
+		  break;
+	  default:
+		  strcat(S, "Unknown event (");
+		  strcat(S, IntToString(Event.EvtCode, Buf));
+		  strcat(S,")"); 
+		  break;
     };
-    return SenderText(Event)+S;
+	strcpy(Result, S);
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString PDUText(TSrvEvent &Event)
+char* PDUText(TSrvEvent &Event, char* Result)
 {
-    switch (Event.EvtRetCode)
+	char S[256];
+	char Buf[128];
+	switch (Event.EvtRetCode)
+	{
+		case evrFragmentRejected:
+			strcpy(S, "Fragment of ");
+			strcat(S, IntToString(Event.EvtParam1, Buf));
+			strcat(S, " bytes rejected");
+			break;
+		case evrMalformedPDU:
+			strcpy(S, "Malformed PDU of ");
+			strcat(S, IntToString(Event.EvtParam1, Buf));
+			strcat(S, " bytes rejected");
+			break;
+		case evrSparseBytes:
+			strcpy(S, "Message of sparse ");
+			strcat(S, IntToString(Event.EvtParam1, Buf));
+			strcat(S, " bytes rejected");
+			break;
+		case evrCannotHandlePDU:
+			strcpy(S, "Cannot handle this PDU");
+			break;
+		case evrNotImplemented:
+			switch (Event.EvtParam1)
+			{
+				case grCyclicData:
+					strcpy(S, "Function group cyclic data not yet implemented");
+					break;
+				case grProgrammer:
+					strcpy(S, "Function group programmer not yet implemented");
+					break;
+			}
+			break;
+		default:
+			strcpy(S, "Unknown Return code (");
+			strcat(S, IntToString(Event.EvtRetCode, Buf));
+			strcat(S, ")");
+			break;
+	}
+	strcpy(Result, S);
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* TxtArea(TSrvEvent &Event, char* Result)
+{
+	char S[64];
+	char Buf[32];
+	switch (Event.EvtParam1)
     {
-      case evrFragmentRejected : return "Fragment of "+IntToString(Event.EvtParam1)+" bytes rejected";
-      case evrMalformedPDU     : return "Malformed PDU of "+IntToString(Event.EvtParam1)+" bytes rejected";
-      case evrSparseBytes      : return "Message of sparse "+IntToString(Event.EvtParam1)+" bytes rejected";
-      case evrCannotHandlePDU  : return "Cannot handle this PDU";
-      case evrNotImplemented   : {
-                                   switch (Event.EvtParam1)
-                                   {
-                                     case grCyclicData : return "Function group cyclic data not yet implemented";
-                                     case grProgrammer : return "Function group programmer not yet implemented";
-                                   }; // <- no break needed here
-                                 }
-      default : return "Unknown Return code ("+IntToString(Event.EvtRetCode)+")";
+		case S7AreaPE: strcpy(S, "Area : PE, "); break;
+		case S7AreaPA: strcpy(S, "Area : PA, "); break;
+		case S7AreaMK: strcpy(S, "Area : MK, "); break;
+		case S7AreaCT: strcpy(S, "Area : CT, "); break;
+		case S7AreaTM: strcpy(S, "Area : TM, "); break;
+		case S7AreaDB: 
+			strcpy(S, "Area : DB");
+			strcat(S, IntToString(Event.EvtParam2, Buf));
+			strcat(S,", "); 
+			break;
+		default: 
+			strcpy(S, "Unknown area (");
+			strcat(S, IntToString(Event.EvtParam2, Buf));
+			strcat(S,")");
+			break;
     }
+	strcpy(Result, S);
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString TxtArea(TSrvEvent &Event)
+char* TxtStartSize(TSrvEvent &Event, char* Result)
 {
-    switch (Event.EvtParam1)
+	char N[32];
+	strcpy(Result, "Start : ");
+	strcat(Result, IntToString(Event.EvtParam3, N));
+	strcat(Result, ", Size : ");
+	strcat(Result, IntToString(Event.EvtParam4, N));
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* TxtDataResult(TSrvEvent &Event, char* Result)
+{
+	char N[32];
+	switch (Event.EvtRetCode)
     {
-        case S7AreaPE : return "Area : PE, ";
-        case S7AreaPA : return "Area : PA, ";
-        case S7AreaMK : return "Area : MK, ";
-        case S7AreaCT : return "Area : CT, ";
-        case S7AreaTM : return "Area : TM, ";
-        case S7AreaDB : return "Area : DB"+IntToString(Event.EvtParam2)+", ";
-        default : return "Unknown area ("+IntToString(Event.EvtParam2)+")";
-    }
-}
-//---------------------------------------------------------------------------
-static BaseString TxtStartSize(TSrvEvent &Event)
-{
-    return "Start : "+IntToString(Event.EvtParam3)+", Size : "+IntToString(Event.EvtParam4);
-}
-//---------------------------------------------------------------------------
-static BaseString TxtDataResult(TSrvEvent &Event)
-{
-    switch (Event.EvtRetCode)
-    {
-        case evrNoError          : return " --> OK";
-        case evrErrException     : return " --> Exception error";
-        case evrErrAreaNotFound  : return " --> Area not found";
-        case evrErrOutOfRange    : return " --> Out of range";
-        case evrErrOverPDU       : return " --> Data size exceeds PDU size";
-        case evrErrTransportSize : return " --> Invalid transport size";
-        case evrDataSizeMismatch : return " --> Data size mismatch";
-        default : return " --> Unknown error code ("+IntToString(Event.EvtRetCode)+")";
+        case evrNoError:
+			strcpy(Result," --> OK");
+			break;
+		case evrErrException: 
+			strcpy(Result, " --> Exception error");
+			break;
+		case evrErrAreaNotFound: 
+			strcpy(Result, " --> Area not found");
+			break;
+        case evrErrOutOfRange: 
+			strcpy(Result, " --> Out of range");
+			break;
+        case evrErrOverPDU:
+			strcpy(Result, " --> Data size exceeds PDU size");
+			break;
+		case evrErrTransportSize: 
+			strcpy(Result, " --> Invalid transport size");
+			break;
+		case evrDataSizeMismatch: 
+			strcpy(Result, " --> Data size mismatch");
+			break;
+		default: 
+			strcpy(Result, " --> Unknown error code (");
+			strcat(Result, IntToString(Event.EvtRetCode, N));
+			strcat(Result,")");
+			break;
     };
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString ControlText(word Code)
+char* ControlText(word Code, char* Result)
 {
-    BaseString Result="CPU Control request : ";
+	char N[64];
+	strcpy(Result, "CPU Control request : ");
     switch (Code)
     {
-        case CodeControlUnknown   : return Result+"Unknown";
-        case CodeControlColdStart : return Result+"Cold START --> OK";
-        case CodeControlWarmStart : return Result+"Warm START --> OK";
-        case CodeControlStop      : return Result+"STOP --> OK";
-        case CodeControlCompress  : return Result+"Memory compress --> OK";
-        case CodeControlCpyRamRom : return Result+"Copy Ram to Rom --> OK";
-        case CodeControlInsDel    : return Result+"Block Insert or Delete --> OK";
-        default : return Result+"Unknown control code ("+IntToString(Code)+")";
+        case CodeControlUnknown: 
+			strcat(Result,"Unknown");
+			break;
+		case CodeControlColdStart: 
+			strcat(Result, "Cold START --> OK");
+			break;
+		case CodeControlWarmStart: 
+			strcat(Result, "Warm START --> OK");
+			break;
+		case CodeControlStop: 
+			strcat(Result, "STOP --> OK");
+			break;
+		case CodeControlCompress: 
+			strcat(Result, "Memory compress --> OK");
+			break;
+		case CodeControlCpyRamRom: 
+			strcat(Result, "Copy Ram to Rom --> OK");
+			break;
+		case CodeControlInsDel: 
+			strcat(Result, "Block Insert or Delete --> OK");
+			break;
+        default : 
+			strcat(Result, "Unknown control code (");
+			strcat(Result, IntToString(Code, N));
+			strcat(Result,")");
     }
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString ClockText(word Code)
+char* ClockText(word Code, char* Result)
 {
     if (Code==evsGetClock)
-        return "System clock read requested";
+        strcpy(Result,"System clock read requested");
     else
-        return "System clock write requested";
+		strcpy(Result, "System clock write requested");
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString ReadSZLText(TSrvEvent &Event)
+char* ReadSZLText(TSrvEvent &Event, char* Result)
 {
-    BaseString Result="Read SZL request, ID:0x"+NumToString(Event.EvtParam1,16,4)+" INDEX:0x"+NumToString(Event.EvtParam2,16,4);
-    if (Event.EvtRetCode == evrNoError)
-        return Result+" --> OK";
+	char S[128];
+	char N[64];
+	strcpy(S, "Read SZL request, ID:0x");
+	strcat(S, NumToString(Event.EvtParam1, 16, 4, N));
+	strcat(S, " INDEX:0x");
+	strcat(S, NumToString(Event.EvtParam2, 16, 4, N));
+	
+	if (Event.EvtRetCode == evrNoError)
+		strcat(S, " --> OK");
     else
-        return Result+" --> NOT AVAILABLE";
+		strcat(S, " --> NOT AVAILABLE");
+	strcpy(Result, S);
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString UploadText(TSrvEvent &Event)
+char* UploadText(TSrvEvent &Event, char* Result)
 {
-   return "Block upload requested --> NOT PERFORMED (due to invalid security level)";
+   strcpy(Result,"Block upload requested --> NOT PERFORMED (due to invalid security level)");
+   return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString DownloadText(TSrvEvent &Event)
+char* DownloadText(TSrvEvent &Event, char* Result)
 {
-   return "Block download requested --> NOT PERFORMED (due to invalid security level)";
+	strcpy(Result, "Block download requested --> NOT PERFORMED (due to invalid security level)");
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString StrBlockType(word Code)
+char* StrBlockType(word Code, char* Result)
 {
-    switch (Code)
+	char N[64];
+	switch (Code)
     {
-        case Block_OB   : return "OB";
-        case Block_DB   : return "DB";
-        case Block_SDB  : return "SDB";
-        case Block_FC   : return "FC";
-        case Block_SFC  : return "SFC";
-        case Block_FB   : return "FB";
-        case Block_SFB  : return "SFB";
-        default : return "[Unknown 0x"+NumToString(Code,16,4)+"]";
+		case Block_OB: 
+			strcpy(Result, "OB");
+			break;
+		case Block_DB: 
+			strcpy(Result, "DB");
+			break;
+		case Block_SDB: 
+			strcpy(Result, "SDB");
+			break;
+		case Block_FC: 
+			strcpy(Result, "FC");
+			break;
+		case Block_SFC: 
+			strcpy(Result, "SFC");
+			break;
+		case Block_FB: 
+			strcpy(Result, "FB");
+			break;
+		case Block_SFB: 
+			strcpy(Result, "SFB");
+			break;
+		default: 
+			strcpy(Result, "[Unknown 0x");
+			strcat(Result, NumToString(Code, 16, 4, N));
+			strcat(Result,"]");
+			break;
     };
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString BlockInfoText(TSrvEvent &Event)
+char* BlockInfoText(TSrvEvent &Event, char* Result)
 {
-    BaseString Result;
+	char S[64];
+	switch (Event.EvtParam1)
+    {
+		case evsGetBlockList: 
+			strcpy(Result, "Block list requested");
+			break;
+		case evsStartListBoT:
+			strcpy(Result, "Block of type ");
+			strcat(Result, StrBlockType(Event.EvtParam2,S));
+			strcat(Result, " list requested (start sequence)");
+			break;
+		case evsListBoT: 
+			strcpy(Result, "Block of type ");
+			strcat(Result, StrBlockType(Event.EvtParam2, S));
+			strcat(Result, " list requested (next part)");
+			break;
+		case evsGetBlockInfo: 
+			strcpy(Result, "Block info requested ");
+			strcat(Result, StrBlockType(Event.EvtParam2, S));
+			strcat(Result, " ");
+			strcat(Result, IntToString(Event.EvtParam3,S));
+			break;
+    };
+    if (Event.EvtRetCode == evrNoError)
+		strcat(Result, " --> OK");
+    else
+		strcat(Result, " --> NOT AVAILABLE");
+	return Result;
+}
+//---------------------------------------------------------------------------
+char* SecurityText(TSrvEvent &Event, char* Result)
+{
     switch (Event.EvtParam1)
     {
-        case evsGetBlockList : Result = "Block list requested";break;
-        case evsStartListBoT : Result = "Block of type "+StrBlockType(Event.EvtParam2)+" list requested (start sequence)";break;
-        case evsListBoT      : Result = "Block of type "+StrBlockType(Event.EvtParam2)+" list requested (next part)";break;
-        case evsGetBlockInfo : Result = "Block info requested "+StrBlockType(Event.EvtParam2)+" "+IntToString(Event.EvtParam3);break;
+        case evsSetPassword:
+			strcpy(Result,"Security request : Set session password --> OK");
+			break;
+		case evsClrPassword: 
+			strcpy(Result, "Security request : Clear session password --> OK");
+			break;
+		default: 
+			strcpy(Result, "Security request : Unknown Subfunction");
+			break;
     };
-    if (Event.EvtRetCode == evrNoError)
-        return Result+" --> OK";
-    else
-        return Result+" --> NOT AVAILABLE";
+	return Result;
 }
 //---------------------------------------------------------------------------
-static BaseString SecurityText(TSrvEvent &Event)
+char* EvtSrvText(TSrvEvent &Event, char* Result, int TextLen)
 {
-    switch (Event.EvtParam1)
-    {
-        case evsSetPassword : return "Security request : Set session password --> OK";
-        case evsClrPassword : return "Security request : Clear session password --> OK";
-        default : return "Security request : Unknown Subfunction";
-    };
-}
-//---------------------------------------------------------------------------
-BaseString EvtSrvText(TSrvEvent &Event)
-{
-    BaseString S;
+	char S[256];
+	char C[128];
 
-    if (Event.EvtCode > evcSnap7Base)
+	if (Event.EvtCode > evcSnap7Base)
     {
-        switch (Event.EvtCode)
+		strcpy(S, SenderText(Event, C));
+		switch (Event.EvtCode)
         {
-            case evcPDUincoming  : S="PDU incoming : "+PDUText(Event);break;
-            case evcDataRead     : S="Read request, "+TxtArea(Event)+TxtStartSize(Event)+TxtDataResult(Event);break;
-            case evcDataWrite    : S="Write request, "+TxtArea(Event)+TxtStartSize(Event)+TxtDataResult(Event);break;
-            case evcNegotiatePDU : S="The client requires a PDU size of "+IntToString(Event.EvtParam1)+" bytes";break;
-            case evcControl      : S=ControlText(Event.EvtParam1);break;
-            case evcReadSZL      : S=ReadSZLText(Event);break;
-            case evcClock        : S=ClockText(Event.EvtParam1);break;
-            case evcUpload       : S=UploadText(Event);break;
-            case evcDownload     : S=DownloadText(Event);break;
-            case evcDirectory    : S=BlockInfoText(Event);break;
-            case evcSecurity     : S=SecurityText(Event);break;
-            default:               S="Unknown event ("+IntToString(Event.EvtCode)+")";break;
+            case evcPDUincoming:
+				strcat(S, "PDU incoming : ");
+				strcat(S,PDUText(Event,C));
+				break;
+			case evcDataRead: 
+				strcat(S, "Read request, ");
+				strcat(S, TxtArea(Event, C));
+				strcat(S, TxtStartSize(Event, C));
+				strcat(S, TxtDataResult(Event, C));
+				break;
+			case evcDataWrite: 
+				strcat(S, "Write request, ");
+				strcat(S, TxtArea(Event, C));
+				strcat(S, TxtStartSize(Event, C));
+				strcat(S, TxtDataResult(Event, C));
+				break;
+			case evcNegotiatePDU:
+				strcat(S, "The client requires a PDU size of ");
+				strcat(S, IntToString(Event.EvtParam1, C));
+				strcat(S," bytes");
+				break;
+			case evcControl: 
+				strcat(S, ControlText(Event.EvtParam1,C));
+				break;
+			case evcReadSZL: 
+				strcat(S, ReadSZLText(Event,C));
+				break;
+			case evcClock: 
+				strcat(S, ClockText(Event.EvtParam1,C));
+				break;
+			case evcUpload: 
+				strcat(S, UploadText(Event,C));
+				break;
+			case evcDownload: 
+				strcat(S, DownloadText(Event,C));
+				break;
+			case evcDirectory: 
+				strcat(S, BlockInfoText(Event,C));
+				break;
+			case evcSecurity: 
+				strcat(S, SecurityText(Event,C));
+				break;
+			default:
+				strcat(S, "Unknown event (");
+				strcat(S, IntToString(Event.EvtCode, C));
+				strcat(S,")");
+				break;
         }
-        return SenderText(Event)+S;
     }
     else
-        return TcpServerEventText(Event);
+        strcpy(S,TcpServerEventText(Event,C));
+
+	strncpy(Result, S, TextLen);
+	return Result;
 }
 

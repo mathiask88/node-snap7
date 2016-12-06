@@ -29,7 +29,6 @@
 #include "s7_micro_client.h"
 #include "s7_server.h"
 #include "s7_partner.h"
-#include <string>
 //---------------------------------------------------------------------------
 
 const int errLibInvalidParam  = -1;
@@ -39,17 +38,11 @@ const longword ErrTcpMask = 0x0000FFFF;
 const longword ErrIsoMask = 0x000F0000;
 const longword ErrS7Mask  = 0xFFF00000;
 
-typedef std::basic_string<char> BaseString;
+char* ErrCliText(int Error, char* Result, int TextLen);
+char* ErrSrvText(int Error, char* Result, int TextLen);
+char* ErrParText(int Error, char* Result, int TextLen);
+char* EvtSrvText(TSrvEvent &Event, char* Result, int TextLen);
 
-BaseString NumToString(int Value, int Base, unsigned int Len = 0);
-BaseString IntToString(int Value);
-
-BaseString ErrTcpText(int Error);
-BaseString ErrCliText(int Error);
-BaseString ErrSrvText(int Error);
-BaseString ErrParText(int Error);
-
-BaseString EvtSrvText(TSrvEvent &Event);
 
 #endif
 
