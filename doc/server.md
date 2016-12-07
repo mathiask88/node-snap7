@@ -114,7 +114,7 @@ Gets the content of a previously registered memory area block.
  - `areaCode` Area identifier (see table [below](#table-area))
  - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
 
-Returns a `buffer` object on success or `false` on error.
+Returns a `buffer` object.
 
 #### <a name="set-area"></a>S7Server.SetArea(areaCode[, index], buffer)
 Sets the content of a previously registered memory area block.
@@ -123,7 +123,18 @@ Sets the content of a previously registered memory area block.
  - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
  - `buffer` Buffer object
 
-Returns `true` on success or `false` on error.
+#### <a name="lock-area"></a>S7Server.LockArea(areaCode[, index])
+Locks the memory area so that a server worker thread is blocked on access attempt until the lock is released with [UnlockArea()](#unlock-area).
+
+ - `areaCode` Area identifier (see table [below](#table-area))
+ - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
+
+#### <a name="unlock-area"></a>S7Server.UnlockArea(areaCode[, index])
+Unlocks a previously locked memory area.
+
+
+ - `areaCode` Area identifier (see table [below](#table-area))
+ - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
 
 <a name="table-area"></a>
 

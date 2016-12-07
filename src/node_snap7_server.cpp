@@ -1089,8 +1089,8 @@ NAN_METHOD(S7Server::UnregisterArea) {
   s7server->lastError = ret;
 
   if (ret == 0) {
-    delete s7server->area2buffer[area][index].pBuffer;
-    s7server->area2buffer.erase(area);
+    delete[] s7server->area2buffer[area][index].pBuffer;
+    s7server->area2buffer[area].erase(index);
   }
 
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
@@ -1105,7 +1105,7 @@ NAN_METHOD(S7Server::SetArea) {
 
   int area = info[0]->Int32Value();
   if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Area not found");
+    return Nan::ThrowError("Unknown area");
   }
 
   int index;
@@ -1124,12 +1124,17 @@ NAN_METHOD(S7Server::SetArea) {
 
     len = node::Buffer::Length(info[2].As<v8::Object>());
     pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
-  } else if (!node::Buffer::HasInstance(info[1])) {
-    return Nan::ThrowTypeError("Wrong arguments");
   } else {
     index = 0;
-    len = node::Buffer::Length(info[1].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
+    if (node::Buffer::HasInstance(info[1])) {
+      len = node::Buffer::Length(info[1].As<v8::Object>());
+      pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
+    } else if (node::Buffer::HasInstance(info[2])) {
+      len = node::Buffer::Length(info[2].As<v8::Object>());
+      pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
+    } else {
+      return Nan::ThrowTypeError("Wrong arguments");
+    }
   }
 
   if (len != s7server->area2buffer[area][index].size) {
@@ -1158,7 +1163,7 @@ NAN_METHOD(S7Server::GetArea) {
   int area = info[0]->Int32Value();
 
   if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Area not found");
+    return Nan::ThrowError("Unknown area");
   }
 
   if (area == srvAreaDB) {
@@ -1166,11 +1171,10 @@ NAN_METHOD(S7Server::GetArea) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
+    index = info[1]->Int32Value();
     if (!s7server->area2buffer[area].count(index)) {
       return Nan::ThrowError("DB index not found");
     }
-
-    index = info[1]->Int32Value();
   }
 
   s7server->snap7Server->LockArea(area, index);
