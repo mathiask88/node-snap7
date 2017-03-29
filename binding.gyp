@@ -63,6 +63,10 @@
                     "GCC_DYNAMIC_NO_PIC": "NO",
                     "OTHER_CFLAGS": ["-pedantic"]
                 }
+            }],
+            ["OS=='freebsd'", {
+                "cflags_cc": ["-fPIC", "-pedantic", "-fexceptions"],
+                "cflags_cc!": ["-fno-exceptions"]
             }]
         ]
     }]
