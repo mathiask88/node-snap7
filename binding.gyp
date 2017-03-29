@@ -43,7 +43,7 @@
             "./deps/snap7/src/lib/snap7_libmain.cpp"
         ],
         "conditions": [
-            ["OS=='linux'", {
+            ["OS=='linux' or OS=='freebsd'", {
                 "cflags_cc": ["-fPIC", "-pedantic", "-fexceptions"],
                 "cflags_cc!": ["-fno-exceptions"]
             }],
@@ -63,10 +63,6 @@
                     "GCC_DYNAMIC_NO_PIC": "NO",
                     "OTHER_CFLAGS": ["-pedantic"]
                 }
-            }],
-            ["OS=='freebsd'", {
-                "cflags_cc": ["-fPIC", "-pedantic", "-fexceptions"],
-                "cflags_cc!": ["-fno-exceptions"]
             }]
         ]
     }]
