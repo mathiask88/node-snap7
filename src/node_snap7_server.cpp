@@ -123,6 +123,10 @@ NAN_MODULE_INIT(S7Server::Init) {
     , S7Server::ErrorText);
   Nan::SetPrototypeMethod(
     tpl
+    , "LastError"
+    , S7Server::LastError);
+  Nan::SetPrototypeMethod(
+    tpl
     , "EventText"
     , S7Server::EventText);
   Nan::SetPrototypeMethod(
