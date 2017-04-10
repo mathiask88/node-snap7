@@ -14,7 +14,7 @@
         "conditions": [
             ["OS=='win'", {
                 "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
-                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"]
+                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS", "_HAS_EXCEPTIONS=0"] # Make sure the STL doesn't try to use exceptions
             }]
         ],
         "dependencies": [
