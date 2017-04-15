@@ -81,8 +81,8 @@ setTimeout(function() {
 }, 20000);
 ```
 
-## Licence & copyright
-Copyright (c) 2016, Mathias Küsel
+## License & copyright
+Copyright (c) 2017, Mathias Küsel
 
 node-snap7 is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
 
