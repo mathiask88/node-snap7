@@ -1831,11 +1831,11 @@ NAN_METHOD(S7Client::Delete) {
 NAN_METHOD(S7Client::DBGet) {
   S7Client *s7client = ObjectWrap::Unwrap<S7Client>(info.Holder());
 
-  if (!info[0]->IsInt32() || !info[1]->IsInt32()) {
+  if (!info[0]->IsInt32()) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int size = info[1]->Int32Value();
+  int size = 65536;
   char *bufferData = new char[size];
   if (!info[2]->IsFunction()) {
     int returnValue = s7client->snap7Client->DBGet(
