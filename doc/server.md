@@ -39,7 +39,7 @@ Starts the server and binds it to the IP address specified in the previous call 
 If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
 If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
 
-#### <a name="start-to"></a>S7Server.StartTo(ip, [callback])
+#### <a name="start-to"></a>S7Server.StartTo(ip[, callback])
 Starts the server and binds it to the specified IP address and the IsoTCP port.
 
 - `ip` PLC/Equipment IPV4 Address ex. “192.168.1.12”
