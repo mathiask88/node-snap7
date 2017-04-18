@@ -198,7 +198,7 @@ On a read event the `callback` expects a buffer as argument that is provided to 
 
 | Operation type            | Value | Description          |
 |:--------------------------|:-----:|:---------------------|
-| `S7Server.OperationRead`  | 0x00  | Read operation
+| `S7Server.operationRead`  | 0x00  | Read operation
 | `S7Server.operationWrite` | 0x01  | Write operation
 
 <a name="tag-object"></a> Tag object:
