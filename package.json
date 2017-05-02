@@ -1,7 +1,7 @@
 {
   "name": "node-snap7",
   "main":  "./lib/node-snap7.js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Native node.js addon/wrapper for snap7",
   "homepage": "https://github.com/mathiask88/node-snap7",
   "repository": {
