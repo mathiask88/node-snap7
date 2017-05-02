@@ -542,7 +542,7 @@ int S7API Cli_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrCliText(Error, Text, TextLen);
-		Text[TextLen] = '\0';
+		Text[TextLen - 1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -894,7 +894,7 @@ int S7API Srv_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrSrvText(Error, Text, TextLen);
-		Text[TextLen] = '\0';
+		Text[TextLen - 1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -906,7 +906,7 @@ int S7API Srv_EventText(TSrvEvent &Event, char *Text, int TextLen)
 {
 	try{
 		EvtSrvText(Event, Text, TextLen);
-		//Text[TextLen] = '\0';
+		Text[TextLen - 1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -1186,6 +1186,7 @@ int S7API Par_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrParText(Error, Text, TextLen);
+        Text[TextLen - 1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
