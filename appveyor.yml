@@ -36,6 +36,10 @@ install:
         npm -g install npm@2 2>&1>$null
         $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
       }
+      Else {
+        npm -g install npm
+        $env:PATH = $env:APPDATA + "\npm;" + $env:PATH
+      }
   # Output useful info for debugging.
   - ps: node --version
   - ps: npm --version
