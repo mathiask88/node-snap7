@@ -20,11 +20,11 @@ Install with:
 Requirements:
 
  - Windows:
-    - Visual Studio 2010 Express or higher e.g [Visual Studio 2013 Express](http://www.microsoft.com/visualstudio/eng/2013-downloads#d-2013-express)
-    - [Python 2.7](https://www.python.org/downloads/release/python-2711/)
+    - Visual Studio 2010 Express or higher e.g [Visual Studio 2015 Express](https://www.visualstudio.com/de/vs/visual-studio-express/)
+    - [Python 2.7](https://www.python.org/downloads/release/python-2713/)
  - Linux:
-     - gcc/g++ & make
-     - [Python 2.7](https://www.python.org/downloads/release/python-2711/)
+    - gcc/g++ & make
+    - [Python 2.7](https://www.python.org/downloads/release/python-2713/)
 
 Building for Node.js 4.x or higher requires C++11 features so the minimum is VS2013 / gcc4.8
 
@@ -80,6 +80,8 @@ setTimeout(function() {
     s7server.UnregisterArea(s7server.srvAreaDB, 1);
 }, 20000);
 ```
+
+Have a look at the resourceless server example [here](doc/server.md#event-read-write).
 
 ## License & copyright
 Copyright (c) 2017, Mathias Küsel
