@@ -1,8 +1,6 @@
 # http://www.appveyor.com/docs/appveyor-yml
 
 environment:
-  # Visual Studio Version
-  MSVS_VERSION: 2013
   # Test against these versions of Node.js and io.js
   matrix:
     # node.js
@@ -42,7 +40,7 @@ install:
   - ps: node --version
   - ps: npm --version
   # Install modules
-  - ps: npm install --msvs_version=$env:MSVS_VERSION
+  - ps: npm install
 
 # Post-install test scripts.
 test_script:
