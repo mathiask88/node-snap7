@@ -22,7 +22,12 @@ platform:
 # Install scripts. (runs after repo cloning)
 install:
   # Get the latest version of $env:nodejs_version
-  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
+  - ps: >-
+      If($env:nodejs_version -eq "0.8") {
+        Install-Product node $env:nodejs_version $env:platform
+      } Else {
+        Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
+      }
   # Install latest NPM@2 for node.js 0.8, 0.10 and 0.12 because built in npm(node-gyp) does not know VS2015
   # Update NPM for the rest
   - IF %nodejs_version:~0,2% EQU 0. npm -g install npm@2 2>&1>nul
