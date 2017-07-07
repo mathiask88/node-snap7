@@ -26,7 +26,7 @@ install:
   # Update NPM for the rest
   - IF %nodejs_version:~0,2% EQU 0. npm -g install npm@2 2>&1>nul
   - IF %nodejs_version:~0,2% NEQ 0. npm -g install npm 2>&1>nul
-  - SET PATH=%APPDATA%\npm;%PATH%aa
+  - SET PATH=%APPDATA%\npm;%PATH%
   # Output useful info for debugging.
   - node --version
   - npm --version
