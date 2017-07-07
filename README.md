@@ -21,7 +21,7 @@ node-snap7 uses `prebuild` and `prebuild-install` for handling prebuilt binaries
 
 If you don't want to use the `prebuild` for the platform you are installing on, specify the `--build-from-source` flag when you install.
 
-For compiling you need the following requirements:
+For building from source you need the following requirements:
 
  - Windows:
     - Visual Studio 2010 Express or higher e.g [Visual Studio 2015 Express](https://www.visualstudio.com/de/vs/visual-studio-express/)
