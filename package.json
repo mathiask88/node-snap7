@@ -1,6 +1,6 @@
 {
   "name": "node-snap7",
-  "main":  "./lib/node-snap7.js",
+  "main": "./lib/node-snap7.js",
   "version": "0.4.0",
   "description": "Native node.js addon/wrapper for snap7",
   "homepage": "https://github.com/mathiask88/node-snap7",
@@ -8,7 +8,12 @@
     "type": "git",
     "url": "git://github.com/mathiask88/node-snap7.git"
   },
-  "keywords": ["snap7", "sps", "S7", "PLC"],
+  "keywords": [
+    "snap7",
+    "sps",
+    "S7",
+    "PLC"
+  ],
   "author": {
     "name": "Mathias Küsel"
   },
