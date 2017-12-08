@@ -2,31 +2,19 @@ sudo: false
 
 language: cpp
 
-env:
-  matrix:
-    - TRAVIS_NODE_VERSION="9"
-    - TRAVIS_NODE_VERSION="8"
-    - TRAVIS_NODE_VERSION="7"
-    - TRAVIS_NODE_VERSION="6"
-    - TRAVIS_NODE_VERSION="5"
-    - TRAVIS_NODE_VERSION="4"
-    - TRAVIS_NODE_VERSION="0.12"
-    - TRAVIS_NODE_VERSION="0.10"
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.8
+node_js:
+    - "9"
+    - "8"
+    - "7"
+    - "6"
+    - "5"
+    - "4"
 
 os:
   - linux
   - osx
 
 install:
-  - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION
-  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
   - $CXX --version
   - node --version
   - npm --version

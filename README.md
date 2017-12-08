@@ -6,7 +6,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ca1kepectsn3wkrc/branch/master?svg=true)](https://ci.appveyor.com/project/mathiask88/node-snap7/branch/master)
 [![dependencies Status](https://david-dm.org/mathiask88/node-snap7/status.svg)](https://david-dm.org/mathiask88/node-snap7)
 
-**Current node-snap7 version:** 0.4.1\
+**Current node-snap7 version:** 1.0.0\
 **Current snap7 version:** 1.4.2
 
 ## About
@@ -24,13 +24,11 @@ If you don't want to use the `prebuild` for the platform you are installing on, 
 For building from source you need the following requirements:
 
  - Windows:
-    - Visual Studio 2010 Express or higher e.g [Visual Studio 2015 Express](https://www.visualstudio.com/de/vs/visual-studio-express/)
-    - [Python 2.7](https://www.python.org/downloads/release/python-2713/)
+    - [Visual Studio 2013 Express or higher](https://www.visualstudio.com/de/vs/visual-studio-express/)
+    - [Python 2.7](https://www.python.org/downloads/release/python-2714/)
  - Linux:
-    - gcc/g++ & make
-    - [Python 2.7](https://www.python.org/downloads/release/python-2713/)
-
-Building for Node.js 4.x or higher requires C++11 features so the minimum is VS2013 / gcc4.8
+    - C++11 toolchain
+    - [Python 2.7](https://www.python.org/downloads/release/python-2714/)
 
 ## Special thanks to
 - Davide Nardella for creating snap7

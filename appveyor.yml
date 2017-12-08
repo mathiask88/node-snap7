@@ -10,9 +10,6 @@ environment:
     - nodejs_version: "6"
     - nodejs_version: "5"
     - nodejs_version: "4"
-    # node.js
-    - nodejs_version: "0.12"
-    - nodejs_version: "0.10"
 
 # Build on both platforms
 platform:
@@ -23,11 +20,6 @@ platform:
 install:
   # Get the latest version of $env:nodejs_version
   - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
-  # Install latest NPM@2 for node.js 0.10 and 0.12 because built in npm(node-gyp) does not know VS2015
-  # Update NPM for the rest
-  - IF %nodejs_version:~0,2% EQU 0. npm -g install npm@2 2>&1>nul
-  - IF %nodejs_version:~0,2% NEQ 0. npm -g install npm 2>&1>nul
-  - SET PATH=%APPDATA%\npm;%PATH%
   # Output useful info for debugging.
   - node --version
   - npm --version
