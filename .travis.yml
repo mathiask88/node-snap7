@@ -16,7 +16,7 @@ os:
   - osx
 
 install:
-  - $CXX --version
+  - g++ --version
   - node --version
   - npm --version
   - npm install
