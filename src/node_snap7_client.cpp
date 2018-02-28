@@ -1034,7 +1034,7 @@ void IOWorker::HandleOKCallback() {
   case CONNECTTO:
   case SETSESSIONPW:
       delete static_cast<Nan::Utf8String*>(pData);
-      callback->Call(1, argv1);
+      callback->Call(1, argv1, async_resource);
       break;
 
   case CONNECT:
@@ -1049,7 +1049,7 @@ void IOWorker::HandleOKCallback() {
   case DBFILL:
   case DELETEBLOCK:
   case DOWNLOAD:
-      callback->Call(1, argv1);
+      callback->Call(1, argv1, async_resource);
       break;
 
   case READAREA:
@@ -1063,7 +1063,7 @@ void IOWorker::HandleOKCallback() {
       argv2[1] = Nan::Null();
       delete[] static_cast<char*>(pData);
     }
-    callback->Call(2, argv2);
+    callback->Call(2, argv2, async_resource);
     break;
 
   case READMULTI:
@@ -1077,7 +1077,7 @@ void IOWorker::HandleOKCallback() {
         delete[] static_cast<PS7DataItem>(pData);
         argv2[1] = Nan::Null();
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case WRITEMULTI:
@@ -1088,7 +1088,7 @@ void IOWorker::HandleOKCallback() {
         delete[] static_cast<PS7DataItem>(pData);
         argv2[1] = Nan::Null();
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETPROTECTION:
@@ -1099,7 +1099,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7Protection>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETCPINFO:
@@ -1110,7 +1110,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7CpInfo>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETCPUINFO:
@@ -1121,7 +1121,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7CpuInfo>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETORDERCODE:
@@ -1132,7 +1132,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7OrderCode>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETPLCDATETIME:
@@ -1143,12 +1143,12 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<tm*>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case SETPLCDATETIME:
       delete static_cast<tm*>(pData);
-      callback->Call(1, argv1);
+      callback->Call(1, argv1, async_resource);
       break;
 
   case PLCSTATUS:
@@ -1157,7 +1157,7 @@ void IOWorker::HandleOKCallback() {
       } else {
         argv2[1] = Nan::Null();
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case DBGET:
@@ -1171,7 +1171,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
         delete[] static_cast<char*>(pData);
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case FULLUPLOAD:
@@ -1186,7 +1186,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
         delete[] static_cast<char*>(pData);
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case LISTBLOCKSOFTYPE:
@@ -1197,7 +1197,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete[] static_cast<PS7BlocksOfType>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case GETAGBLOCKINFO:
@@ -1209,7 +1209,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7BlockInfo>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case LISTBLOCKS:
@@ -1221,7 +1221,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7BlocksList>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case READSZLLIST:
@@ -1233,7 +1233,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
       }
       delete static_cast<PS7SZLList>(pData);
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
 
   case READSZL:
@@ -1247,7 +1247,7 @@ void IOWorker::HandleOKCallback() {
         argv2[1] = Nan::Null();
         delete static_cast<PS7SZL>(pData);
       }
-      callback->Call(2, argv2);
+      callback->Call(2, argv2, async_resource);
       break;
   }
 }
