@@ -873,12 +873,12 @@ void IOWorkerServer::HandleOKCallback() {
   switch (caller) {
   case STARTTO:
     delete static_cast<Nan::Utf8String*>(pData);
-    callback->Call(1, argv1);
+    callback->Call(1, argv1, async_resource);
     break;
 
   case START:
   case STOP:
-    callback->Call(1, argv1);
+    callback->Call(1, argv1, async_resource);
     break;
   }
 }
