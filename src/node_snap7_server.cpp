@@ -643,7 +643,7 @@ NAN_MODULE_INIT(S7Server::Init) {
 
 NAN_METHOD(S7Server::New) {
   if (info.IsConstructCall()) {
-    S7Server *s7Server = new S7Server();
+    S7Server *s7Server = new S7Server(info.This());
 
     s7Server->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
@@ -655,7 +655,8 @@ NAN_METHOD(S7Server::New) {
   }
 }
 
-S7Server::S7Server() {
+S7Server::S7Server(v8::Local<v8::Object> resource)
+  : async_resource("S7Server:emit", resource) {
   lastError = 0;
   snap7Server = new TS7Server();
 
@@ -769,7 +770,7 @@ void S7Server::HandleEvent(uv_async_t* handle, int status) {
       event_obj
     };
 
-    Nan::MakeCallback(s7server->handle(), "emit", 2, argv);
+    s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 2, argv);
     event_list_g.pop_front();
   }
   uv_mutex_unlock(&mutex_event);
@@ -822,7 +823,7 @@ void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
     Nan::New<v8::Function>(S7Server::RWBufferCallback)
   };
 
-  Nan::MakeCallback(s7server->handle(), "emit", 6, argv);
+  s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 6, argv);
 }
 
 void IOWorkerServer::Execute() {

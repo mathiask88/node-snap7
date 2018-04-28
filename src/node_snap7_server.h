@@ -26,7 +26,7 @@ typedef struct {
 
 class S7Server : public Nan::ObjectWrap {
  public:
-  S7Server();
+  S7Server(v8::Local<v8::Object> resource);
   static NAN_MODULE_INIT(Init);
   static NAN_METHOD(New);
 
@@ -73,6 +73,7 @@ class S7Server : public Nan::ObjectWrap {
   TS7Server *snap7Server;
   std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;
+  Nan::AsyncResource async_resource;
 
  private:
   ~S7Server();
