@@ -26,7 +26,7 @@ typedef struct {
 
 class S7Server : public Nan::ObjectWrap {
  public:
-  S7Server(v8::Local<v8::Object> resource);
+  explicit S7Server(v8::Local<v8::Object> resource);
   static NAN_MODULE_INIT(Init);
   static NAN_METHOD(New);
 
