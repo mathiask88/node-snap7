@@ -777,14 +777,14 @@ NAN_METHOD(S7Client::ConnectTo) {
   if (!info[3]->IsFunction()) {
     int ret = s7client->snap7Client->ConnectTo(
         **remAddress
-      , info[1]->Int32Value()
-      , info[2]->Int32Value());
+      , Nan::To<int32_t>(info[1]).FromJust()
+      , Nan::To<int32_t>(info[2]).FromJust());
     delete remAddress;
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, CONNECTTO
-      , remAddress, info[1]->Int32Value(), info[2]->Int32Value()));
+      , remAddress, Nan::To<int32_t>(info[1]).FromJust(), Nan::To<int32_t>(info[2]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -798,8 +798,8 @@ NAN_METHOD(S7Client::SetConnectionParams) {
   }
 
   Nan::Utf8String remAddress(info[0]);
-  word LocalTSAP = info[1]->Uint32Value();
-  word RemoteTSAP = info[2]->Uint32Value();
+  word LocalTSAP = Nan::To<uint32_t>(info[1]).FromJust();
+  word RemoteTSAP = Nan::To<uint32_t>(info[2]).FromJust();
 
   int ret = s7client->snap7Client->SetConnectionParams(
       *remAddress
@@ -815,7 +815,7 @@ NAN_METHOD(S7Client::SetConnectionType) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  word type = info[0]->Uint32Value();
+  word type = Nan::To<uint32_t>(info[0]).FromJust();
 
   int  ret = s7client->snap7Client->SetConnectionType(type);
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
@@ -836,7 +836,7 @@ NAN_METHOD(S7Client::GetParam) {
   }
 
   int pData;
-  int returnValue = s7client->snap7Client->GetParam(info[0]->Int32Value()
+  int returnValue = s7client->snap7Client->GetParam(Nan::To<int32_t>(info[0]).FromJust()
     , &pData);
 
   if (returnValue == 0) {
@@ -853,8 +853,8 @@ NAN_METHOD(S7Client::SetParam) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int pData = info[1]->Int32Value();
-  int ret = s7client->snap7Client->SetParam(info[0]->Int32Value(), &pData);
+  int pData = Nan::To<int32_t>(info[1]).FromJust();
+  int ret = s7client->snap7Client->SetParam(Nan::To<int32_t>(info[0]).FromJust(), &pData);
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
@@ -1263,16 +1263,16 @@ NAN_METHOD(S7Client::ReadArea) {
       !info[4]->IsInt32())
     return Nan::ThrowTypeError("Wrong arguments");
 
-  int amount = info[3]->Int32Value();
-  int byteCount = s7client->GetByteCountFromWordLen(info[4]->Int32Value());
+  int amount = Nan::To<int32_t>(info[3]).FromJust();
+  int byteCount = s7client->GetByteCountFromWordLen(Nan::To<int32_t>(info[4]).FromJust());
   int size = amount * byteCount;
   char *bufferData = new char[size];
 
   if (!info[5]->IsFunction()) {
     int returnValue = s7client->snap7Client->ReadArea(
-        info[0]->Int32Value(), info[1]->Int32Value()
-      , info[2]->Int32Value(), info[3]->Int32Value()
-      , info[4]->Int32Value(), bufferData);
+		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust()
+      , Nan::To<int32_t>(info[2]).FromJust(), Nan::To<int32_t>(info[3]).FromJust()
+      , Nan::To<int32_t>(info[4]).FromJust(), bufferData);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> ret = Nan::NewBuffer(
@@ -1289,8 +1289,8 @@ NAN_METHOD(S7Client::ReadArea) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[5].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, READAREA
-      , bufferData, info[0]->Int32Value(), info[1]->Int32Value()
-      , info[2]->Int32Value(), info[3]->Int32Value(), info[4]->Int32Value()));
+      , bufferData, Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust()
+      , Nan::To<int32_t>(info[2]).FromJust(), Nan::To<int32_t>(info[3]).FromJust(), Nan::To<int32_t>(info[4]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1308,16 +1308,16 @@ NAN_METHOD(S7Client::WriteArea) {
 
   if (!info[6]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(
-      s7client->snap7Client->WriteArea(info[0]->Int32Value()
-        , info[1]->Int32Value(), info[2]->Int32Value()
-        , info[3]->Int32Value(), info[4]->Int32Value()
+      s7client->snap7Client->WriteArea(Nan::To<int32_t>(info[0]).FromJust()
+        , Nan::To<int32_t>(info[1]).FromJust(), Nan::To<int32_t>(info[2]).FromJust()
+        , Nan::To<int32_t>(info[3]).FromJust(), Nan::To<int32_t>(info[4]).FromJust()
         , node::Buffer::Data(info[5].As<v8::Object>())) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[6].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, WRITEAREA
-      , node::Buffer::Data(info[5].As<v8::Object>()), info[0]->Int32Value()
-      , info[1]->Int32Value(), info[2]->Int32Value(), info[3]->Int32Value()
-      , info[4]->Int32Value()));
+      , node::Buffer::Data(info[5].As<v8::Object>()), Nan::To<int32_t>(info[0]).FromJust()
+      , Nan::To<int32_t>(info[1]).FromJust(), Nan::To<int32_t>(info[2]).FromJust(), Nan::To<int32_t>(info[3]).FromJust()
+      , Nan::To<int32_t>(info[4]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1348,7 +1348,7 @@ NAN_METHOD(S7Client::ReadMultiVars) {
     if (!Nan::Get(data_arr, i).ToLocalChecked()->IsObject()) {
       return Nan::ThrowTypeError("Wrong argument structure");
     } else {
-      v8::Local<v8::Object> data_obj = Nan::Get(data_arr, i).ToLocalChecked()->ToObject();
+      v8::Local<v8::Object> data_obj = Nan::To<v8::Object>(Nan::Get(data_arr, i).ToLocalChecked()).ToLocalChecked();
       if (!Nan::Has(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).FromJust() ||
           !Nan::Has(data_obj, Nan::New<v8::String>("WordLen").ToLocalChecked()).FromJust() ||
           !Nan::Has(data_obj, Nan::New<v8::String>("Start").ToLocalChecked()).FromJust() ||
@@ -1359,7 +1359,7 @@ NAN_METHOD(S7Client::ReadMultiVars) {
                  !Nan::Get(data_obj, Nan::New<v8::String>("Start").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
                  !Nan::Get(data_obj, Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()->IsInt32()) {
         return Nan::ThrowTypeError("Wrong argument structure");
-      } else if (Nan::Get(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()->Int32Value() == S7AreaDB) {
+      } else if (Nan::To<int32_t>(Nan::Get(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()).FromJust() == S7AreaDB) {
         if (!Nan::Has(data_obj, Nan::New<v8::String>("DBNumber").ToLocalChecked()).FromJust()) {
           return Nan::ThrowTypeError("Wrong argument structure");
         }
@@ -1374,18 +1374,18 @@ NAN_METHOD(S7Client::ReadMultiVars) {
   int byteCount, size;
 
   for (int i = 0; i < len; i++) {
-    data_obj = Nan::Get(data_arr, i).ToLocalChecked()->ToObject();
+    data_obj = Nan::To<v8::Object>(Nan::Get(data_arr, i).ToLocalChecked()).ToLocalChecked();
 
-    Items[i].Area = Nan::Get(data_obj,
-      Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].WordLen = Nan::Get(data_obj,
-      Nan::New<v8::String>("WordLen").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].DBNumber = Nan::Get(data_obj,
-      Nan::New<v8::String>("DBNumber").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].Start = Nan::Get(data_obj,
-      Nan::New<v8::String>("Start").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].Amount = Nan::Get(data_obj,
-      Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()->Int32Value();
+    Items[i].Area = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].WordLen = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("WordLen").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].DBNumber = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("DBNumber").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].Start = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Start").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].Amount = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()).FromJust();
 
     byteCount = s7client->GetByteCountFromWordLen(Items[i].WordLen);
     size = Items[i].Amount * byteCount;
@@ -1478,7 +1478,7 @@ NAN_METHOD(S7Client::WriteMultiVars) {
     if (!Nan::Get(data_arr, i).ToLocalChecked()->IsObject()) {
       return Nan::ThrowTypeError("Wrong argument structure");
     } else {
-      v8::Local<v8::Object> data_obj = Nan::Get(data_arr, i).ToLocalChecked()->ToObject();
+      v8::Local<v8::Object> data_obj = Nan::To<v8::Object>(Nan::Get(data_arr, i).ToLocalChecked()).ToLocalChecked();
       if (!Nan::Has(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).FromJust() ||
           !Nan::Has(data_obj, Nan::New<v8::String>("WordLen").ToLocalChecked()).FromJust() ||
           !Nan::Has(data_obj, Nan::New<v8::String>("Start").ToLocalChecked()).FromJust() ||
@@ -1491,7 +1491,7 @@ NAN_METHOD(S7Client::WriteMultiVars) {
                  !Nan::Get(data_obj, Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
                  !node::Buffer::HasInstance(Nan::Get(data_obj, Nan::New<v8::String>("Data").ToLocalChecked()).ToLocalChecked())) {
         return Nan::ThrowTypeError("Wrong argument structure");
-      } else if (Nan::Get(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()->Int32Value() == S7AreaDB) {
+      } else if (Nan::To<int32_t>(Nan::Get(data_obj, Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()).FromJust() == S7AreaDB) {
         if (!Nan::Has(data_obj, Nan::New<v8::String>("DBNumber").ToLocalChecked()).FromJust()) {
           return Nan::ThrowTypeError("Wrong argument structure");
         }
@@ -1504,18 +1504,18 @@ NAN_METHOD(S7Client::WriteMultiVars) {
   PS7DataItem Items = new TS7DataItem[len];
   v8::Local<v8::Object> data_obj;
   for (int i = 0; i < len; i++) {
-    data_obj = Nan::Get(data_arr, i).ToLocalChecked()->ToObject();
+    data_obj = Nan::To<v8::Object>(Nan::Get(data_arr, i).ToLocalChecked()).ToLocalChecked();
 
-    Items[i].Area = Nan::Get(data_obj,
-      Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].WordLen = Nan::Get(data_obj,
-      Nan::New<v8::String>("WordLen").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].DBNumber = Nan::Get(data_obj,
-      Nan::New<v8::String>("DBNumber").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].Start = Nan::Get(data_obj,
-      Nan::New<v8::String>("Start").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    Items[i].Amount = Nan::Get(data_obj,
-      Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()->Int32Value();
+    Items[i].Area = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Area").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].WordLen = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("WordLen").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].DBNumber = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("DBNumber").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].Start = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Start").ToLocalChecked()).ToLocalChecked()).FromJust();
+    Items[i].Amount = Nan::To<int32_t>(Nan::Get(data_obj,
+      Nan::New<v8::String>("Amount").ToLocalChecked()).ToLocalChecked()).FromJust();
     Items[i].pdata = node::Buffer::Data(Nan::Get(data_obj,
       Nan::New<v8::String>("Data").ToLocalChecked()).ToLocalChecked().As<v8::Object>());
   }
@@ -1598,7 +1598,7 @@ NAN_METHOD(S7Client::GetAgBlockInfo) {
   PS7BlockInfo BlockInfo = new TS7BlockInfo;
   if (!info[2]->IsFunction()) {
     int returnValue = s7client->snap7Client->GetAgBlockInfo(
-      info[0]->Int32Value(), info[1]->Int32Value(), BlockInfo);
+		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), BlockInfo);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> block_info = s7client->S7BlockInfoToObject(
@@ -1613,7 +1613,7 @@ NAN_METHOD(S7Client::GetAgBlockInfo) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, GETAGBLOCKINFO
-      , BlockInfo, info[0]->Int32Value(), info[1]->Int32Value()));
+      , BlockInfo, Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1690,7 +1690,7 @@ NAN_METHOD(S7Client::ListBlocksOfType) {
   PS7BlocksOfType BlockList = new TS7BlocksOfType[BlockNum];
   if (!info[1]->IsFunction()) {
     int returnValue = s7client->snap7Client->ListBlocksOfType(
-        info[0]->Int32Value(), BlockList, &BlockNum);
+		Nan::To<int32_t>(info[0]).FromJust(), BlockList, &BlockNum);
 
     if (returnValue == 0) {
       v8::Local<v8::Array> block_list = s7client->S7BlocksOfTypeToArray(
@@ -1704,7 +1704,7 @@ NAN_METHOD(S7Client::ListBlocksOfType) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, LISTBLOCKSOFTYPE
-      , BlockList, info[0]->Int32Value(), BlockNum));
+      , BlockList, Nan::To<int32_t>(info[0]).FromJust(), BlockNum));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1731,11 +1731,11 @@ NAN_METHOD(S7Client::Upload) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  char *bufferData = new char[info[2]->Int32Value()];
-  int size = info[2]->Int32Value();
+  char *bufferData = new char[Nan::To<int32_t>(info[2]).FromJust()];
+  int size = Nan::To<int32_t>(info[2]).FromJust();
   if (!info[3]->IsFunction()) {
     int returnValue = s7client->snap7Client->Upload(
-      info[0]->Int32Value(), info[1]->Int32Value(), bufferData, &size);
+		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), bufferData, &size);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> ret_buf;
@@ -1752,7 +1752,7 @@ NAN_METHOD(S7Client::Upload) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, UPLOAD
-      , bufferData, info[0]->Int32Value(), info[1]->Int32Value(), size));
+      , bufferData, Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), size));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1764,11 +1764,11 @@ NAN_METHOD(S7Client::FullUpload) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  char *bufferData = new char[info[2]->Int32Value()];
-  int size = info[2]->Int32Value();
+  char *bufferData = new char[Nan::To<int32_t>(info[2]).FromJust()];
+  int size = Nan::To<int32_t>(info[2]).FromJust();
   if (!info[3]->IsFunction()) {
     int returnValue = s7client->snap7Client->FullUpload(
-      info[0]->Int32Value(), info[1]->Int32Value(), bufferData, &size);
+		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), bufferData, &size);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> ret_buf;
@@ -1785,7 +1785,7 @@ NAN_METHOD(S7Client::FullUpload) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[3].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, FULLUPLOAD
-      , bufferData, info[0]->Int32Value(), info[1]->Int32Value(), size));
+      , bufferData, Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), size));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1799,12 +1799,12 @@ NAN_METHOD(S7Client::Download) {
 
   if (!info[2]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(s7client->snap7Client->Download(
-        info[0]->Int32Value(), node::Buffer::Data(info[1].As<v8::Object>())
+		Nan::To<int32_t>(info[0]).FromJust(), node::Buffer::Data(info[1].As<v8::Object>())
       , static_cast<int>(node::Buffer::Length(info[1].As<v8::Object>()))) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, DOWNLOAD
-      , node::Buffer::Data(info[1].As<v8::Object>()), info[0]->Int32Value()
+      , node::Buffer::Data(info[1].As<v8::Object>()), Nan::To<int32_t>(info[0]).FromJust()
       , static_cast<int>(node::Buffer::Length(info[1].As<v8::Object>()))));
     info.GetReturnValue().SetUndefined();
   }
@@ -1819,11 +1819,11 @@ NAN_METHOD(S7Client::Delete) {
 
   if (!info[2]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(s7client->snap7Client->Delete(
-      info[0]->Int32Value(), info[1]->Int32Value()) == 0));
+		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust()) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, DELETEBLOCK
-      , info[0]->Int32Value(), info[1]->Int32Value()));
+      , Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1839,7 +1839,7 @@ NAN_METHOD(S7Client::DBGet) {
   char *bufferData = new char[size];
   if (!info[2]->IsFunction()) {
     int returnValue = s7client->snap7Client->DBGet(
-      info[0]->Int32Value(), bufferData, &size);
+		Nan::To<int32_t>(info[0]).FromJust(), bufferData, &size);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> ret_buf;
@@ -1856,7 +1856,7 @@ NAN_METHOD(S7Client::DBGet) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, DBGET
-      , bufferData, info[0]->Int32Value(), size));
+      , bufferData, Nan::To<int32_t>(info[0]).FromJust(), size));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1870,7 +1870,7 @@ NAN_METHOD(S7Client::DBFill) {
 
   int fill;
   if (info[1]->IsInt32()) {
-    fill = info[1]->Int32Value();
+    fill = Nan::To<int32_t>(info[1]).FromJust();
   } else {
     Nan::Utf8String fillstr(info[1]);
     fill = static_cast<int>(**fillstr);
@@ -1878,11 +1878,11 @@ NAN_METHOD(S7Client::DBFill) {
 
   if (!info[2]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(s7client->snap7Client->DBFill(
-      info[0]->Int32Value(), fill) == 0));
+		Nan::To<int32_t>(info[0]).FromJust(), fill) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, DBFILL
-      , info[0]->Int32Value(), fill));
+      , Nan::To<int32_t>(info[0]).FromJust(), fill));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -1918,23 +1918,23 @@ NAN_METHOD(S7Client::SetPlcDateTime) {
 
   tm *DateTime = new tm;
   if (info[0]->IsDate()) {
-    v8::Local<v8::Date> date = v8::Local<v8::Date>::Cast(info[0]->ToObject());
-    time_t timestamp = static_cast<time_t>(date->NumberValue() / 1000);
+    v8::Local<v8::Date> date = v8::Local<v8::Date>::Cast(Nan::To<v8::Object>(info[0]).ToLocalChecked());
+    time_t timestamp = static_cast<time_t>(Nan::To<double>(date).FromJust() / 1000);
     *DateTime = *localtime(&timestamp);
   } else {
-    v8::Local<v8::Object> date_time = info[0]->ToObject();
-    DateTime->tm_year = Nan::Get(date_time,
-      Nan::New<v8::String>("year").ToLocalChecked()).ToLocalChecked()->Int32Value() - 1900;
-    DateTime->tm_mon = Nan::Get(date_time,
-      Nan::New<v8::String>("month").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    DateTime->tm_mday = Nan::Get(date_time,
-      Nan::New<v8::String>("day").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    DateTime->tm_hour = Nan::Get(date_time,
-      Nan::New<v8::String>("hours").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    DateTime->tm_min = Nan::Get(date_time,
-      Nan::New<v8::String>("minutes").ToLocalChecked()).ToLocalChecked()->Int32Value();
-    DateTime->tm_sec = Nan::Get(date_time,
-      Nan::New<v8::String>("seconds").ToLocalChecked()).ToLocalChecked()->Int32Value();
+    v8::Local<v8::Object> date_time = Nan::To<v8::Object>(info[0]).ToLocalChecked();
+    DateTime->tm_year = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("year").ToLocalChecked()).ToLocalChecked()).FromJust() - 1900;
+    DateTime->tm_mon = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("month").ToLocalChecked()).ToLocalChecked()).FromJust();
+    DateTime->tm_mday = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("day").ToLocalChecked()).ToLocalChecked()).FromJust();
+    DateTime->tm_hour = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("hours").ToLocalChecked()).ToLocalChecked()).FromJust();
+    DateTime->tm_min = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("minutes").ToLocalChecked()).ToLocalChecked()).FromJust();
+    DateTime->tm_sec = Nan::To<int32_t>(Nan::Get(date_time,
+      Nan::New<v8::String>("seconds").ToLocalChecked()).ToLocalChecked()).FromJust();
   }
 
   if (!info[1]->IsFunction()) {
@@ -2093,8 +2093,8 @@ NAN_METHOD(S7Client::ReadSZL) {
   PS7SZL SZL = new TS7SZL;
   int size = sizeof(TS7SZL);
   if (!info[2]->IsFunction()) {
-    int returnValue = s7client->snap7Client->ReadSZL(info[0]->Int32Value()
-      , info[1]->Int32Value(), SZL, &size);
+    int returnValue = s7client->snap7Client->ReadSZL(Nan::To<int32_t>(info[0]).FromJust()
+      , Nan::To<int32_t>(info[1]).FromJust(), SZL, &size);
 
     if (returnValue == 0) {
       v8::Local<v8::Object> ret_buf;
@@ -2112,7 +2112,7 @@ NAN_METHOD(S7Client::ReadSZL) {
   } else {
     Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, READSZL, SZL
-      , info[0]->Int32Value(), info[1]->Int32Value(), size));
+      , Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), size));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -2202,11 +2202,11 @@ NAN_METHOD(S7Client::CopyRamToRom) {
 
   if (!info[1]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(
-      s7client->snap7Client->CopyRamToRom(info[0]->Int32Value()) == 0));
+      s7client->snap7Client->CopyRamToRom(Nan::To<int32_t>(info[0]).FromJust()) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, COPYRAMTOROM
-      , info[0]->Int32Value()));
+      , Nan::To<int32_t>(info[0]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -2220,11 +2220,11 @@ NAN_METHOD(S7Client::Compress) {
 
   if (!info[1]->IsFunction()) {
     info.GetReturnValue().Set(Nan::New<v8::Boolean>(
-      s7client->snap7Client->Compress(info[0]->Int32Value()) == 0));
+      s7client->snap7Client->Compress(Nan::To<int32_t>(info[0]).FromJust()) == 0));
   } else {
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, COMPRESS
-      , info[0]->Int32Value()));
+      , Nan::To<int32_t>(info[0]).FromJust()));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -2381,7 +2381,7 @@ NAN_METHOD(S7Client::ErrorText) {
   }
 
   info.GetReturnValue().Set(Nan::New<v8::String>(
-    CliErrorText(info[0]->Int32Value()).c_str()).ToLocalChecked());
+    CliErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()).ToLocalChecked());
 }
 
 }  // namespace node_snap7

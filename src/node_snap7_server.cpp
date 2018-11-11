@@ -962,7 +962,7 @@ NAN_METHOD(S7Server::SetResourceless) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  bool resourceless = info[0]->BooleanValue();
+  bool resourceless = Nan::To<bool>(info[0]).FromJust();
 
   int ret;
   if (resourceless) {
@@ -983,7 +983,7 @@ NAN_METHOD(S7Server::GetParam) {
   }
 
   int pData;
-  int ret = s7server->snap7Server->GetParam(info[0]->Int32Value()
+  int ret = s7server->snap7Server->GetParam(Nan::To<int32_t>(info[0]).FromJust()
     , &pData);
   s7server->lastError = ret;
 
@@ -997,8 +997,8 @@ NAN_METHOD(S7Server::SetParam) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int pData = info[1]->Int32Value();
-  int ret = s7server->snap7Server->SetParam(info[0]->Int32Value(), &pData);
+  int pData = Nan::To<int32_t>(info[1]).FromJust();
+  int ret = s7server->snap7Server->SetParam(Nan::To<int32_t>(info[0]).FromJust(), &pData);
   s7server->lastError = ret;
 
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
@@ -1019,7 +1019,7 @@ NAN_METHOD(S7Server::SetEventsMask) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  s7server->snap7Server->SetEventsMask(info[0]->Uint32Value());
+  s7server->snap7Server->SetEventsMask(Nan::To<uint32_t>(info[0]).FromJust());
   info.GetReturnValue().SetUndefined();
 }
 
@@ -1033,14 +1033,14 @@ NAN_METHOD(S7Server::RegisterArea) {
   int index;
   char *pBuffer;
   size_t len;
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
     len = node::Buffer::Length(info[2].As<v8::Object>());
     pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
   } else if (!node::Buffer::HasInstance(info[1])) {
@@ -1080,14 +1080,14 @@ NAN_METHOD(S7Server::UnregisterArea) {
   }
 
   int index = 0;
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->UnregisterArea(area, index);
@@ -1108,7 +1108,7 @@ NAN_METHOD(S7Server::SetArea) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
   if (!s7server->area2buffer.count(area)) {
     return Nan::ThrowError("Unknown area");
   }
@@ -1122,7 +1122,7 @@ NAN_METHOD(S7Server::SetArea) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
     if (!s7server->area2buffer[area].count(index)) {
       return Nan::ThrowError("DB index not found");
     }
@@ -1165,7 +1165,7 @@ NAN_METHOD(S7Server::GetArea) {
   }
 
   int index = 0;
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
 
   if (!s7server->area2buffer.count(area)) {
     return Nan::ThrowError("Unknown area");
@@ -1176,7 +1176,7 @@ NAN_METHOD(S7Server::GetArea) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
     if (!s7server->area2buffer[area].count(index)) {
       return Nan::ThrowError("DB index not found");
     }
@@ -1201,14 +1201,14 @@ NAN_METHOD(S7Server::LockArea) {
   }
 
   int index = 0;
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->LockArea(area, index);
@@ -1225,14 +1225,14 @@ NAN_METHOD(S7Server::UnlockArea) {
   }
 
   int index = 0;
-  int area = info[0]->Int32Value();
+  int area = Nan::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
       return Nan::ThrowTypeError("Wrong arguments");
     }
 
-    index = info[1]->Int32Value();
+    index = Nan::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->UnlockArea(area, index);
@@ -1283,7 +1283,7 @@ NAN_METHOD(S7Server::SetCpuStatus) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int ret = s7server->snap7Server->SetCpuStatus(info[0]->Int32Value());
+  int ret = s7server->snap7Server->SetCpuStatus(Nan::To<int32_t>(info[0]).FromJust());
   s7server->lastError = ret;
 
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
@@ -1295,7 +1295,7 @@ NAN_METHOD(S7Server::ErrorText) {
   }
 
   info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvErrorText(info[0]->Int32Value()).c_str()).ToLocalChecked());
+    SrvErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()).ToLocalChecked());
 }
 
 NAN_METHOD(S7Server::EventText) {
@@ -1333,14 +1333,14 @@ NAN_METHOD(S7Server::EventText) {
         event_obj
       , Nan::New<v8::String>("EvtSender").ToLocalChecked()).ToLocalChecked());
 
-  SrvEvent.EvtTime = static_cast<time_t>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked())->NumberValue() / 1000);
+  SrvEvent.EvtTime = static_cast<time_t>(Nan::To<double>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked())).FromJust() / 1000);
   SrvEvent.EvtSender = inet_addr(**remAddress);
-  SrvEvent.EvtCode = Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()->Uint32Value();
-  SrvEvent.EvtRetCode = Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()->Int32Value();
-  SrvEvent.EvtParam1 = Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()->Int32Value();
-  SrvEvent.EvtParam2 = Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()->Int32Value();
-  SrvEvent.EvtParam3 = Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()->Int32Value();
-  SrvEvent.EvtParam4 = Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()->Int32Value();
+  SrvEvent.EvtCode = Nan::To<uint32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtRetCode = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtParam1 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtParam2 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtParam3 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtParam4 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()).FromJust();
 
   delete remAddress;
 
