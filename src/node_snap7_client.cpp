@@ -1837,7 +1837,7 @@ NAN_METHOD(S7Client::DBGet) {
 
   int size = 65536;
   char *bufferData = new char[size];
-  if (!info[2]->IsFunction()) {
+  if (!info[1]->IsFunction()) {
     int returnValue = s7client->snap7Client->DBGet(
 		Nan::To<int32_t>(info[0]).FromJust(), bufferData, &size);
 
@@ -1854,7 +1854,7 @@ NAN_METHOD(S7Client::DBGet) {
       info.GetReturnValue().Set(Nan::False());
     }
   } else {
-    Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
+    Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
     Nan::AsyncQueueWorker(new IOWorker(callback, s7client, DBGET
       , bufferData, Nan::To<int32_t>(info[0]).FromJust(), size));
     info.GetReturnValue().SetUndefined();
