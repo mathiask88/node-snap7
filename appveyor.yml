@@ -18,7 +18,7 @@ platform:
 # Install scripts. (runs after repo cloning)
 install:
   # Get the latest version of $env:nodejs_version
-  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:platform
+  - ps: Install-Product node $env:nodejs_version $env:platform
   # Output useful info for debugging.
   - node --version
   - npm --version
