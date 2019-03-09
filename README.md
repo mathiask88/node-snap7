@@ -86,7 +86,7 @@ setTimeout(function() {
 Have a look at the resourceless server example [here](doc/server.md#event-read-write).
 
 ## License & copyright
-Copyright (c) 2018, Mathias Küsel
+Copyright (c) 2019, Mathias Küsel
 
 node-snap7 is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
 

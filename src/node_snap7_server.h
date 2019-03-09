@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Mathias Küsel
+ * Copyright (c) 2019, Mathias Küsel
  * MIT License <https://github.com/mathiask88/node-snap7/blob/master/LICENSE>
  */
 
