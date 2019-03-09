@@ -6,7 +6,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ca1kepectsn3wkrc/branch/master?svg=true)](https://ci.appveyor.com/project/mathiask88/node-snap7/branch/master)
 [![dependencies Status](https://david-dm.org/mathiask88/node-snap7/status.svg)](https://david-dm.org/mathiask88/node-snap7)
 
-**Current node-snap7 version:** 1.0.0\
+**Current node-snap7 version:** 1.0.1\
 **Current snap7 version:** 1.4.2
 
 ## About
