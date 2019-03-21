@@ -1717,7 +1717,7 @@ v8::Local<v8::Array> S7Client::S7BlocksOfTypeToArray(
 
   v8::Local<v8::Array> block_list = Nan::New<v8::Array>(count);
   for (int i = 0; i < count; i++) {
-    Nan::Set(block_list, i, Nan::New<v8::Integer>(*BlocksList[i]));
+    Nan::Set(block_list, i, Nan::New<v8::Integer>((*BlocksList)[i]));
   }
 
   return scope.Escape(block_list);
