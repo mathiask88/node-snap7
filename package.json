@@ -23,13 +23,13 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "~2.13.1",
+    "node-addon-api": "~1.6.3",
     "bindings": "~1.5.0",
-    "prebuild-install": "^5.0.0"
+    "prebuild-install": "^5.2.5"
   },
   "devDependencies": {
-    "prebuild": "^8.0.1",
-    "prebuild-ci": "^2.2.3"
+    "prebuild": "^8.2.1",
+    "prebuild-ci": "^2.3.0"
   },
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",

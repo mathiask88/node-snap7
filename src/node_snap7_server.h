@@ -7,9 +7,7 @@
 #define SRC_NODE_SNAP7_SERVER_H_
 
 #include <snap7.h>
-#include <node.h>
-#include <node_buffer.h>
-#include <nan.h>
+#include <napi.h>
 #include <map>
 #include <deque>
 
@@ -24,34 +22,33 @@ typedef struct {
   word size;
 }TBufferInfo;
 
-class S7Server : public Nan::ObjectWrap {
+class S7Server : public Napi::ObjectWrap<S7Server> {
  public:
-  explicit S7Server(v8::Local<v8::Object> resource);
-  static NAN_MODULE_INIT(Init);
-  static NAN_METHOD(New);
+  static Napi::Object Init(Napi::Env env, Napi::Object exports);
+  S7Server(const Napi::CallbackInfo &info, v8::Local<v8::Object> resource);
 
-  static NAN_METHOD(Start);
-  static NAN_METHOD(StartTo);
-  static NAN_METHOD(Stop);
-  static NAN_METHOD(SetResourceless);
-  static NAN_METHOD(GetParam);
-  static NAN_METHOD(SetParam);
-  static NAN_METHOD(GetEventsMask);
-  static NAN_METHOD(SetEventsMask);
-  static NAN_METHOD(RegisterArea);
-  static NAN_METHOD(UnregisterArea);
-  static NAN_METHOD(SetArea);
-  static NAN_METHOD(GetArea);
-  static NAN_METHOD(LockArea);
-  static NAN_METHOD(UnlockArea);
-  static NAN_METHOD(ServerStatus);
-  static NAN_METHOD(ClientsCount);
-  static NAN_METHOD(GetCpuStatus);
-  static NAN_METHOD(SetCpuStatus);
+  Napi::Value Start(const Napi::CallbackInfo &info);
+  Napi::Value StartTo(const Napi::CallbackInfo &info);
+  Napi::Value Stop(const Napi::CallbackInfo &info);
+  Napi::Value SetResourceless(const Napi::CallbackInfo &info);
+  Napi::Value GetParam(const Napi::CallbackInfo &info);
+  Napi::Value SetParam(const Napi::CallbackInfo &info);
+  Napi::Value GetEventsMask(const Napi::CallbackInfo &info);
+  Napi::Value SetEventsMask(const Napi::CallbackInfo &info);
+  Napi::Value RegisterArea(const Napi::CallbackInfo &info);
+  Napi::Value UnregisterArea(const Napi::CallbackInfo &info);
+  Napi::Value SetArea(const Napi::CallbackInfo &info);
+  Napi::Value GetArea(const Napi::CallbackInfo &info);
+  Napi::Value LockArea(const Napi::CallbackInfo &info);
+  Napi::Value UnlockArea(const Napi::CallbackInfo &info);
+  Napi::Value ServerStatus(const Napi::CallbackInfo &info);
+  Napi::Value ClientsCount(const Napi::CallbackInfo &info);
+  Napi::Value GetCpuStatus(const Napi::CallbackInfo &info);
+  Napi::Value SetCpuStatus(const Napi::CallbackInfo &info);
 
-  static NAN_METHOD(ErrorText);
-  static NAN_METHOD(EventText);
-  static NAN_METHOD(LastError);
+  Napi::Value ErrorText(const Napi::CallbackInfo &info);
+  Napi::Value EventText(const Napi::CallbackInfo &info);
+  static Napi::Value LastError(const Napi::CallbackInfo &info);
 
   static int GetByteCountFromWordLen(int WordLen);
 
@@ -73,30 +70,29 @@ class S7Server : public Nan::ObjectWrap {
   TS7Server *snap7Server;
   std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;
-  Nan::AsyncResource async_resource;
+  node::AsyncResource async_resource;
 
  private:
   ~S7Server();
-  static Nan::Persistent<v8::FunctionTemplate> constructor;
+  static Napi::FunctionReference constructor;
 };
 
-class IOWorkerServer : public Nan::AsyncWorker {
+class IOWorkerServer : public Napi::AsyncWorker {
  public:
   // No args
-  IOWorkerServer(Nan::Callback *callback, S7Server *s7server, ServerIOFunction caller)
-    : Nan::AsyncWorker(callback), s7server(s7server), caller(caller) {}
+  IOWorkerServer(Function& callback, S7Server *s7server, ServerIOFunction caller)
+    : Napi::AsyncWorker(callback), s7server(s7server), caller(caller) {}
   // 1 args
-  IOWorkerServer(Nan::Callback *callback, S7Server *s7server, ServerIOFunction caller
+  IOWorkerServer(Function& callback, S7Server *s7server, ServerIOFunction caller
     , void *arg1)
-    : Nan::AsyncWorker(callback), s7server(s7server), caller(caller)
+    : Napi::AsyncWorker(callback), s7server(s7server), caller(caller)
     , pData(arg1) {}
 
+  void Execute();
+  void OnOK();
   ~IOWorkerServer() {}
 
  private:
-  void Execute();
-  void HandleOKCallback();
-
   S7Server *s7server;
   ServerIOFunction caller;
   void *pData;

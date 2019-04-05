@@ -2,15 +2,16 @@
     "targets": [{
         "target_name": "node_snap7",
         "include_dirs": [
-            "<!(node -e \"require('nan')\")",
+            "<!@(node -p \"require('node-addon-api').include\")",
             "./src"
         ],
         "sources": [
             "./src/node_snap7.cpp",
             "./src/node_snap7_client.cpp",
-            "./src/node_snap7_server.cpp",
+            #"./src/node_snap7_server.cpp",
             "./src/snap7.cpp"
         ],
+        "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
         "conditions": [
             ["OS=='win'", {
                 "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
@@ -18,6 +19,7 @@
             }]
         ],
         "dependencies": [
+            "<!(node -p \"require('node-addon-api').gyp\")",
             "snap7"
         ]
     }, {
