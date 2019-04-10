@@ -97,7 +97,7 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
   static void FreeCallbackSZL(char *data, void* hint);
 
   uv_mutex_t mutex;
-  TS7Client *snap7Client;
+  PS7Client snap7Client;
 
  private:
   ~S7Client();
@@ -107,40 +107,40 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
 class IOWorker : public Napi::AsyncWorker {
  public:
   // No args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller)
-    : Napi::AsyncWorker(receiver, callback), caller(caller) {}
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller) {}
   // 1 args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , void *arg1)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1) {}
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , int arg1)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , int1(arg1) {}
   // 2 args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2) {}
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , int arg1, int arg2)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , int1(arg1), int2(arg2) {}
   // 3 args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3) {}
   // 4 args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4) {}
   // 6 args
-  IOWorker(const Napi::Object& receiver, const Napi::Function& callback, DataIOFunction caller
+  IOWorker(const Napi::Function& callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
-    : Napi::AsyncWorker(receiver, callback), caller(caller)
+    : Napi::AsyncWorker(callback), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4), int4(arg5), int5(arg6) {}
 
   void Execute();
@@ -148,6 +148,7 @@ class IOWorker : public Napi::AsyncWorker {
   ~IOWorker() {}
 
  private:
+  S7Client *s7client;
   DataIOFunction caller;
   void *pData;
   int int1, int2, int3, int4, int5, returnValue;
