@@ -5,77 +5,79 @@
 
 #include <node_snap7_client.h>
 #include <sstream>
+#include <vector>
+#include <string>
 
 namespace node_snap7 {
 
 Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
-	Napi::Function func = DefineClass(env, "S7Client", {
-		// Control functions
-		InstanceMethod("Connect", &S7Client::Connect),
-		InstanceMethod("ConnectTo", &S7Client::ConnectTo),
-		InstanceMethod("SetConnectionParams", &S7Client::SetConnectionParams),
-		InstanceMethod("SetConnectionType", &S7Client::SetConnectionType),
-		InstanceMethod("Disconnect", &S7Client::Disconnect),
-		InstanceMethod("GetParam", &S7Client::GetParam),
-		InstanceMethod("SetParam", &S7Client::SetParam),
+  Napi::Function func = DefineClass(env, "S7Client", {
+    // Control functions
+    InstanceMethod("Connect", &S7Client::Connect),
+    InstanceMethod("ConnectTo", &S7Client::ConnectTo),
+    InstanceMethod("SetConnectionParams", &S7Client::SetConnectionParams),
+    InstanceMethod("SetConnectionType", &S7Client::SetConnectionType),
+    InstanceMethod("Disconnect", &S7Client::Disconnect),
+    InstanceMethod("GetParam", &S7Client::GetParam),
+    InstanceMethod("SetParam", &S7Client::SetParam),
 
-		// Data I/O Main functions
-		InstanceMethod("ReadArea", &S7Client::ReadArea),
-		InstanceMethod("WriteArea", &S7Client::WriteArea),
-		InstanceMethod("ReadMultiVars", &S7Client::ReadMultiVars),
-		InstanceMethod("WriteMultiVars", &S7Client::WriteMultiVars),
+    // Data I/O Main functions
+    InstanceMethod("ReadArea", &S7Client::ReadArea),
+    InstanceMethod("WriteArea", &S7Client::WriteArea),
+    InstanceMethod("ReadMultiVars", &S7Client::ReadMultiVars),
+    InstanceMethod("WriteMultiVars", &S7Client::WriteMultiVars),
 
-		// Directory functions
-		InstanceMethod("ListBlocks", &S7Client::ListBlocks),
-		InstanceMethod("GetAgBlockInfo", &S7Client::GetAgBlockInfo),
-		InstanceMethod("GetPgBlockInfo", &S7Client::GetPgBlockInfo),
-		InstanceMethod("ListBlocksOfType", &S7Client::ListBlocksOfType),
+    // Directory functions
+    InstanceMethod("ListBlocks", &S7Client::ListBlocks),
+    InstanceMethod("GetAgBlockInfo", &S7Client::GetAgBlockInfo),
+    InstanceMethod("GetPgBlockInfo", &S7Client::GetPgBlockInfo),
+    InstanceMethod("ListBlocksOfType", &S7Client::ListBlocksOfType),
 
-		// Blocks functions
-		InstanceMethod("Upload", &S7Client::Upload),
-		InstanceMethod("FullUpload", &S7Client::FullUpload),
-		InstanceMethod("Download", &S7Client::Download),
-		InstanceMethod("Delete", &S7Client::Delete),
-		InstanceMethod("DBGet", &S7Client::DBGet),
-		InstanceMethod("DBFill", &S7Client::DBFill),
+    // Blocks functions
+    InstanceMethod("Upload", &S7Client::Upload),
+    InstanceMethod("FullUpload", &S7Client::FullUpload),
+    InstanceMethod("Download", &S7Client::Download),
+    InstanceMethod("Delete", &S7Client::Delete),
+    InstanceMethod("DBGet", &S7Client::DBGet),
+    InstanceMethod("DBFill", &S7Client::DBFill),
 
-		// Date/Time functions
-		InstanceMethod("GetPlcDateTime", &S7Client::GetPlcDateTime),
-		InstanceMethod("SetPlcDateTime", &S7Client::SetPlcDateTime),
-		InstanceMethod("SetPlcSystemDateTime", &S7Client::SetPlcSystemDateTime),
+    // Date/Time functions
+    InstanceMethod("GetPlcDateTime", &S7Client::GetPlcDateTime),
+    InstanceMethod("SetPlcDateTime", &S7Client::SetPlcDateTime),
+    InstanceMethod("SetPlcSystemDateTime", &S7Client::SetPlcSystemDateTime),
 
-		// System Info functions
-		InstanceMethod("GetOrderCode", &S7Client::GetOrderCode),
-		InstanceMethod("GetCpuInfo", &S7Client::GetCpuInfo),
-		InstanceMethod("GetCpInfo", &S7Client::GetCpInfo),
-		InstanceMethod("ReadSZL", &S7Client::ReadSZL),
-		InstanceMethod("ReadSZLList", &S7Client::ReadSZLList),
+    // System Info functions
+    InstanceMethod("GetOrderCode", &S7Client::GetOrderCode),
+    InstanceMethod("GetCpuInfo", &S7Client::GetCpuInfo),
+    InstanceMethod("GetCpInfo", &S7Client::GetCpInfo),
+    InstanceMethod("ReadSZL", &S7Client::ReadSZL),
+    InstanceMethod("ReadSZLList", &S7Client::ReadSZLList),
 
-		// Control functions
-		InstanceMethod("PlcHotStart", &S7Client::PlcHotStart),
-		InstanceMethod("PlcColdStart", &S7Client::PlcColdStart),
-		InstanceMethod("PlcStop", &S7Client::PlcStop),
-		InstanceMethod("CopyRamToRom", &S7Client::CopyRamToRom),
-		InstanceMethod("Compress", &S7Client::Compress),
+    // Control functions
+    InstanceMethod("PlcHotStart", &S7Client::PlcHotStart),
+    InstanceMethod("PlcColdStart", &S7Client::PlcColdStart),
+    InstanceMethod("PlcStop", &S7Client::PlcStop),
+    InstanceMethod("CopyRamToRom", &S7Client::CopyRamToRom),
+    InstanceMethod("Compress", &S7Client::Compress),
 
-		// Security functions
-		InstanceMethod("GetProtection", &S7Client::GetProtection),
-		InstanceMethod("SetSessionPassword", &S7Client::SetSessionPassword),
-		InstanceMethod("ClearSessionPassword", &S7Client::ClearSessionPassword),
+    // Security functions
+    InstanceMethod("GetProtection", &S7Client::GetProtection),
+    InstanceMethod("SetSessionPassword", &S7Client::SetSessionPassword),
+    InstanceMethod("ClearSessionPassword", &S7Client::ClearSessionPassword),
 
-		// Properties
-		InstanceMethod("ExecTime", &S7Client::ExecTime),
-		InstanceMethod("LastError", &S7Client::LastError),
-		InstanceMethod("PDURequested", &S7Client::PDURequested),
-		InstanceMethod("PDULength", &S7Client::PDULength),
-		InstanceMethod("PlcStatus", &S7Client::PlcStatus),
-		InstanceMethod("Connected", &S7Client::Connected),
+    // Properties
+    InstanceMethod("ExecTime", &S7Client::ExecTime),
+    InstanceMethod("LastError", &S7Client::LastError),
+    InstanceMethod("PDURequested", &S7Client::PDURequested),
+    InstanceMethod("PDULength", &S7Client::PDULength),
+    InstanceMethod("PlcStatus", &S7Client::PlcStatus),
+    InstanceMethod("Connected", &S7Client::Connected),
 
-		// Error to text function
-		InstanceMethod("ErrorText", &S7Client::ErrorText),
+    // Error to text function
+    InstanceMethod("ErrorText", &S7Client::ErrorText),
 
-		// Error codes
-		StaticValue("errNegotiatingPDU", Napi::Value::From(env, errNegotiatingPDU)),
+    // Error codes
+    StaticValue("errNegotiatingPDU", Napi::Value::From(env, errNegotiatingPDU)),
     StaticValue("errCliInvalidParams", Napi::Value::From(env, errCliInvalidParams)),
     StaticValue("errCliJobPending", Napi::Value::From(env, errCliJobPending)),
     StaticValue("errCliTooManyItems", Napi::Value::From(env, errCliTooManyItems)),
@@ -249,7 +251,7 @@ Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
   if (!info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
-    
+
   std::string* remAddress = new std::string(info[0].As<Napi::String>().Utf8Value());
   if (!info[3].IsFunction()) {
     int ret = this->snap7Client->ConnectTo(
@@ -720,8 +722,6 @@ void IOWorker::OnOK() {
 }
 
 Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
-  
-
   if (info.Length() < 5)
     Napi::TypeError::New(info.Env(), "Wrong number of Arguments").ThrowAsJavaScriptException();
 
@@ -738,7 +738,7 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
   if (!info[5].IsFunction()) {
     int returnValue = this->snap7Client->ReadArea(
       info[0].As<Napi::Number>().Int32Value()
-		  , info[1].As<Napi::Number>().Int32Value()
+      , info[1].As<Napi::Number>().Int32Value()
       , info[2].As<Napi::Number>().Int32Value()
       , info[3].As<Napi::Number>().Int32Value()
       , info[4].As<Napi::Number>().Int32Value()
@@ -775,7 +775,7 @@ Napi::Value S7Client::WriteArea(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
 
   if (!info[6].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->WriteArea(
         info[0].As<Napi::Number>().Int32Value()
         , info[1].As<Napi::Number>().Int32Value()
@@ -829,7 +829,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
       } else if (!data_obj.Get("Area").IsNumber() ||
                  !data_obj.Get("WordLen").IsNumber() ||
                  !data_obj.Get("Start").IsNumber() ||
-                 !data_obj.Get("Amount").IsNumber()){
+                 !data_obj.Get("Amount").IsNumber()) {
         Napi::TypeError::New(info.Env(), "Wrong argument structure").ThrowAsJavaScriptException();
       } else if (data_obj.Get("Area").As<Napi::Number>().Int32Value == S7AreaDB) {
         if (!data_obj.Has("DBNumber")) {
@@ -918,8 +918,6 @@ Napi::Array S7Client::S7DataItemToArray(
 }
 
 Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
-  
-
   if (info.Length() < 1) {
     Napi::TypeError::New(info.Env(), "Wrong number of arguments").ThrowAsJavaScriptException();
   }
@@ -998,8 +996,6 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
 
 // Directory functions
 Napi::Value S7Client::ListBlocks(const Napi::CallbackInfo &info) {
-  
-
   PS7BlocksList BlocksList = new TS7BlocksList;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->ListBlocks(BlocksList);
@@ -1041,8 +1037,6 @@ Napi::Object S7Client::S7BlocksListToObject(
 
 
 Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1051,7 +1045,7 @@ Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
   if (!info[2].IsFunction()) {
     int returnValue = this->snap7Client->GetAgBlockInfo(
       info[0].As<Napi::Number>().Int32Value()
-		, info[1].As<Napi::Number>().Int32Value(), BlockInfo);
+    , info[1].As<Napi::Number>().Int32Value(), BlockInfo);
 
     if (returnValue == 0) {
       Napi::Object block_info = this->S7BlockInfoToObject(
@@ -1072,8 +1066,6 @@ Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::GetPgBlockInfo(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsBuffer()) {
     Napi::TypeError::New(info.Env(), "Argument should be a Buffer").ThrowAsJavaScriptException();
   }
@@ -1133,8 +1125,6 @@ Napi::Object S7Client::S7BlockInfoToObject(PS7BlockInfo BlockInfo) {
 }
 
 Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1143,7 +1133,7 @@ Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
   PS7BlocksOfType BlockList = new TS7BlocksOfType[BlockNum];
   if (!info[1].IsFunction()) {
     int returnValue = this->snap7Client->ListBlocksOfType(
-		info[0].As<Napi::Number>().Int32Value(), BlockList, &BlockNum);
+    info[0].As<Napi::Number>().Int32Value(), BlockList, &BlockNum);
 
     if (returnValue == 0) {
       Napi::Array block_list = this->S7BlocksOfTypeToArray(
@@ -1178,8 +1168,6 @@ Napi::Array S7Client::S7BlocksOfTypeToArray(
 
 // Blocks functions
 Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1190,7 +1178,7 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
   if (!info[3].IsFunction()) {
     int returnValue = this->snap7Client->Upload(
       info[0].As<Napi::Number>().Int32Value()
-		  , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
+      , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
       Napi::Object ret_buf;
@@ -1213,8 +1201,6 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1225,7 +1211,7 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
   if (!info[3].IsFunction()) {
     int returnValue = this->snap7Client->FullUpload(
       info[0].As<Napi::Number>().Int32Value()
-		  , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
+      , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
       Napi::Object ret_buf;
@@ -1248,8 +1234,6 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !node::Buffer::HasInstance(info[1])) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1268,8 +1252,6 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1277,7 +1259,7 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
   if (!info[2].IsFunction()) {
     return Napi::Boolean::New(info.Env(), this->snap7Client->Delete(
       info[0].As<Napi::Number>().Int32Value()
-		  , info[1].As<Napi::Number>().Int32Value()) == 0);
+      , info[1].As<Napi::Number>().Int32Value()) == 0);
   } else {
     Napi::Function callback = info[2].As<Napi::Function>();
     IOWorker* worker = new IOWorker(callback, this, DELETEBLOCK
@@ -1288,8 +1270,6 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1298,7 +1278,7 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
   char *bufferData = new char[size];
   if (!info[1].IsFunction()) {
     int returnValue = this->snap7Client->DBGet(
-		info[0].As<Napi::Number>().Int32Value(), bufferData, &size);
+    info[0].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
       Napi::Object ret_buf;
@@ -1321,8 +1301,6 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber() || !(info[1].IsNumber() || info[1].IsString())) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1337,7 +1315,7 @@ Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
 
   if (!info[2].IsFunction()) {
     return Napi::Boolean::New(info.Env(), this->snap7Client->DBFill(
-		info[0].As<Napi::Number>().Int32Value(), fill) == 0);
+    info[0].As<Napi::Number>().Int32Value(), fill) == 0);
   } else {
     Napi::Function callback = info[2].As<Napi::Function>();
     IOWorker* worker = new IOWorker(callback, this, DBFILL
@@ -1348,8 +1326,6 @@ Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
 
 // Date/Time functions
 Napi::Value S7Client::GetPlcDateTime(const Napi::CallbackInfo &info) {
-  
-
   tm *DateTime = new tm;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->GetPlcDateTime(DateTime);
@@ -1369,8 +1345,6 @@ Napi::Value S7Client::GetPlcDateTime(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
-  
-
   if (!(info[0].IsObject() || info[0].IsDate())) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1391,7 +1365,7 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
   }
 
   if (!info[1].IsFunction()) {
-    Napi::Boolean ret = Napi::Boolean::New(info.Env(), 
+    Napi::Boolean ret = Napi::Boolean::New(info.Env(),
       this->snap7Client->SetPlcDateTime(DateTime) == 0);
     delete DateTime;
     return ret;
@@ -1404,10 +1378,8 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::SetPlcSystemDateTime(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->SetPlcSystemDateTime() == 0);
   } else {
     Napi::Function callback = info[0].As<Napi::Function>();
@@ -1418,8 +1390,6 @@ Napi::Value S7Client::SetPlcSystemDateTime(const Napi::CallbackInfo &info) {
 
 // System Info functions
 Napi::Value S7Client::GetOrderCode(const Napi::CallbackInfo &info) {
-  
-
   PS7OrderCode OrderCode = new TS7OrderCode;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->GetOrderCode(OrderCode);
@@ -1452,10 +1422,7 @@ Napi::Object S7Client::S7OrderCodeToObject(PS7OrderCode OrderCode) {
   return scope.Escape(order_code);
 }
 
-
 Napi::Value S7Client::GetCpuInfo(const Napi::CallbackInfo &info) {
-  
-
   PS7CpuInfo CpuInfo = new TS7CpuInfo;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->GetCpuInfo(CpuInfo);
@@ -1490,8 +1457,6 @@ Napi::Object S7Client::S7CpuInfoToObject(PS7CpuInfo CpuInfo) {
 
 
 Napi::Value S7Client::GetCpInfo(const Napi::CallbackInfo &info) {
-  
-
   PS7CpInfo CpInfo = new TS7CpInfo;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->GetCpInfo(CpInfo);
@@ -1524,8 +1489,6 @@ Napi::Object S7Client::S7CpInfoToObject(PS7CpInfo CpInfo) {
 }
 
 Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
-  
-
   if (!(info[0].IsNumber() || info[1].IsNumber())) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
@@ -1594,10 +1557,8 @@ Napi::Array S7Client::S7SZLListToArray(PS7SZLList SZLList, int count) {
 
 // Control functions
 Napi::Value S7Client::PlcHotStart(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->PlcHotStart() == 0);
   } else {
     Napi::Function callback = info[0].As<Napi::Function>();
@@ -1607,10 +1568,8 @@ Napi::Value S7Client::PlcHotStart(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::PlcColdStart(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->PlcColdStart() == 0);
   } else {
     Napi::Function callback = info[0].As<Napi::Function>();
@@ -1620,10 +1579,8 @@ Napi::Value S7Client::PlcColdStart(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::PlcStop(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->PlcStop() == 0);
   } else {
     Napi::Function callback = info[0].As<Napi::Function>();
@@ -1633,14 +1590,12 @@ Napi::Value S7Client::PlcStop(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   if (!info[1].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->CopyRamToRom(info[0].As<Napi::Number>().Int32Value()) == 0);
   } else {
     Napi::Function callback = info[1].As<Napi::Function>();
@@ -1651,14 +1606,12 @@ Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   if (!info[1].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->Compress(info[0].As<Napi::Number>().Int32Value()) == 0);
   } else {
     Napi::Function callback = info[1].As<Napi::Function>();
@@ -1670,8 +1623,6 @@ Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
 
 // Security functions
 Napi::Value S7Client::GetProtection(const Napi::CallbackInfo &info) {
-  
-
   PS7Protection S7Protection = new TS7Protection;
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->GetProtection(S7Protection);
@@ -1713,10 +1664,10 @@ Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  Nan::Utf8String *password = new Nan::Utf8String(info[0]);
+  std::string *password = new std::string(info[0].As<Napi::String>().Utf8Value());
   if (!info[1].IsFunction()) {
-    Napi::Boolean ret = Napi::Boolean::New(info.Env(), 
-      this->snap7Client->SetSessionPassword(**password) == 0);
+    Napi::Boolean ret = Napi::Boolean::New(info.Env(),
+      this->snap7Client->SetSessionPassword(&*password->begin()) == 0);
     delete password;
     return ret;
   } else {
@@ -1729,7 +1680,7 @@ Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::ClearSessionPassword(const Napi::CallbackInfo &info) {
   if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(info.Env(), 
+    return Napi::Boolean::New(info.Env(),
       this->snap7Client->ClearSessionPassword() == 0);
   } else {
     Napi::Function callback = info[0].As<Napi::Function>();
@@ -1749,13 +1700,11 @@ Napi::Value S7Client::ExecTime(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::LastError(const Napi::CallbackInfo &info) {
-  return Napi::Number::New(info.Env(), 
+  return Napi::Number::New(info.Env(),
     this->snap7Client->LastError());
 }
 
 Napi::Value S7Client::PDURequested(const Napi::CallbackInfo &info) {
-  
-
   int returnValue = this->snap7Client->PDURequested();
   if (returnValue == 0) {
     return Napi::Boolean::New(info.Env(), false);
@@ -1765,8 +1714,6 @@ Napi::Value S7Client::PDURequested(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::PDULength(const Napi::CallbackInfo &info) {
-  
-
   int returnValue = this->snap7Client->PDULength();
   if (returnValue == 0) {
     return Napi::Boolean::New(info.Env(), false);
@@ -1776,8 +1723,6 @@ Napi::Value S7Client::PDULength(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::PlcStatus(const Napi::CallbackInfo &info) {
-  
-
   if (!info[0].IsFunction()) {
     int returnValue = this->snap7Client->PlcStatus();
     if ((returnValue == S7CpuStatusUnknown) ||
@@ -1795,9 +1740,7 @@ Napi::Value S7Client::PlcStatus(const Napi::CallbackInfo &info) {
 }
 
 Napi::Value S7Client::Connected(const Napi::CallbackInfo &info) {
-  
-
-  return Napi::Boolean::New(info.Env(), 
+  return Napi::Boolean::New(info.Env(),
     this->snap7Client->Connected());
 }
 

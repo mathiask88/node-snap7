@@ -24,7 +24,7 @@ enum DataIOFunction { READAREA = 1, WRITEAREA, READMULTI, WRITEMULTI
 class S7Client : public Napi::ObjectWrap<S7Client> {
  public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
-  S7Client(const Napi::CallbackInfo &info);
+  explicit S7Client(const Napi::CallbackInfo &info);
   // Control functions
   Napi::Value Connect(const Napi::CallbackInfo &info);
   Napi::Value ConnectTo(const Napi::CallbackInfo &info);
