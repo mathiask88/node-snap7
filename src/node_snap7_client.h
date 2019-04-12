@@ -93,8 +93,8 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
     , int count);
   Napi::Array S7SZLListToArray(PS7SZLList SZLList, int count);
 
-  static void FreeCallback(char *data, void* hint);
-  static void FreeCallbackSZL(char *data, void* hint);
+  static void FreeCallback(Napi::Env env, char *finalizeData);
+  static void FreeCallbackSZL(Napi::Env env, char *finalizeData);
 
   uv_mutex_t mutex;
   PS7Client snap7Client;
