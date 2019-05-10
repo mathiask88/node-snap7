@@ -25,7 +25,7 @@ typedef struct {
 class S7Server : public Napi::ObjectWrap<S7Server> {
  public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
-  S7Server(const Napi::CallbackInfo &info, v8::Local<v8::Object> resource);
+  explicit S7Server(const Napi::CallbackInfo &info);
 
   Napi::Value Start(const Napi::CallbackInfo &info);
   Napi::Value StartTo(const Napi::CallbackInfo &info);
@@ -52,25 +52,12 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 
   static int GetByteCountFromWordLen(int WordLen);
 
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-  static void HandleEvent(uv_async_t* handle);
-#else
-  static void HandleEvent(uv_async_t* handle, int status);
-#endif
-
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-  static void HandleReadWriteEvent(uv_async_t* handle);
-#else
-  static void HandleReadWriteEvent(uv_async_t* handle, int status);
-#endif
-
-  static NAN_METHOD(RWBufferCallback);
+  //static NAN_METHOD(RWBufferCallback);
 
   uv_mutex_t mutex;
   TS7Server *snap7Server;
   std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;
-  node::AsyncResource async_resource;
 
  private:
   ~S7Server();
@@ -80,10 +67,10 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 class IOWorkerServer : public Napi::AsyncWorker {
  public:
   // No args
-  IOWorkerServer(Function& callback, S7Server *s7server, ServerIOFunction caller)
+  IOWorkerServer(Napi::Function& callback, S7Server *s7server, ServerIOFunction caller)
     : Napi::AsyncWorker(callback), s7server(s7server), caller(caller) {}
   // 1 args
-  IOWorkerServer(Function& callback, S7Server *s7server, ServerIOFunction caller
+  IOWorkerServer(Napi::Function& callback, S7Server *s7server, ServerIOFunction caller
     , void *arg1)
     : Napi::AsyncWorker(callback), s7server(s7server), caller(caller)
     , pData(arg1) {}

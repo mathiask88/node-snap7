@@ -25,6 +25,7 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
  public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   explicit S7Client(const Napi::CallbackInfo &info);
+  ~S7Client();
   // Control functions
   Napi::Value Connect(const Napi::CallbackInfo &info);
   Napi::Value ConnectTo(const Napi::CallbackInfo &info);
@@ -100,7 +101,6 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
   PS7Client snap7Client;
 
  private:
-  ~S7Client();
   static Napi::FunctionReference constructor;
 };
 
