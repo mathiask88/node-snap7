@@ -638,7 +638,7 @@ NAN_MODULE_INIT(S7Server::Init) {
     , v8::ReadOnly);
 
   constructor.Reset(tpl);
-  Nan::Set(target, name, tpl->GetFunction());
+  Nan::Set(target, name, Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 NAN_METHOD(S7Server::New) {
@@ -651,7 +651,7 @@ NAN_METHOD(S7Server::New) {
     v8::Local<v8::FunctionTemplate> constructorHandle;
     constructorHandle = Nan::New<v8::FunctionTemplate>(constructor);
     info.GetReturnValue().Set(
-      Nan::NewInstance(constructorHandle->GetFunction()).ToLocalChecked());
+      Nan::NewInstance(Nan::GetFunction(constructorHandle).ToLocalChecked()).ToLocalChecked());
   }
 }
 
