@@ -18,7 +18,7 @@
     "name": "Mathias Küsel"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=6"
   },
   "license": "MIT",
   "readmeFilename": "README.md",
@@ -28,8 +28,8 @@
     "prebuild-install": "^5.2.5"
   },
   "devDependencies": {
-    "prebuild": "^8.2.1",
-    "prebuild-ci": "^2.3.0"
+    "prebuild": "^9.0.0",
+    "prebuild-ci": "^3.0.0"
   },
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",

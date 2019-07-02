@@ -6,8 +6,10 @@
 #ifndef SRC_NODE_SNAP7_SERVER_H_
 #define SRC_NODE_SNAP7_SERVER_H_
 
-#include <snap7.h>
 #include <napi.h>
+#include <snap7.h>
+#include <condition_variable>
+#include <mutex>
 #include <map>
 #include <deque>
 
@@ -52,9 +54,9 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 
   static int GetByteCountFromWordLen(int WordLen);
 
-  //static NAN_METHOD(RWBufferCallback);
+  static Napi::Value RWBufferCallback(const Napi::CallbackInfo& info);
 
-  uv_mutex_t mutex;
+  std::mutex mutex;
   TS7Server *snap7Server;
   std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;

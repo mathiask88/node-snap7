@@ -9,9 +9,9 @@ namespace node_snap7 {
 
 static uv_async_t event_async_g;
 static uv_async_t rw_async_g;
-static uv_mutex_t mutex_rw;
-static uv_mutex_t mutex_event;
-static uv_sem_t sem_rw;
+static std::mutex mutex_rw;
+static std::mutex mutex_event;
+static std::condition_variable sem_rw;
 static std::deque<TSrvEvent> event_list_g;
 
 static struct rw_event_baton_t {
@@ -22,9 +22,9 @@ static struct rw_event_baton_t {
 } rw_event_baton_g;
 
 void S7API EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size) {
-  uv_mutex_lock(&mutex_event);
+  mutex_event.lock();
   event_list_g.push_back(*PEvent);
-  uv_mutex_unlock(&mutex_event);
+  mutex_event.unlock();
 
   uv_async_send(&event_async_g);
 }
@@ -40,623 +40,262 @@ int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
 
   uv_async_send(&rw_async_g);
 
-  uv_sem_wait(&sem_rw);
+  sem_rw.wait();
   uv_mutex_unlock(&mutex_rw);
 
   return 0;
 }
 
-Nan::Persistent<v8::FunctionTemplate> S7Server::constructor;
+Napi::FunctionReference S7Server::constructor;
 
-NAN_MODULE_INIT(S7Server::Init) {
-  Nan::HandleScope scope;
+Napi::FunctionReference S7Server::constructor;
 
-  v8::Local<v8::FunctionTemplate> tpl;
-  tpl = Nan::New<v8::FunctionTemplate>(S7Server::New);
+Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
+  Napi::HandleScope scope(env);
 
-  v8::Local<v8::String> name = Nan::New<v8::String>("S7Server")
-    .ToLocalChecked();
-
-  tpl->SetClassName(name);
-  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+  Napi::Function func = DefineClass(env, "S7Client", {
 
   // Setup the prototype
-  Nan::SetPrototypeMethod(
-    tpl
-    , "Start"
-    , S7Server::Start);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "StartTo"
-    , S7Server::StartTo);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "Stop"
-    , S7Server::Stop);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetParam"
-    , S7Server::SetParam);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetParam"
-    , S7Server::GetParam);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetResourceless"
-    , S7Server::SetResourceless);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "RegisterArea"
-    , S7Server::RegisterArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "UnregisterArea"
-    , S7Server::UnregisterArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "LockArea"
-    , S7Server::LockArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "UnlockArea"
-    , S7Server::UnlockArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetArea"
-    , S7Server::SetArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetArea"
-    , S7Server::GetArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetEventMask"
-    , S7Server::SetEventsMask);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetEventsMask"
-    , S7Server::GetEventsMask);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ErrorText"
-    , S7Server::ErrorText);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "LastError"
-    , S7Server::LastError);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "EventText"
-    , S7Server::EventText);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ServerStatus"
-    , S7Server::ServerStatus);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ClientsCount"
-    , S7Server::ClientsCount);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetCpuStatus"
-    , S7Server::GetCpuStatus);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetCpuStatus"
-    , S7Server::SetCpuStatus);
+  InstanceMethod("Start", &S7Server::Start),
+  InstanceMethod("StartTo", &S7Server::StartTo),
+  InstanceMethod("Stop", &S7Server::Stop),
+  InstanceMethod("SetParam", &S7Server::SetParam),
+  InstanceMethod("GetParam", &S7Server::GetParam),
+  InstanceMethod("SetResourceless", &S7Server::SetResourceless),
+  InstanceMethod("RegisterArea", &S7Server::RegisterArea),
+  InstanceMethod("UnregisterArea", &S7Server::UnregisterArea),
+  InstanceMethod("LockArea", &S7Server::LockArea),
+  InstanceMethod("UnlockArea", &S7Server::UnlockArea),
+  InstanceMethod("SetArea", &S7Server::SetArea),
+  InstanceMethod("GetArea", &S7Server::GetArea),
+  InstanceMethod("SetEventMask", &S7Server::SetEventsMask),
+  InstanceMethod("GetEventsMask", &S7Server::GetEventsMask),
+  InstanceMethod("ErrorText", &S7Server::ErrorText),
+  InstanceMethod("LastError", &S7Server::LastError),
+  InstanceMethod("EventText", &S7Server::EventText),
+  InstanceMethod("ServerStatus", &S7Server::ServerStatus),
+  InstanceMethod("ClientsCount", &S7Server::ClientsCount),
+  InstanceMethod("GetCpuStatus", &S7Server::GetCpuStatus),
+  InstanceMethod("SetCpuStatus", &S7Server::SetCpuStatus),
 
   // Error codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvCannotStart").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvCannotStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvDBNullPointer").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvDBNullPointer)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvAreaAlreadyExists").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvAreaAlreadyExists)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvUnknownArea").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvUnknownArea)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvInvalidParams").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvInvalidParams)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvTooManyDB").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvTooManyDB)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvInvalidParamNumber").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvInvalidParamNumber)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvCannotChangeParam").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvCannotChangeParam)
-    , v8::ReadOnly);
+  StaticValue("errSrvCannotStart"
+    , Napi::Value::From(env, errSrvCannotStart)),
+  StaticValue("errSrvDBNullPointer"
+    , Napi::Value::From(env, errSrvDBNullPointer)),
+  StaticValue("errSrvAreaAlreadyExists"
+    , Napi::Value::From(env, errSrvAreaAlreadyExists)),
+  StaticValue("errSrvUnknownArea"
+    , Napi::Value::From(env, errSrvUnknownArea)),
+  StaticValue("errSrvInvalidParams"
+    , Napi::Value::From(env, errSrvInvalidParams)),
+  StaticValue("errSrvTooManyDB"
+    , Napi::Value::From(env, errSrvTooManyDB)),
+  StaticValue("errSrvInvalidParamNumber"
+    , Napi::Value::From(env, errSrvInvalidParamNumber)),
+  StaticValue("errSrvCannotChangeParam"
+    , Napi::Value::From(env, errSrvCannotChangeParam)),
 
   // Server area IDs
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaPE").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaPE)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaPA").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaPA)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaMK").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaMK)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaCT").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaCT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaTM").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaTM)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaDB").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaDB)
-    , v8::ReadOnly);
-
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("operationWrite").ToLocalChecked()
-    , Nan::New<v8::Integer>(OperationWrite)
-    , v8::ReadOnly);
-
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("operationRead").ToLocalChecked()
-    , Nan::New<v8::Integer>(OperationRead)
-    , v8::ReadOnly);
-
+  StaticValue("srvAreaPE"
+    , Napi::Value::From(env, srvAreaPE)),
+  StaticValue("srvAreaPA"
+    , Napi::Value::From(env, srvAreaPA)),
+  StaticValue("srvAreaMK"
+    , Napi::Value::From(env, srvAreaMK)),
+  StaticValue("srvAreaCT"
+    , Napi::Value::From(env, srvAreaCT)),
+  StaticValue("srvAreaTM"
+    , Napi::Value::From(env, srvAreaTM)),
+  StaticValue("srvAreaDB"
+    , Napi::Value::From(env, srvAreaDB)),
+  StaticValue("operationWrite"
+    , Napi::Value::From(env, OperationWrite)),
+  StaticValue("operationRead"
+    , Napi::Value::From(env, OperationRead)),
   // TCP server event codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcServerStarted").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcServerStarted)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcServerStopped").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcServerStopped)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcListenerCannotStart").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcListenerCannotStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientAdded").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientAdded)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientRejected").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientRejected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientNoRoom").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientNoRoom)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientException").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientException)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientDisconnected").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientDisconnected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientTerminated").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientTerminated)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientsDropped").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientsDropped)
-    , v8::ReadOnly);
+  StaticValue("evcServerStarted"
+    , Napi::Value::From(env, evcServerStarted)),
+  StaticValue("evcServerStopped"
+    , Napi::Value::From(env, evcServerStopped)),
+  StaticValue("evcListenerCannotStart"
+    , Napi::Value::From(env, evcListenerCannotStart)),
+  StaticValue("evcClientAdded"
+    , Napi::Value::From(env, evcClientAdded)),
+  StaticValue("evcClientRejected"
+    , Napi::Value::From(env, evcClientRejected)),
+  StaticValue("evcClientNoRoom"
+    , Napi::Value::From(env, evcClientNoRoom)),
+  StaticValue("evcClientException"
+    , Napi::Value::From(env, evcClientException)),
+  StaticValue("evcClientDisconnected"
+    , Napi::Value::From(env, evcClientDisconnected)),
+  StaticValue("evcClientTerminated"
+    , Napi::Value::From(env, evcClientTerminated)),
+  StaticValue("evcClientsDropped"
+    , Napi::Value::From(env, evcClientsDropped)),
 
   // S7 server event codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcPDUincoming").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcPDUincoming)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDataRead").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDataRead)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDataWrite").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDataWrite)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcNegotiatePDU").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcNegotiatePDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcReadSZL").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcReadSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClock").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcUpload").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDownload").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDirectory").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDirectory)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcSecurity").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcSecurity)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcControl").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcControl)
-    , v8::ReadOnly);
+  StaticValue("evcPDUincoming"
+    , Napi::Value::From(env, evcPDUincoming)),
+  StaticValue("evcDataRead"
+    , Napi::Value::From(env, evcDataRead)),
+  StaticValue("evcDataWrite"
+    , Napi::Value::From(env, evcDataWrite)),
+  StaticValue("evcNegotiatePDU"
+    , Napi::Value::From(env, evcNegotiatePDU)),
+  StaticValue("evcReadSZL"
+    , Napi::Value::From(env, evcReadSZL)),
+  StaticValue("evcClock"
+    , Napi::Value::From(env, evcClock)),
+  StaticValue("evcUpload"
+    , Napi::Value::From(env, evcUpload)),
+  StaticValue("evcDownload"
+    , Napi::Value::From(env, evcDownload)),
+  StaticValue("evcDirectory"
+    , Napi::Value::From(env, evcDirectory)),
+  StaticValue("evcSecurity"
+    , Napi::Value::From(env, evcSecurity)),
+  StaticValue("evcControl"
+    , Napi::Value::From(env, evcControl)),
 
   // Masks to enable/disable all events
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcAll").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcAll)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcNone").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcNone)
-    , v8::ReadOnly);
+  StaticValue("evcAll"
+    , Napi::Value::From(env, evcAll)),
+  StaticValue("evcNone"
+    , Napi::Value::From(env, evcNone)),
 
   // Event subcodes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartUpload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartDownload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetBlockList").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetBlockList)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartListBoT").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartListBoT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsListBoT").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsListBoT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetBlockInfo").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetBlockInfo)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsSetClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsSetClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsSetPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsSetPassword)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsClrPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsClrPassword)
-    , v8::ReadOnly);
+  StaticValue("evsUnknown"
+    , Napi::Value::From(env, evsUnknown)),
+  StaticValue("evsStartUpload"
+    , Napi::Value::From(env, evsStartUpload)),
+  StaticValue("evsStartDownload"
+    , Napi::Value::From(env, evsStartDownload)),
+  StaticValue("evsGetBlockList"
+    , Napi::Value::From(env, evsGetBlockList)),
+  StaticValue("evsStartListBoT"
+    , Napi::Value::From(env, evsStartListBoT)),
+  StaticValue("evsListBoT"
+    , Napi::Value::From(env, evsListBoT)),
+  StaticValue("evsGetBlockInfo"
+    , Napi::Value::From(env, evsGetBlockInfo)),
+  StaticValue("evsGetClock"
+    , Napi::Value::From(env, evsGetClock)),
+  StaticValue("evsSetClock"
+    , Napi::Value::From(env, evsSetClock)),
+  StaticValue("evsSetPassword"
+    , Napi::Value::From(env, evsSetPassword)),
+  StaticValue("evsClrPassword"
+    , Napi::Value::From(env, evsClrPassword)),
 
   // Event params : functions group
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grProgrammer").ToLocalChecked()
-    , Nan::New<v8::Integer>(grProgrammer)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grCyclicData").ToLocalChecked()
-    , Nan::New<v8::Integer>(grCyclicData)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grBlocksInfo").ToLocalChecked()
-    , Nan::New<v8::Integer>(grBlocksInfo)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grSZL").ToLocalChecked()
-    , Nan::New<v8::Integer>(grSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(grPassword)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grBSend").ToLocalChecked()
-    , Nan::New<v8::Integer>(grBSend)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(grClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grSecurity").ToLocalChecked()
-    , Nan::New<v8::Integer>(grSecurity)
-    , v8::ReadOnly);
+  StaticValue("grProgrammer"
+    , Napi::Value::From(env, grProgrammer)),
+  StaticValue("grCyclicData"
+    , Napi::Value::From(env, grCyclicData)),
+  StaticValue("grBlocksInfo"
+    , Napi::Value::From(env, grBlocksInfo)),
+  StaticValue("grSZL"
+    , Napi::Value::From(env, grSZL)),
+  StaticValue("grPassword"
+    , Napi::Value::From(env, grPassword)),
+  StaticValue("grBSend"
+    , Napi::Value::From(env, grBSend)),
+  StaticValue("grClock"
+    , Napi::Value::From(env, grClock)),
+  StaticValue("grSecurity"
+    , Napi::Value::From(env, grSecurity)),
 
   // Event params : control codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlColdStart").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlColdStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlWarmStart").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlWarmStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlStop").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlStop)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlCompress").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlCompress)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlCpyRamRom").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlCpyRamRom)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlInsDel").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlInsDel)
-    , v8::ReadOnly);
+  StaticValue("CodeControlUnknown"
+    , Napi::Value::From(env, CodeControlUnknown)),
+  StaticValue("CodeControlColdStart"
+    , Napi::Value::From(env, CodeControlColdStart)),
+  StaticValue("CodeControlWarmStart"
+    , Napi::Value::From(env, CodeControlWarmStart)),
+  StaticValue("CodeControlStop"
+    , Napi::Value::From(env, CodeControlStop)),
+  StaticValue("CodeControlCompress"
+    , Napi::Value::From(env, CodeControlCompress)),
+  StaticValue("CodeControlCpyRamRom"
+    , Napi::Value::From(env, CodeControlCpyRamRom)),
+  StaticValue("CodeControlInsDel"
+    , Napi::Value::From(env, CodeControlInsDel)),
 
   // Event results
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrNoError").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrNoError)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrFragmentRejected").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrFragmentRejected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrMalformedPDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrMalformedPDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrSparseBytes").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrSparseBytes)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotHandlePDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotHandlePDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrNotImplemented").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrNotImplemented)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrException").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrException)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrAreaNotFound").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrAreaNotFound)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrOutOfRange").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrOutOfRange)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrOverPDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrOverPDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrTransportSize").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrTransportSize)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrInvalidGroupUData").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrInvalidGroupUData)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrInvalidSZL").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrInvalidSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrDataSizeMismatch").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrDataSizeMismatch)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotUpload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotDownload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrUploadInvalidID").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrUploadInvalidID)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrResNotFound").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrResNotFound)
-    , v8::ReadOnly);
+  StaticValue("evrNoError"
+    , Napi::Value::From(env, evrNoError)),
+  StaticValue("evrFragmentRejected"
+    , Napi::Value::From(env, evrFragmentRejected)),
+  StaticValue("evrMalformedPDU"
+    , Napi::Value::From(env, evrMalformedPDU)),
+  StaticValue("evrSparseBytes"
+    , Napi::Value::From(env, evrSparseBytes)),
+  StaticValue("evrCannotHandlePDU"
+    , Napi::Value::From(env, evrCannotHandlePDU)),
+  StaticValue("evrNotImplemented"
+    , Napi::Value::From(env, evrNotImplemented)),
+  StaticValue("evrErrException"
+    , Napi::Value::From(env, evrErrException)),
+  StaticValue("evrErrAreaNotFound"
+    , Napi::Value::From(env, evrErrAreaNotFound)),
+  StaticValue("evrErrOutOfRange"
+    , Napi::Value::From(env, evrErrOutOfRange)),
+  StaticValue("evrErrOverPDU"
+    , Napi::Value::From(env, evrErrOverPDU)),
+  StaticValue("evrErrTransportSize"
+    , Napi::Value::From(env, evrErrTransportSize)),
+  StaticValue("evrInvalidGroupUData"
+    , Napi::Value::From(env, evrInvalidGroupUData)),
+  StaticValue("evrInvalidSZL"
+    , Napi::Value::From(env, evrInvalidSZL)),
+  StaticValue("evrDataSizeMismatch"
+    , Napi::Value::From(env, evrDataSizeMismatch)),
+  StaticValue("evrCannotUpload"
+    , Napi::Value::From(env, evrCannotUpload)),
+  StaticValue("evrCannotDownload"
+    , Napi::Value::From(env, evrCannotDownload)),
+  StaticValue("evrUploadInvalidID"
+    , Napi::Value::From(env, evrUploadInvalidID)),
+  StaticValue("evrResNotFound"
+    , Napi::Value::From(env, evrResNotFound)),
 
   // Server parameter
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("LocalPort").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_u16_LocalPort)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("WorkInterval").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_WorkInterval)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("PDURequest").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_PDURequest)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("MaxClients").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_MaxClients)
-    , v8::ReadOnly);
+  StaticValue("LocalPort"
+    , Napi::Value::From(env, p_u16_LocalPort)),
+  StaticValue("WorkInterval"
+    , Napi::Value::From(env, p_i32_WorkInterval)),
+  StaticValue("PDURequest"
+    , Napi::Value::From(env, p_i32_PDURequest)),
+  StaticValue("MaxClients"
+    , Napi::Value::From(env, p_i32_MaxClients)),
 
   // CPU status codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusRun").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusRun)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusStop").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusStop)
-    , v8::ReadOnly);
+  StaticValue("S7CpuStatusUnknown"
+    , Napi::Value::From(env, S7CpuStatusUnknown)),
+  StaticValue("S7CpuStatusRun"
+    , Napi::Value::From(env, S7CpuStatusRun)),
+  StaticValue("S7CpuStatusStop"
+    , Napi::Value::From(env, S7CpuStatusStop)),
 
   // Server status codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvStopped").ToLocalChecked()
-    , Nan::New<v8::Integer>(0)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvRunning").ToLocalChecked()
-    , Nan::New<v8::Integer>(1)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvError").ToLocalChecked()
-    , Nan::New<v8::Integer>(2)
-    , v8::ReadOnly);
+  StaticValue("SrvStopped"
+    , Napi::Value::From(env, 0)),
+  StaticValue("SrvRunning"
+    , Napi::Value::From(env, 1)),
+  StaticValue("SrvError"
+    , Napi::Value::From(env, 2))
+  });
 
-  constructor.Reset(tpl);
-  Nan::Set(target, name, tpl->GetFunction());
+  constructor = Napi::Persistent(func);
+  constructor.SuppressDestruct();
+
+  exports.Set("S7Client", func);
+  return exports;
 }
 
-NAN_METHOD(S7Server::New) {
-  if (info.IsConstructCall()) {
-    S7Server *s7Server = new S7Server(info.This());
-
-    s7Server->Wrap(info.This());
-  info.GetReturnValue().Set(info.This());
-  } else {
-    v8::Local<v8::FunctionTemplate> constructorHandle;
-    constructorHandle = Nan::New<v8::FunctionTemplate>(constructor);
-    info.GetReturnValue().Set(
-      Nan::NewInstance(constructorHandle->GetFunction()).ToLocalChecked());
-  }
-}
-
-S7Server::S7Server(v8::Local<v8::Object> resource)
-  : async_resource("S7Server:emit", resource) {
+S7Server::S7Server(const Napi::CallbackInfo& info) {
   lastError = 0;
   snap7Server = new TS7Server();
 
@@ -706,7 +345,7 @@ int S7Server::GetByteCountFromWordLen(int WordLen) {
   }
 }
 
-NAN_METHOD(S7Server::RWBufferCallback) {
+Napi::Value S7Server::RWBufferCallback(const Napi::CallbackInfo& info) {
   Nan::HandleScope scope;
 
   if (rw_event_baton_g.Operation == OperationRead) {
@@ -731,11 +370,7 @@ NAN_METHOD(S7Server::RWBufferCallback) {
   uv_sem_post(&sem_rw);
 }
 
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-void S7Server::HandleEvent(uv_async_t* handle) {
-#else
 void S7Server::HandleEvent(uv_async_t* handle, int status) {
-#endif
   Nan::HandleScope scope;
 
   S7Server *s7server = static_cast<S7Server*>(handle->data);
@@ -748,25 +383,25 @@ void S7Server::HandleEvent(uv_async_t* handle, int status) {
     double time = static_cast<double>(Event->EvtTime * 1000);
 
     v8::Local<v8::Object> event_obj = Nan::New<v8::Object>();
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()
-      , Nan::New<v8::Date>(time).ToLocalChecked());
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()
-      , Nan::New<v8::String>(inet_ntoa(sin)).ToLocalChecked());
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtTime")
+      , Nan::New<v8::Date>(time));
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtSender")
+      , Nan::New<v8::String>(inet_ntoa(sin)));
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtCode")
       , Nan::New<v8::Uint32>(Event->EvtCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtRetCode")
       , Nan::New<v8::Integer>(Event->EvtRetCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam1")
       , Nan::New<v8::Integer>(Event->EvtParam1));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam2")
       , Nan::New<v8::Integer>(Event->EvtParam2));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam3")
       , Nan::New<v8::Integer>(Event->EvtParam3));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()
+    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam4")
       , Nan::New<v8::Integer>(Event->EvtParam4));
 
     v8::Local<v8::Value> argv[2] = {
-      Nan::New("event").ToLocalChecked(),
+      Nan::New("event"),
       event_obj
     };
 
@@ -776,27 +411,24 @@ void S7Server::HandleEvent(uv_async_t* handle, int status) {
   uv_mutex_unlock(&mutex_event);
 }
 
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-void S7Server::HandleReadWriteEvent(uv_async_t* handle) {
-#else
+
 void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
-#endif
-  Nan::HandleScope scope;
+  Napi::AsyncContext context(info.Env(), "S7Server:emit", resource);
 
   S7Server *s7server = static_cast<S7Server*>(handle->data);
   in_addr sin;
   sin.s_addr = rw_event_baton_g.Sender;
 
   v8::Local<v8::Object> rw_tag_obj = Nan::New<v8::Object>();
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Area").ToLocalChecked()
+  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Area")
     , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Area));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("DBNumber").ToLocalChecked()
+  Nan::Set(rw_tag_obj, Nan::New<v8::String>("DBNumber")
     , Nan::New<v8::Integer>(rw_event_baton_g.Tag.DBNumber));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Start").ToLocalChecked()
+  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Start")
     , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Start));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Size").ToLocalChecked()
+  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Size")
     , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Size));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("WordLen").ToLocalChecked()
+  Nan::Set(rw_tag_obj, Nan::New<v8::String>("WordLen")
     , Nan::New<v8::Integer>(rw_event_baton_g.Tag.WordLen));
 
   int byteCount, size;
@@ -808,15 +440,15 @@ void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
   if (rw_event_baton_g.Operation == OperationWrite) {
     buffer = Nan::CopyBuffer(
       static_cast<char*>(rw_event_baton_g.pUsrData),
-      size).ToLocalChecked();
+      size);
   } else {
-    buffer = Nan::NewBuffer(size).ToLocalChecked();
+    buffer = Nan::NewBuffer(size);
     memset(node::Buffer::Data(buffer), 0, size);
   }
 
   v8::Local<v8::Value> argv[6] = {
-    Nan::New("readWrite").ToLocalChecked(),
-    Nan::New<v8::String>(inet_ntoa(sin)).ToLocalChecked(),
+    Nan::New("readWrite"),
+    Nan::New<v8::String>(inet_ntoa(sin)),
     Nan::New<v8::Integer>(rw_event_baton_g.Operation),
     rw_tag_obj,
     buffer,
@@ -884,7 +516,7 @@ void IOWorkerServer::HandleOKCallback() {
   }
 }
 
-NAN_METHOD(S7Server::Start) {
+Napi::Value S7Server::Start(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsFunction()) {
@@ -904,7 +536,7 @@ NAN_METHOD(S7Server::Start) {
   }
 }
 
-NAN_METHOD(S7Server::StartTo) {
+Napi::Value S7Server::StartTo(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (info.Length() < 1) {
@@ -935,7 +567,7 @@ NAN_METHOD(S7Server::StartTo) {
   }
 }
 
-NAN_METHOD(S7Server::Stop) {
+Napi::Value S7Server::Stop(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsFunction()) {
@@ -955,7 +587,7 @@ NAN_METHOD(S7Server::Stop) {
   }
 }
 
-NAN_METHOD(S7Server::SetResourceless) {
+Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsBoolean()) {
@@ -975,7 +607,7 @@ NAN_METHOD(S7Server::SetResourceless) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::GetParam) {
+Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -990,7 +622,7 @@ NAN_METHOD(S7Server::GetParam) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::SetParam) {
+Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!(info[0]->IsInt32() || info[1]->IsInt32())) {
@@ -1004,7 +636,7 @@ NAN_METHOD(S7Server::SetParam) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::GetEventsMask) {
+Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   int ret = s7server->snap7Server->GetEventsMask();
@@ -1012,7 +644,7 @@ NAN_METHOD(S7Server::GetEventsMask) {
   info.GetReturnValue().Set(Nan::New<v8::Uint32>(ret));
 }
 
-NAN_METHOD(S7Server::SetEventsMask) {
+Napi::Value S7Server::SetEventsMask(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsUint32()) {
@@ -1023,7 +655,7 @@ NAN_METHOD(S7Server::SetEventsMask) {
   info.GetReturnValue().SetUndefined();
 }
 
-NAN_METHOD(S7Server::RegisterArea) {
+Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1072,7 +704,7 @@ NAN_METHOD(S7Server::RegisterArea) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::UnregisterArea) {
+Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1101,7 +733,7 @@ NAN_METHOD(S7Server::UnregisterArea) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::SetArea) {
+Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1157,7 +789,7 @@ NAN_METHOD(S7Server::SetArea) {
   info.GetReturnValue().SetUndefined();
 }
 
-NAN_METHOD(S7Server::GetArea) {
+Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1186,14 +818,14 @@ NAN_METHOD(S7Server::GetArea) {
 
   v8::Local<v8::Object> buffer = Nan::CopyBuffer(
       s7server->area2buffer[area][index].pBuffer
-    , s7server->area2buffer[area][index].size).ToLocalChecked();
+    , s7server->area2buffer[area][index].size);
 
   s7server->snap7Server->UnlockArea(area, index);
 
   info.GetReturnValue().Set(buffer);
 }
 
-NAN_METHOD(S7Server::LockArea) {
+Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1217,7 +849,7 @@ NAN_METHOD(S7Server::LockArea) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::UnlockArea) {
+Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1241,7 +873,7 @@ NAN_METHOD(S7Server::UnlockArea) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::ServerStatus) {
+Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   int ret = s7server->snap7Server->ServerStatus();
@@ -1254,14 +886,14 @@ NAN_METHOD(S7Server::ServerStatus) {
   }
 }
 
-NAN_METHOD(S7Server::ClientsCount) {
+Napi::Value S7Server::ClientsCount(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   int ret = s7server->snap7Server->ClientsCount();
   info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
 }
 
-NAN_METHOD(S7Server::GetCpuStatus) {
+Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   int ret = s7server->snap7Server->GetCpuStatus();
@@ -1276,7 +908,7 @@ NAN_METHOD(S7Server::GetCpuStatus) {
   }
 }
 
-NAN_METHOD(S7Server::SetCpuStatus) {
+Napi::Value S7Server::SetCpuStatus(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
@@ -1289,16 +921,16 @@ NAN_METHOD(S7Server::SetCpuStatus) {
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
 }
 
-NAN_METHOD(S7Server::ErrorText) {
+Napi::Value S7Server::ErrorText(const Napi::CallbackInfo& info) {
   if (!info[0]->IsInt32()) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
   info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()).ToLocalChecked());
+    SrvErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()));
 }
 
-NAN_METHOD(S7Server::EventText) {
+Napi::Value S7Server::EventText(const Napi::CallbackInfo& info) {
   TSrvEvent SrvEvent;
 
   if (!info[0]->IsObject()) {
@@ -1306,49 +938,49 @@ NAN_METHOD(S7Server::EventText) {
   }
 
   v8::Local<v8::Object> event_obj = v8::Local<v8::Object>::Cast(info[0]);
-  if (!Nan::Has(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).FromJust()) {
+  if (!Nan::Has(event_obj, Nan::New<v8::String>("EvtTime")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtSender")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtCode")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtRetCode")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam1")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam2")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam3")).FromJust() ||
+    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam4")).FromJust()) {
     return Nan::ThrowTypeError("Wrong argument structure");
   }
 
-  if (!Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked()->IsDate() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()).ToLocalChecked()->IsString() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()->IsUint32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()->IsInt32()) {
+  if (!Nan::Get(event_obj, Nan::New<v8::String>("EvtTime"))->IsDate() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtSender"))->IsString() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtCode"))->IsUint32() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode"))->IsInt32() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1"))->IsInt32() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2"))->IsInt32() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3"))->IsInt32() ||
+    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4"))->IsInt32()) {
     return Nan::ThrowTypeError("Wrong argument types");
   }
 
   Nan::Utf8String *remAddress = new Nan::Utf8String(
     Nan::Get(
         event_obj
-      , Nan::New<v8::String>("EvtSender").ToLocalChecked()).ToLocalChecked());
+      , Nan::New<v8::String>("EvtSender")));
 
-  SrvEvent.EvtTime = static_cast<time_t>(Nan::To<double>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked())).FromJust() / 1000);
+  SrvEvent.EvtTime = static_cast<time_t>(Nan::To<double>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime")))).FromJust() / 1000);
   SrvEvent.EvtSender = inet_addr(**remAddress);
-  SrvEvent.EvtCode = Nan::To<uint32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtRetCode = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam1 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam2 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam3 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam4 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()).FromJust();
+  SrvEvent.EvtCode = Nan::To<uint32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtCode"))).FromJust();
+  SrvEvent.EvtRetCode = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode"))).FromJust();
+  SrvEvent.EvtParam1 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1"))).FromJust();
+  SrvEvent.EvtParam2 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2"))).FromJust();
+  SrvEvent.EvtParam3 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3"))).FromJust();
+  SrvEvent.EvtParam4 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4"))).FromJust();
 
   delete remAddress;
 
   info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvEventText(&SrvEvent).c_str()).ToLocalChecked());
+    SrvEventText(&SrvEvent).c_str()));
 }
 
-NAN_METHOD(S7Server::LastError) {
+Napi::Value S7Server::LastError(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   info.GetReturnValue().Set(Nan::New<v8::Integer>(s7server->lastError));

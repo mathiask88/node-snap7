@@ -198,18 +198,13 @@ Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
 }
 
 S7Client::S7Client(const Napi::CallbackInfo &info) : Napi::ObjectWrap<S7Client>(info) {
-  Napi::Env env = info.Env();
-  Napi::HandleScope scope(env);
-
   snap7Client = new TS7Client();
-  uv_mutex_init(&mutex);
 }
 
 S7Client::~S7Client() {
   snap7Client->Disconnect();
   delete snap7Client;
   constructor.Reset();
-  uv_mutex_destroy(&mutex);
 }
 
 int S7Client::GetByteCountFromWordLen(int WordLen) {
@@ -339,7 +334,7 @@ Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
 
 // Data I/O Main functions
 void IOWorker::Execute() {
-  uv_mutex_lock(&this->s7client->mutex);
+  this->s7client->mutex.lock();
 
   switch (caller) {
   case CONNECTTO:
@@ -494,7 +489,7 @@ void IOWorker::Execute() {
       break;
   }
 
-  uv_mutex_unlock(&this->s7client->mutex);
+  this->s7client->mutex.unlock();
 }
 
 void IOWorker::OnOK() {
@@ -751,7 +746,7 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
       , bufferData);
 
     if (returnValue == 0) {
-      Napi::Object ret = Napi::Buffer<char>::New(Env(),
+      Napi::Buffer<char> ret = Napi::Buffer<char>::New(Env(),
           bufferData
         , size
         , S7Client::FreeCallback);
@@ -814,7 +809,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  Napi::Array data_arr = info[0].As<Napi::Array>();
+  const Napi::Array data_arr = info[0].As<Napi::Array>();
   int len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(info.Env(), "Array needs at least 1 item").ThrowAsJavaScriptException();
@@ -826,10 +821,10 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
   }
 
   for (int i = 0; i < len; i++) {
-    if (!static_cast<Napi::Value>(data_arr[i]).IsObject()) {
+    if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(info.Env(), "Wrong argument structure").ThrowAsJavaScriptException();
     } else {
-      Napi::Object data_obj = static_cast<Napi::Value>(data_arr[i]).As<Napi::Object>();
+      Napi::Object data_obj = data_arr[i].As<Napi::Object>();
       if (!data_obj.Has("Area") ||
           !data_obj.Has("WordLen") ||
           !data_obj.Has("Start") ||
@@ -855,7 +850,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
   int byteCount, size;
 
   for (int i = 0; i < len; i++) {
-    data_obj = static_cast<Napi::Value>(data_arr[i]).As<Napi::Object>();
+    data_obj = data_arr[i].As<Napi::Object>();
 
     Items[i].Area = data_obj.Get("Area").As<Napi::Number>().Int32Value();
     Items[i].WordLen = data_obj.Get("WordLen").As<Napi::Number>().Int32Value();
@@ -935,7 +930,7 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  Napi::Array data_arr = info[0].As<Napi::Array>();
+  const Napi::Array data_arr = info[0].As<Napi::Array>();
   int len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(info.Env(), "Array needs at least 1 item").ThrowAsJavaScriptException();
@@ -947,10 +942,10 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
   }
 
   for (int i = 0; i < len; i++) {
-    if (!static_cast<Napi::Value>(data_arr[i]).IsObject()) {
+    if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(info.Env(), "Wrong argument structure").ThrowAsJavaScriptException();
     } else {
-      Napi::Object data_obj = static_cast<Napi::Value>(data_arr[i]).As<Napi::Object>();
+      Napi::Object data_obj = data_arr[i].As<Napi::Object>();
       if (!data_obj.Has("Area") ||
           !data_obj.Has("WordLen") ||
           !data_obj.Has("Start") ||
@@ -976,7 +971,7 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
   PS7DataItem Items = new TS7DataItem[len];
   Napi::Object data_obj;
   for (int i = 0; i < len; i++) {
-    data_obj = static_cast<Napi::Value>(data_arr[i]).As<Napi::Object>();
+    data_obj = data_arr[i].As<Napi::Object>();
 
     Items[i].Area = data_obj.Get("Area").As<Napi::Number>().Int32Value();
     Items[i].WordLen = data_obj.Get("WordLen").As<Napi::Number>().Int32Value();
@@ -1183,7 +1178,7 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
       , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
-      Napi::Object ret_buf;
+      Napi::Buffer<char> ret_buf;
       ret_buf = Napi::Buffer<char>::New(Env(),
           bufferData
         , size
@@ -1217,7 +1212,7 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
       , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
-      Napi::Object ret_buf;
+      Napi::Buffer<char> ret_buf;
       ret_buf = Napi::Buffer<char>::New(Env(),
           bufferData
         , size
@@ -1292,7 +1287,7 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
     info[0].As<Napi::Number>().Int32Value(), bufferData, &size);
 
     if (returnValue == 0) {
-      Napi::Object ret_buf;
+      Napi::Buffer<char> ret_buf;
       ret_buf = Napi::Buffer<char>::New(Env(),
           bufferData
         , size
@@ -1368,7 +1363,7 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
   tm *DateTime = new tm;
   if (info[0].IsDate()) {
     Napi::Date date = info[0].As<Napi::Date>();
-    time_t timestamp = static_cast<time_t>(date.DateValue()) / 1000;
+    time_t timestamp = static_cast<time_t>(date.NumberValue()) / 1000;
     *DateTime = *localtime(&timestamp);
   } else {
     Napi::Object date_time = info[0].As<Napi::Object>();
@@ -1526,7 +1521,7 @@ Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
       , info[1].As<Napi::Number>().Int32Value(), SZL, &size);
 
     if (returnValue == 0) {
-      Napi::Object ret_buf;
+      Napi::Buffer<char> ret_buf;
       ret_buf = Napi::Buffer<char>::New(Env(),
           reinterpret_cast<char*>(SZL)
         , size

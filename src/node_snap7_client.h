@@ -7,8 +7,8 @@
 #define SRC_NODE_SNAP7_CLIENT_H_
 
 #include <napi.h>
-#include <uv.h>
 #include <snap7.h>
+#include <mutex>
 
 namespace node_snap7 {
 
@@ -97,7 +97,7 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
   static void FreeCallback(Napi::Env env, char *finalizeData);
   static void FreeCallbackSZL(Napi::Env env, char *finalizeData);
 
-  uv_mutex_t mutex;
+  std::mutex mutex;
   PS7Client snap7Client;
 
  private:
