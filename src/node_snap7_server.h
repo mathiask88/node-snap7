@@ -8,15 +8,11 @@
 
 #include <napi.h>
 #include <snap7.h>
-#include <condition_variable>
-#include <mutex>
-#include <map>
-#include <deque>
 
 namespace node_snap7 {
 
-enum ServerIOFunction {
-  START = 1, STARTTO, STOP
+enum class ServerIOFunction {
+  START, STARTTO, STOP
 };
 
 typedef struct {
@@ -50,20 +46,17 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 
   Napi::Value ErrorText(const Napi::CallbackInfo &info);
   Napi::Value EventText(const Napi::CallbackInfo &info);
-  static Napi::Value LastError(const Napi::CallbackInfo &info);
+  Napi::Value LastError(const Napi::CallbackInfo &info);
 
   static int GetByteCountFromWordLen(int WordLen);
 
-  static Napi::Value RWBufferCallback(const Napi::CallbackInfo& info);
-
-  std::mutex mutex;
   TS7Server *snap7Server;
-  std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;
 
  private:
   ~S7Server();
   static Napi::FunctionReference constructor;
+  Napi::ThreadSafeFunction tsfn;
 };
 
 class IOWorkerServer : public Napi::AsyncWorker {
@@ -84,8 +77,8 @@ class IOWorkerServer : public Napi::AsyncWorker {
  private:
   S7Server *s7server;
   ServerIOFunction caller;
-  void *pData;
-  int ret;
+  void *pData = nullptr;
+  int ret = 0;
 };
 
 }  // namespace node_snap7

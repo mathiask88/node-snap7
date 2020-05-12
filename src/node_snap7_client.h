@@ -12,7 +12,7 @@
 
 namespace node_snap7 {
 
-enum DataIOFunction { READAREA = 1, WRITEAREA, READMULTI, WRITEMULTI
+enum class DataIOFunction { READAREA, WRITEAREA, READMULTI, WRITEMULTI
   , PLCSTATUS, GETPROTECTION, CLEARSESSIONPW, SETSESSIONPW, PLCSTOP
   , PLCCOLDSTART, PLCHOTSTART, GETCPINFO, GETCPUINFO, GETORDERCODE
   , SETPLCSYSTEMDATETIME, GETPLCDATETIME, COMPRESS, COPYRAMTOROM
@@ -150,8 +150,8 @@ class IOWorker : public Napi::AsyncWorker {
  private:
   S7Client *s7client;
   DataIOFunction caller;
-  void *pData;
-  int int1, int2, int3, int4, int5, returnValue;
+  void *pData = nullptr;
+  int int1 = 0, int2 = 0, int3 = 0, int4 = 0, int5 = 0, returnValue = 0;
 };
 
 }  // namespace node_snap7

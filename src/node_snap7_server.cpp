@@ -7,8 +7,6 @@
 
 namespace node_snap7 {
 
-static uv_async_t event_async_g;
-static uv_async_t rw_async_g;
 static std::mutex mutex_rw;
 static std::mutex mutex_event;
 static std::condition_variable sem_rw;
@@ -22,26 +20,12 @@ static struct rw_event_baton_t {
 } rw_event_baton_g;
 
 void S7API EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size) {
-  mutex_event.lock();
-  event_list_g.push_back(*PEvent);
-  mutex_event.unlock();
 
-  uv_async_send(&event_async_g);
 }
 
 int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
   , void *pUsrData
 ) {
-  uv_mutex_lock(&mutex_rw);
-  rw_event_baton_g.Sender = Sender;
-  rw_event_baton_g.Operation = Operation;
-  rw_event_baton_g.Tag = *PTag;
-  rw_event_baton_g.pUsrData = pUsrData;
-
-  uv_async_send(&rw_async_g);
-
-  sem_rw.wait();
-  uv_mutex_unlock(&mutex_rw);
 
   return 0;
 }
@@ -301,16 +285,6 @@ S7Server::S7Server(const Napi::CallbackInfo& info) {
 
   event_async_g.data = rw_async_g.data = this;
 
-  uv_async_init(uv_default_loop(), &event_async_g, S7Server::HandleEvent);
-  uv_async_init(uv_default_loop(), &rw_async_g, S7Server::HandleReadWriteEvent);
-
-  uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-  uv_unref(reinterpret_cast<uv_handle_t *>(&rw_async_g));
-  uv_mutex_init(&mutex);
-  uv_mutex_init(&mutex_rw);
-  uv_mutex_init(&mutex_event);
-  uv_sem_init(&sem_rw, 0);
-
   snap7Server->SetEventsCallback(&EventCallBack, NULL);
 }
 
@@ -319,13 +293,6 @@ S7Server::~S7Server() {
   delete snap7Server;
 
   constructor.Reset();
-
-  uv_close(reinterpret_cast<uv_handle_t *>(&event_async_g), 0);
-  uv_close(reinterpret_cast<uv_handle_t *>(&rw_async_g), 0);
-  uv_sem_destroy(&sem_rw);
-  uv_mutex_destroy(&mutex_event);
-  uv_mutex_destroy(&mutex_rw);
-  uv_mutex_destroy(&mutex);
 }
 
 int S7Server::GetByteCountFromWordLen(int WordLen) {
@@ -346,19 +313,17 @@ int S7Server::GetByteCountFromWordLen(int WordLen) {
 }
 
 Napi::Value S7Server::RWBufferCallback(const Napi::CallbackInfo& info) {
-  Nan::HandleScope scope;
-
   if (rw_event_baton_g.Operation == OperationRead) {
-    if (!node::Buffer::HasInstance(info[0])) {
-      return Nan::ThrowTypeError("Wrong argument");
+    if (!info[0].IsBuffer()) {
+      Napi::TypeError::New(info.Env(), "Wrong argument").ThrowAsJavaScriptException();
     }
 
     int byteCount, size;
     byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
     size = byteCount * rw_event_baton_g.Tag.Size;
 
-    if (node::Buffer::Length(info[0].As<v8::Object>()) < size) {
-      return Nan::ThrowTypeError("Buffer length too small");
+    if (info[0].As<Napi::Buffer<char>>().Length() < size) {
+      Napi::TypeError::New(info.Env(), "Buffer length too small").ThrowAsJavaScriptException();
     }
 
     memcpy(
@@ -366,70 +331,63 @@ Napi::Value S7Server::RWBufferCallback(const Napi::CallbackInfo& info) {
       , node::Buffer::Data(info[0].As<v8::Object>())
       , size);
   }
-
-  uv_sem_post(&sem_rw);
 }
 
-void S7Server::HandleEvent(uv_async_t* handle, int status) {
-  Nan::HandleScope scope;
-
+void S7Server::EmitEvent(const Napi::CallbackInfo& info) {
   S7Server *s7server = static_cast<S7Server*>(handle->data);
 
-  uv_mutex_lock(&mutex_event);
-  while (!event_list_g.empty()) {
     PSrvEvent Event = &event_list_g.front();
     in_addr sin;
     sin.s_addr = Event->EvtSender;
     double time = static_cast<double>(Event->EvtTime * 1000);
 
-    v8::Local<v8::Object> event_obj = Nan::New<v8::Object>();
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtTime")
-      , Nan::New<v8::Date>(time));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtSender")
-      , Nan::New<v8::String>(inet_ntoa(sin)));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtCode")
-      , Nan::New<v8::Uint32>(Event->EvtCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtRetCode")
-      , Nan::New<v8::Integer>(Event->EvtRetCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam1")
-      , Nan::New<v8::Integer>(Event->EvtParam1));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam2")
-      , Nan::New<v8::Integer>(Event->EvtParam2));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam3")
-      , Nan::New<v8::Integer>(Event->EvtParam3));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam4")
-      , Nan::New<v8::Integer>(Event->EvtParam4));
+    v8::Local<v8::Object> event_obj = Napi::New<v8::Object>();
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtTime")
+      , Napi::New<v8::Date>(time));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtSender")
+      , Napi::New<v8::String>(inet_ntoa(sin)));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtCode")
+      , Napi::New<v8::Uint32>(Event->EvtCode));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtRetCode")
+      , Napi::New<v8::Integer>(Event->EvtRetCode));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam1")
+      , Napi::New<v8::Integer>(Event->EvtParam1));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam2")
+      , Napi::New<v8::Integer>(Event->EvtParam2));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam3")
+      , Napi::New<v8::Integer>(Event->EvtParam3));
+    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam4")
+      , Napi::New<v8::Integer>(Event->EvtParam4));
 
-    v8::Local<v8::Value> argv[2] = {
-      Nan::New("event"),
+    Napi::Value argv[2] = {
+      Napi::String::New(env, "event"),
       event_obj
     };
 
+    Napi::Function emit = info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
+    emit.Call(info.This(), { Napi::String::New(env, "data"), Napi::String::New(env, "data ...") });
     s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 2, argv);
     event_list_g.pop_front();
   }
-  uv_mutex_unlock(&mutex_event);
 }
 
 
-void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
-  Napi::AsyncContext context(info.Env(), "S7Server:emit", resource);
-
+void S7Server::EmitReadWriteEvent(const Napi::CallbackInfo& info) {
   S7Server *s7server = static_cast<S7Server*>(handle->data);
   in_addr sin;
   sin.s_addr = rw_event_baton_g.Sender;
 
-  v8::Local<v8::Object> rw_tag_obj = Nan::New<v8::Object>();
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Area")
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Area));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("DBNumber")
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.DBNumber));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Start")
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Start));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Size")
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Size));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("WordLen")
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.WordLen));
+  v8::Local<v8::Object> rw_tag_obj = Napi::New<v8::Object>();
+  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Area")
+    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Area));
+  Napi::Set(rw_tag_obj, Napi::New<v8::String>("DBNumber")
+    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.DBNumber));
+  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Start")
+    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Start));
+  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Size")
+    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Size));
+  Napi::Set(rw_tag_obj, Napi::New<v8::String>("WordLen")
+    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.WordLen));
 
   int byteCount, size;
   byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
@@ -438,21 +396,21 @@ void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
   v8::Local<v8::Object> buffer;
 
   if (rw_event_baton_g.Operation == OperationWrite) {
-    buffer = Nan::CopyBuffer(
+    buffer = Napi::CopyBuffer(
       static_cast<char*>(rw_event_baton_g.pUsrData),
       size);
   } else {
-    buffer = Nan::NewBuffer(size);
+    buffer = Napi::NewBuffer(size);
     memset(node::Buffer::Data(buffer), 0, size);
   }
 
   v8::Local<v8::Value> argv[6] = {
-    Nan::New("readWrite"),
-    Nan::New<v8::String>(inet_ntoa(sin)),
-    Nan::New<v8::Integer>(rw_event_baton_g.Operation),
+    Napi::New("readWrite"),
+    Napi::New<v8::String>(inet_ntoa(sin)),
+    Napi::New<v8::Integer>(rw_event_baton_g.Operation),
     rw_tag_obj,
     buffer,
-    Nan::New<v8::Function>(S7Server::RWBufferCallback)
+    Napi::New<v8::Function>(S7Server::RWBufferCallback)
   };
 
   s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 6, argv);
@@ -462,16 +420,16 @@ void IOWorkerServer::Execute() {
   uv_mutex_lock(&s7server->mutex);
 
   switch (caller) {
-  case STARTTO:
+  case ServerIOFunction::STARTTO:
     ret = s7server->snap7Server->StartTo(
-      **static_cast<Nan::Utf8String*>(pData));
+      **static_cast<Napi::Utf8String*>(pData));
 
     if (ret == 0) {
       uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
     }
     break;
 
-  case START:
+  case ServerIOFunction::START:
     ret = s7server->snap7Server->Start();
 
     if (ret == 0) {
@@ -492,25 +450,25 @@ void IOWorkerServer::Execute() {
 }
 
 void IOWorkerServer::HandleOKCallback() {
-  Nan::HandleScope scope;
+  Napi::HandleScope scope;
 
   v8::Local<v8::Value> argv1[1];
   v8::Local<v8::Value> argv2[2];
 
   if (ret == 0) {
-    argv2[0] = argv1[0] = Nan::Null();
+    argv2[0] = argv1[0] = Napi::Null();
   } else {
-    argv2[0] = argv1[0] = Nan::New<v8::Integer>(ret);
+    argv2[0] = argv1[0] = Napi::New<v8::Integer>(ret);
   }
 
   switch (caller) {
-  case STARTTO:
-    delete static_cast<Nan::Utf8String*>(pData);
+  case ServerIOFunction::STARTTO:
+    delete static_cast<Napi::Utf8String*>(pData);
     callback->Call(1, argv1, async_resource);
     break;
 
-  case START:
-  case STOP:
+  case ServerIOFunction::START:
+  case ServerIOFunction::STOP:
     callback->Call(1, argv1, async_resource);
     break;
   }
@@ -528,10 +486,10 @@ Napi::Value S7Server::Start(const Napi::CallbackInfo& info) {
 
     s7server->lastError = ret;
 
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
   } else {
-    Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, START));
+    Napi::Callback *callback = new Napi::Callback(info[0].As<v8::Function>());
+    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::START));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -540,14 +498,14 @@ Napi::Value S7Server::StartTo(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (info.Length() < 1) {
-    return Nan::ThrowTypeError("Wrong number of arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong number of arguments");
   }
 
   if (!info[0]->IsString()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  Nan::Utf8String *address = new Nan::Utf8String(info[0]);
+  Napi::Utf8String *address = new Napi::Utf8String(info[0]);
   if (!info[1]->IsFunction()) {
     int ret = s7server->snap7Server->StartTo(**address);
     delete address;
@@ -558,10 +516,10 @@ Napi::Value S7Server::StartTo(const Napi::CallbackInfo& info) {
 
     s7server->lastError = ret;
 
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
   } else {
-    Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, STARTTO
+    Napi::Callback *callback = new Napi::Callback(info[1].As<v8::Function>());
+    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::STARTTO
       , address));
     info.GetReturnValue().SetUndefined();
   }
@@ -579,10 +537,10 @@ Napi::Value S7Server::Stop(const Napi::CallbackInfo& info) {
 
     s7server->lastError = ret;
 
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
   } else {
-    Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, STOP));
+    Napi::Callback *callback = new Napi::Callback(info[0].As<v8::Function>());
+    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::STOP));
     info.GetReturnValue().SetUndefined();
   }
 }
@@ -591,10 +549,10 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsBoolean()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  bool resourceless = Nan::To<bool>(info[0]).FromJust();
+  bool resourceless = Napi::To<bool>(info[0]).FromJust();
 
   int ret;
   if (resourceless) {
@@ -604,36 +562,36 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
   }
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int pData;
-  int ret = s7server->snap7Server->GetParam(Nan::To<int32_t>(info[0]).FromJust()
+  int ret = s7server->snap7Server->GetParam(Napi::To<int32_t>(info[0]).FromJust()
     , &pData);
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!(info[0]->IsInt32() || info[1]->IsInt32())) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  int pData = Nan::To<int32_t>(info[1]).FromJust();
-  int ret = s7server->snap7Server->SetParam(Nan::To<int32_t>(info[0]).FromJust(), &pData);
+  int pData = Napi::To<int32_t>(info[1]).FromJust();
+  int ret = s7server->snap7Server->SetParam(Napi::To<int32_t>(info[0]).FromJust(), &pData);
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
@@ -641,17 +599,17 @@ Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
 
   int ret = s7server->snap7Server->GetEventsMask();
 
-  info.GetReturnValue().Set(Nan::New<v8::Uint32>(ret));
+  info.GetReturnValue().Set(Napi::New<v8::Uint32>(ret));
 }
 
 Napi::Value S7Server::SetEventsMask(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsUint32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  s7server->snap7Server->SetEventsMask(Nan::To<uint32_t>(info[0]).FromJust());
+  s7server->snap7Server->SetEventsMask(Napi::To<uint32_t>(info[0]).FromJust());
   info.GetReturnValue().SetUndefined();
 }
 
@@ -659,24 +617,24 @@ Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int index;
   char *pBuffer;
   size_t len;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
     len = node::Buffer::Length(info[2].As<v8::Object>());
     pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
   } else if (!node::Buffer::HasInstance(info[1])) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   } else {
     index = 0;
     len = node::Buffer::Length(info[1].As<v8::Object>());
@@ -684,7 +642,7 @@ Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
   }
 
   if (len > 0xFFFF) {
-    return Nan::ThrowRangeError("Max area buffer size is 65535");
+    return Napi::ThrowRangeError("Max area buffer size is 65535");
   }
 
   word size = static_cast<word>(len);
@@ -701,25 +659,25 @@ Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
     delete[] data;
   }
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->UnregisterArea(area, index);
@@ -730,19 +688,19 @@ Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
     s7server->area2buffer[area].erase(index);
   }
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
   if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Unknown area");
+    return Napi::ThrowError("Unknown area");
   }
 
   int index;
@@ -751,12 +709,12 @@ Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
     if (!s7server->area2buffer[area].count(index)) {
-      return Nan::ThrowError("DB index not found");
+      return Napi::ThrowError("DB index not found");
     }
 
     len = node::Buffer::Length(info[2].As<v8::Object>());
@@ -770,12 +728,12 @@ Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
       len = node::Buffer::Length(info[2].As<v8::Object>());
       pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
     } else {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
   }
 
   if (len != s7server->area2buffer[area][index].size) {
-    return Nan::ThrowError("Wrong buffer length");
+    return Napi::ThrowError("Wrong buffer length");
   }
 
   s7server->snap7Server->LockArea(area, index);
@@ -793,30 +751,30 @@ Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
 
   if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Unknown area");
+    return Napi::ThrowError("Unknown area");
   }
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
     if (!s7server->area2buffer[area].count(index)) {
-      return Nan::ThrowError("DB index not found");
+      return Napi::ThrowError("DB index not found");
     }
   }
 
   s7server->snap7Server->LockArea(area, index);
 
-  v8::Local<v8::Object> buffer = Nan::CopyBuffer(
+  v8::Local<v8::Object> buffer = Napi::CopyBuffer(
       s7server->area2buffer[area][index].pBuffer
     , s7server->area2buffer[area][index].size);
 
@@ -829,48 +787,48 @@ Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->LockArea(area, index);
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+  int area = Napi::To<int32_t>(info[0]).FromJust();
 
   if (area == srvAreaDB) {
     if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+      return Napi::TypeError::New(info.Env(), "Wrong arguments");
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
+    index = Napi::To<int32_t>(info[1]).FromJust();
   }
 
   int ret = s7server->snap7Server->UnlockArea(area, index);
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
@@ -879,10 +837,10 @@ Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
   int ret = s7server->snap7Server->ServerStatus();
   if ((ret == 0) || (ret == 1) || (ret == 2)) {
     s7server->lastError = 0;
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
+    info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
   } else {
     s7server->lastError = ret;
-    info.GetReturnValue().Set(Nan::False());
+    info.GetReturnValue().Set(Napi::False());
   }
 }
 
@@ -890,7 +848,7 @@ Napi::Value S7Server::ClientsCount(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   int ret = s7server->snap7Server->ClientsCount();
-  info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
+  info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
 }
 
 Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
@@ -901,10 +859,10 @@ Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
     (ret == S7CpuStatusStop) ||
     (ret == S7CpuStatusRun)) {
     s7server->lastError = 0;
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
+    info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
   } else {
     s7server->lastError = ret;
-    info.GetReturnValue().Set(Nan::False());
+    info.GetReturnValue().Set(Napi::False());
   }
 }
 
@@ -912,78 +870,78 @@ Napi::Value S7Server::SetCpuStatus(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  int ret = s7server->snap7Server->SetCpuStatus(Nan::To<int32_t>(info[0]).FromJust());
+  int ret = s7server->snap7Server->SetCpuStatus(Napi::To<int32_t>(info[0]).FromJust());
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
 }
 
 Napi::Value S7Server::ErrorText(const Napi::CallbackInfo& info) {
   if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
-  info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()));
+  info.GetReturnValue().Set(Napi::New<v8::String>(
+    SrvErrorText(Napi::To<int32_t>(info[0]).FromJust()).c_str()));
 }
 
 Napi::Value S7Server::EventText(const Napi::CallbackInfo& info) {
   TSrvEvent SrvEvent;
 
   if (!info[0]->IsObject()) {
-    return Nan::ThrowTypeError("Wrong arguments");
+    return Napi::TypeError::New(info.Env(), "Wrong arguments");
   }
 
   v8::Local<v8::Object> event_obj = v8::Local<v8::Object>::Cast(info[0]);
-  if (!Nan::Has(event_obj, Nan::New<v8::String>("EvtTime")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtSender")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtCode")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtRetCode")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam1")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam2")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam3")).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam4")).FromJust()) {
-    return Nan::ThrowTypeError("Wrong argument structure");
+  if (!Napi::Has(event_obj, Napi::New<v8::String>("EvtTime")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtSender")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtCode")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtRetCode")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam1")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam2")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam3")).FromJust() ||
+    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam4")).FromJust()) {
+    return Napi::TypeError::New(info.Env(), "Wrong argument structure");
   }
 
-  if (!Nan::Get(event_obj, Nan::New<v8::String>("EvtTime"))->IsDate() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtSender"))->IsString() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtCode"))->IsUint32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode"))->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1"))->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2"))->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3"))->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4"))->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong argument types");
+  if (!Napi::Get(event_obj, Napi::New<v8::String>("EvtTime"))->IsDate() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtSender"))->IsString() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtCode"))->IsUint32() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtRetCode"))->IsInt32() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam1"))->IsInt32() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam2"))->IsInt32() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam3"))->IsInt32() ||
+    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam4"))->IsInt32()) {
+    return Napi::TypeError::New(info.Env(), "Wrong argument types");
   }
 
-  Nan::Utf8String *remAddress = new Nan::Utf8String(
-    Nan::Get(
+  Napi::Utf8String *remAddress = new Napi::Utf8String(
+    Napi::Get(
         event_obj
-      , Nan::New<v8::String>("EvtSender")));
+      , Napi::New<v8::String>("EvtSender")));
 
-  SrvEvent.EvtTime = static_cast<time_t>(Nan::To<double>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime")))).FromJust() / 1000);
+  SrvEvent.EvtTime = static_cast<time_t>(Napi::To<double>(v8::Local<v8::Date>::Cast(Napi::Get(event_obj, Napi::New<v8::String>("EvtTime")))).FromJust() / 1000);
   SrvEvent.EvtSender = inet_addr(**remAddress);
-  SrvEvent.EvtCode = Nan::To<uint32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtCode"))).FromJust();
-  SrvEvent.EvtRetCode = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode"))).FromJust();
-  SrvEvent.EvtParam1 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1"))).FromJust();
-  SrvEvent.EvtParam2 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2"))).FromJust();
-  SrvEvent.EvtParam3 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3"))).FromJust();
-  SrvEvent.EvtParam4 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4"))).FromJust();
+  SrvEvent.EvtCode = Napi::To<uint32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtCode"))).FromJust();
+  SrvEvent.EvtRetCode = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtRetCode"))).FromJust();
+  SrvEvent.EvtParam1 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam1"))).FromJust();
+  SrvEvent.EvtParam2 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam2"))).FromJust();
+  SrvEvent.EvtParam3 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam3"))).FromJust();
+  SrvEvent.EvtParam4 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam4"))).FromJust();
 
   delete remAddress;
 
-  info.GetReturnValue().Set(Nan::New<v8::String>(
+  info.GetReturnValue().Set(Napi::New<v8::String>(
     SrvEventText(&SrvEvent).c_str()));
 }
 
 Napi::Value S7Server::LastError(const Napi::CallbackInfo& info) {
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
-  info.GetReturnValue().Set(Nan::New<v8::Integer>(s7server->lastError));
+  info.GetReturnValue().Set(Napi::New<v8::Integer>(s7server->lastError));
 }
 
 }  // namespace node_snap7
