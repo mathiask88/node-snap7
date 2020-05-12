@@ -9,6 +9,9 @@
 **Current node-snap7 version:** 1.0.3\
 **Current snap7 version:** 1.4.2
 
+**In my spare time I am working on a [node-addon-api](https://github.com/nodejs/node-addon-api) rewrite and want to switch from [prebuild-install](https://github.com/prebuild/prebuild-install) to [prebuildify](https://github.com/prebuild/prebuildify).\
+The current S7Server implementation has some bugs, please use with caution.**
+
 ## About
 This is a node.js wrapper for snap7. Snap7 is an open source, 32/64 bit, multi-platform Ethernet communication suite for interfacing natively with Siemens S7 PLCs (See [compatibility](http://snap7.sourceforge.net/snap7_client.html#target_compatibility)).
 
