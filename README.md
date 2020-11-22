@@ -1,12 +1,12 @@
 # node-snap7
-<!---
-[![NPM](https://nodei.co/npm/node-snap7.png?downloads=true)](https://nodei.co/npm/node-snap7/) [![NPM](https://nodei.co/npm-dl/node-snap7.png?months=1)](https://nodei.co/npm/node-snap7/)
---->
-[![Build Status](https://travis-ci.org/mathiask88/node-snap7.svg?branch=master)](https://travis-ci.org/mathiask88/node-snap7)
-[![Build status](https://ci.appveyor.com/api/projects/status/ca1kepectsn3wkrc/branch/master?svg=true)](https://ci.appveyor.com/project/mathiask88/node-snap7/branch/master)
-[![dependencies Status](https://david-dm.org/mathiask88/node-snap7/status.svg)](https://david-dm.org/mathiask88/node-snap7)
 
-**Current node-snap7 version:** 1.0.4\
+[![npm](https://img.shields.io/npm/v/node-snap7.svg?label=&logo=npm)](https://www.npmjs.com/package/node-snap7)
+[![Node version](https://img.shields.io/node/v/node-snap7.svg)](https://www.npmjs.com/package/node-snap7)
+[![Travis](https://img.shields.io/travis/mathiask88/node-snap7.svg?logo=travis&label=)](https://travis-ci.com/mathiask88/node-snap7)
+[![AppVeyor](https://img.shields.io/appveyor/ci/mathiask88/node-snap7.svg?logo=appveyor&label=)](https://ci.appveyor.com/project/mathiask88/node-snap7)
+[![npm](https://img.shields.io/npm/dm/node-snap7.svg?label=dl)](https://www.npmjs.com/package/node-snap7)
+
+**Current node-snap7 version:** 1.0.5\
 **Current snap7 version:** 1.4.2
 
 **In my spare time I am working on a [node-addon-api](https://github.com/nodejs/node-addon-api) rewrite and want to switch from [prebuild-install](https://github.com/prebuild/prebuild-install) to [prebuildify](https://github.com/prebuild/prebuildify).\
