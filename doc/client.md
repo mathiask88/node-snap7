@@ -540,11 +540,13 @@ Returns an `object` (see [example](#example-blockinfo) above) on success or `fal
 
 ----------
 
-#### <a name="full-upload"></a>S7Client.FullUpload(blockType, blockNum[, callback])
+#### <a name="full-upload"></a>S7Client.FullUpload(blockType, blockNum, size[, callback])
 Uploads a block from AG. The whole block (including header and footer) is copied into the user buffer.
 
  - `blockType` Type of block (see table [above](#table-blocktype))
  - `blockNum` Number of block
+ - `size` Buffer size (if smaller than the data
+uploaded, only `size` bytes are copied and `errCliPartialDataRead` is returned)
  - The optional `callback` parameter will be executed after completion
 
 If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.<br />

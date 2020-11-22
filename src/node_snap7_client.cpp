@@ -1764,8 +1764,8 @@ NAN_METHOD(S7Client::FullUpload) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  char *bufferData = new char[Nan::To<int32_t>(info[2]).FromJust()];
   int size = Nan::To<int32_t>(info[2]).FromJust();
+  char *bufferData = new char[size];
   if (!info[3]->IsFunction()) {
     int returnValue = s7client->snap7Client->FullUpload(
 		Nan::To<int32_t>(info[0]).FromJust(), Nan::To<int32_t>(info[1]).FromJust(), bufferData, &size);
