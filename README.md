@@ -6,7 +6,7 @@
 [![AppVeyor](https://img.shields.io/appveyor/ci/mathiask88/node-snap7.svg?logo=appveyor&label=)](https://ci.appveyor.com/project/mathiask88/node-snap7)
 [![npm](https://img.shields.io/npm/dm/node-snap7.svg?label=dl)](https://www.npmjs.com/package/node-snap7)
 
-**Current node-snap7 version:** 1.0.5\
+**Current node-snap7 version:** 1.0.6\
 **Current snap7 version:** 1.4.2
 
 **In my spare time I am working on a [node-addon-api](https://github.com/nodejs/node-addon-api) rewrite and want to switch from [prebuild-install](https://github.com/prebuild/prebuild-install) to [prebuildify](https://github.com/prebuild/prebuildify).\
