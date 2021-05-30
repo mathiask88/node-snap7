@@ -10,10 +10,7 @@
 
 namespace node_snap7 {
 
-Napi::FunctionReference S7Client::constructor;
-
 Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
-  Napi::HandleScope scope(env);
 
   Napi::Function func = DefineClass(env, "S7Client", {
     // Control functions
@@ -190,8 +187,9 @@ Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
     StaticValue("KeepAliveTime", Napi::Value::From(env, p_u32_KeepAliveTime))
   });
 
-  constructor = Napi::Persistent(func);
-  constructor.SuppressDestruct();
+  Napi::FunctionReference* constructor = new Napi::FunctionReference();
+  *constructor = Napi::Persistent(func);
+  env.SetInstanceData(constructor);
 
   exports.Set("S7Client", func);
   return exports;
@@ -204,7 +202,6 @@ S7Client::S7Client(const Napi::CallbackInfo &info) : Napi::ObjectWrap<S7Client>(
 S7Client::~S7Client() {
   snap7Client->Disconnect();
   delete snap7Client;
-  constructor.Reset();
 }
 
 int S7Client::GetByteCountFromWordLen(int WordLen) {

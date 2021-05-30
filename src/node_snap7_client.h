@@ -26,7 +26,29 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   explicit S7Client(const Napi::CallbackInfo &info);
   ~S7Client();
-  // Control functions
+
+  // Internal Helper functions
+  static int GetByteCountFromWordLen(int WordLen);
+  Napi::Array S7DataItemToArray(PS7DataItem Items, int len
+    , bool readMulti);
+  Napi::Object S7ProtectionToObject(PS7Protection S7Protection);
+  Napi::Object S7CpInfoToObject(PS7CpInfo CpInfo);
+  Napi::Object S7CpuInfoToObject(PS7CpuInfo CpuInfo);
+  Napi::Object S7OrderCodeToObject(PS7OrderCode OrderCode);
+  Napi::Object S7BlockInfoToObject(PS7BlockInfo BlockInfo);
+  Napi::Object S7BlocksListToObject(PS7BlocksList BlocksList);
+  Napi::Array S7BlocksOfTypeToArray(PS7BlocksOfType BlocksList
+    , int count);
+  Napi::Array S7SZLListToArray(PS7SZLList SZLList, int count);
+
+  static void FreeCallback(Napi::Env env, char *finalizeData);
+  static void FreeCallbackSZL(Napi::Env env, char *finalizeData);
+
+  std::mutex mutex;
+  PS7Client snap7Client;
+
+ private:
+   // Control functions
   Napi::Value Connect(const Napi::CallbackInfo &info);
   Napi::Value ConnectTo(const Napi::CallbackInfo &info);
   Napi::Value SetConnectionParams(const Napi::CallbackInfo &info);
@@ -80,28 +102,6 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
   Napi::Value Connected(const Napi::CallbackInfo &info);
 
   Napi::Value ErrorText(const Napi::CallbackInfo &info);
-  // Internal Helper functions
-  static int GetByteCountFromWordLen(int WordLen);
-  Napi::Array S7DataItemToArray(PS7DataItem Items, int len
-    , bool readMulti);
-  Napi::Object S7ProtectionToObject(PS7Protection S7Protection);
-  Napi::Object S7CpInfoToObject(PS7CpInfo CpInfo);
-  Napi::Object S7CpuInfoToObject(PS7CpuInfo CpuInfo);
-  Napi::Object S7OrderCodeToObject(PS7OrderCode OrderCode);
-  Napi::Object S7BlockInfoToObject(PS7BlockInfo BlockInfo);
-  Napi::Object S7BlocksListToObject(PS7BlocksList BlocksList);
-  Napi::Array S7BlocksOfTypeToArray(PS7BlocksOfType BlocksList
-    , int count);
-  Napi::Array S7SZLListToArray(PS7SZLList SZLList, int count);
-
-  static void FreeCallback(Napi::Env env, char *finalizeData);
-  static void FreeCallbackSZL(Napi::Env env, char *finalizeData);
-
-  std::mutex mutex;
-  PS7Client snap7Client;
-
- private:
-  static Napi::FunctionReference constructor;
 };
 
 class IOWorker : public Napi::AsyncWorker {
