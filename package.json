@@ -4,6 +4,7 @@
   "version": "2.0.0",
   "description": "Native node.js addon/wrapper for snap7",
   "homepage": "https://github.com/mathiask88/node-snap7",
+  "gypfile": true,
   "repository": {
     "type": "git",
     "url": "git://github.com/mathiask88/node-snap7.git"
@@ -23,24 +24,24 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "node-gyp-build": "~4.2.3"
+    "node-gyp-build": "~4.6.0"
   },
   "devDependencies": {
-    "node-addon-api": "~3.1.0",
-    "node-gyp": "^7.1.2",
-    "prebuildify": "^4.1.2",
+    "node-addon-api": "~6.1.0",
+    "node-gyp": "^9.3.1",
+    "prebuildify": "^5.0.1",
     "prebuildify-ci": "~1.0.5",
-    "prebuildify-cross": "^4.0.0"
+    "prebuildify-cross": "^5.0.0"
   },
   "scripts": {
     "install": "node-gyp-build",
     "rebuild": "npm run install --build-from-source",
     "prebuild": "prebuildify -t 10.17.0 --napi --strip",
     "download-prebuilds": "prebuildify-ci download",
-    "prebuild-arm": "npm run prebuild-linux-arm && npm run prebuild-android-arm",
-    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64 -t 10.17.0 --napi --strip",
-    "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 10.17.0 --napi --strip",
+    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 10.17.0 --napi --strip",
     "prebuild-linux-x64": "prebuildify-cross -i centos7-devtoolset7 -i alpine -t 10.17.0 --napi --strip",
-    "prebuild-darwin-x64": "prebuildify -t 10.17.0 --napi --strip"
+    "prebuild-darwin-x64+arm64": "prebuildify -t 10.17.0 --napi --strip --arch x64+arm64",
+    "prebuild-win32-x86": "prebuildify -t 10.17.0 --napi --strip",
+    "prebuild-win32-x64": "prebuildify -t 10.17.0 --napi --strip"
   }
 }
