@@ -816,7 +816,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), err.str().c_str()).ThrowAsJavaScriptException();
   }
 
-  for (int i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < len; i++) {
     if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(info.Env(), "Wrong argument structure").ThrowAsJavaScriptException();
     } else {
@@ -845,7 +845,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
   Napi::Object data_obj;
   int byteCount, size;
 
-  for (int i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < len; i++) {
     data_obj = data_arr[i].As<Napi::Object>();
 
     Items[i].Area = data_obj.Get("Area").As<Napi::Number>().Int32Value();
@@ -937,7 +937,7 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(info.Env(), err.str().c_str()).ThrowAsJavaScriptException();
   }
 
-  for (int i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < len; i++) {
     if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(info.Env(), "Wrong argument structure").ThrowAsJavaScriptException();
     } else {
@@ -966,7 +966,7 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
 
   PS7DataItem Items = new TS7DataItem[len];
   Napi::Object data_obj;
-  for (int i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < len; i++) {
     data_obj = data_arr[i].As<Napi::Object>();
 
     Items[i].Area = data_obj.Get("Area").As<Napi::Number>().Int32Value();
