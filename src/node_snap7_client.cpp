@@ -806,7 +806,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
   }
 
   const Napi::Array data_arr = info[0].As<Napi::Array>();
-  int len = data_arr.Length();
+  uint32_t len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(info.Env(), "Array needs at least 1 item").ThrowAsJavaScriptException();
   } else if (len > MaxVars) {
@@ -927,7 +927,7 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
   }
 
   const Napi::Array data_arr = info[0].As<Napi::Array>();
-  int len = data_arr.Length();
+  uint32_t len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(info.Env(), "Array needs at least 1 item").ThrowAsJavaScriptException();
   } else if (len > MaxVars) {
