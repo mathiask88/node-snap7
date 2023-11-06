@@ -18,7 +18,7 @@
     "name": "Mathias Küsel"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=8"
   },
   "license": "MIT",
   "readmeFilename": "README.md",
