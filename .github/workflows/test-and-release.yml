@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           npm install --global node-gyp@latest
-          npm config set node_gyp $(npm prefix -g)/lib/node_modules/node-gyp/bin/node-gyp.js
+          echo "npm_config_node_gyp=$(npm prefix -g)/lib/node_modules/node-gyp/bin/node-gyp.js" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: npm install
