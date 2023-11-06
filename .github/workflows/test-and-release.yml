@@ -57,11 +57,17 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: patch node gyp on windows to support Visual Studio 2019
-        if: matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+        if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
           npm install --global node-gyp@latest
           npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
+
+      - name: patch node gyp on macos
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          npm explore npm/node_modules/@npmcli/run-script -g -- npm_config_global=false npm install node-gyp@latest
 
       - name: Install Dependencies
         run: npm install
