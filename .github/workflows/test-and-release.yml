@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           npm explore npm -g -- npm install node-gyp@latest
-          npm explore npm/node_modules/npm-lifecycle -g -- npm install node-gyp@latest
+          npm explore npm/node_modules/@npmcli/run-script -g -- npm_config_global=false npm install node-gyp@latest
 
       - name: Install Dependencies
         run: npm install
