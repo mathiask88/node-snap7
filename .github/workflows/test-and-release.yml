@@ -67,7 +67,8 @@ jobs:
         if: matrix.os == 'macos-latest'
         shell: bash
         run: |
-          npm explore npm/node_modules/@npmcli/run-script -g -- npm_config_global=false npm install node-gyp@latest
+          npm install --global node-gyp@latest
+          npm config set node_gyp $(npm prefix -g)/lib/node_modules/node-gyp/bin/node-gyp.js
 
       - name: Install Dependencies
         run: npm install
