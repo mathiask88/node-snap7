@@ -3,7 +3,7 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  test:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -28,4 +28,6 @@ jobs:
       - name: Install
         run: npm install
       - name: Test
+        env:
+          PREBUILD_TOKEN: ${{ secrets.PREBUILD_TOKEN }}
         run: npm test
