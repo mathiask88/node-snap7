@@ -21,7 +21,12 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 2
-      - name: Use node ${{ matrix.node }}
+      # Force Python to 3.11 until prebuild updates to node-gyp 10
+      - name: Use Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Use node ${{ matrix.node }} ${{ matrix.arch }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
