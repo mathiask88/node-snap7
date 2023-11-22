@@ -18,18 +18,18 @@
     "name": "Mathias Küsel"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=12"
   },
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "~2.14.1",
+    "nan": "~2.18.0",
     "bindings": "~1.5.0",
-    "prebuild-install": "^6.1.2"
+    "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
-    "prebuild": "^10.0.0",
-    "prebuild-ci": "^3.1.0"
+    "prebuild": "^12.1.0",
+    "prebuild-ci": "^4.0.0"
   },
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",

@@ -2,8 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/node-snap7.svg?label=&logo=npm)](https://www.npmjs.com/package/node-snap7)
 [![Node version](https://img.shields.io/node/v/node-snap7.svg)](https://www.npmjs.com/package/node-snap7)
-[![Travis](https://img.shields.io/travis/mathiask88/node-snap7.svg?logo=travis&label=)](https://travis-ci.org/mathiask88/node-snap7)
-[![AppVeyor](https://img.shields.io/appveyor/ci/mathiask88/node-snap7.svg?logo=appveyor&label=)](https://ci.appveyor.com/project/mathiask88/node-snap7)
+[![Test and Release](https://github.com/mathiask88/node-snap7/actions/workflows/test-and-release.yml/badge.svg)](https://github.com/mathiask88/node-snap7/actions/workflows/test-and-release.yml)
 [![npm](https://img.shields.io/npm/dm/node-snap7.svg?label=dl)](https://www.npmjs.com/package/node-snap7)
 
 **Current node-snap7 version:** 1.0.6\
