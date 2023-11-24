@@ -65,5 +65,8 @@
                 }
             }]
         ]
-    }]
+    }],
+    'variables' : {
+        'openssl_fips': '',
+    }
 }
