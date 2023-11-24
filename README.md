@@ -5,7 +5,7 @@
 [![Test and Release](https://github.com/mathiask88/node-snap7/actions/workflows/test-and-release.yml/badge.svg)](https://github.com/mathiask88/node-snap7/actions/workflows/test-and-release.yml)
 [![npm](https://img.shields.io/npm/dm/node-snap7.svg?label=dl)](https://www.npmjs.com/package/node-snap7)
 
-**Current node-snap7 version:** 1.0.6\
+**Current node-snap7 version:** 1.0.7\
 **Current snap7 version:** 1.4.2
 
 **In my spare time I am working on a [node-addon-api](https://github.com/nodejs/node-addon-api) rewrite and want to switch from [prebuild-install](https://github.com/prebuild/prebuild-install) to [prebuildify](https://github.com/prebuild/prebuildify).\
