@@ -20,19 +20,27 @@ static struct rw_event_baton_t {
 } rw_event_baton_g;
 
 void S7API EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size) {
-
+Napi::Function emit =
+      info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
+  emit.Call(info.This(), {Napi::String::New(env, "start")});
 }
 
 int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
   , void *pUsrData
 ) {
+  uv_mutex_lock(&mutex_rw);
+  rw_event_baton_g.Sender = Sender;
+  rw_event_baton_g.Operation = Operation;
+  rw_event_baton_g.Tag = *PTag;
+  rw_event_baton_g.pUsrData = pUsrData;
+
+  uv_async_send(&rw_async_g);
+
+  uv_sem_wait(&sem_rw);
+  uv_mutex_unlock(&mutex_rw);
 
   return 0;
 }
-
-Napi::FunctionReference S7Server::constructor;
-
-Napi::FunctionReference S7Server::constructor;
 
 Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
@@ -272,10 +280,11 @@ Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
     , Napi::Value::From(env, 2))
   });
 
-  constructor = Napi::Persistent(func);
-  constructor.SuppressDestruct();
+  Napi::FunctionReference* constructor = new Napi::FunctionReference();
+  *constructor = Napi::Persistent(func);
+  env.SetInstanceData(constructor);
 
-  exports.Set("S7Client", func);
+  exports.Set("S7Server", func);
   return exports;
 }
 
@@ -291,8 +300,6 @@ S7Server::S7Server(const Napi::CallbackInfo& info) {
 S7Server::~S7Server() {
   snap7Server->Stop();
   delete snap7Server;
-
-  constructor.Reset();
 }
 
 int S7Server::GetByteCountFromWordLen(int WordLen) {

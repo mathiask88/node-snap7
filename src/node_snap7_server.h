@@ -24,6 +24,7 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
  public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   explicit S7Server(const Napi::CallbackInfo &info);
+  ~S7Server();
 
   Napi::Value Start(const Napi::CallbackInfo &info);
   Napi::Value StartTo(const Napi::CallbackInfo &info);
@@ -54,8 +55,6 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
   int lastError;
 
  private:
-  ~S7Server();
-  static Napi::FunctionReference constructor;
   Napi::ThreadSafeFunction tsfn;
 };
 
