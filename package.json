@@ -19,19 +19,19 @@
     "name": "Mathias Küsel"
   },
   "engines": {
-    "node": ">=10.17.0"
+    "node": ">=16"
   },
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "node-gyp-build": "~4.6.0"
+    "node-gyp-build": "~4.8.0"
   },
   "devDependencies": {
-    "node-addon-api": "~6.1.0",
-    "node-gyp": "^9.3.1",
-    "prebuildify": "^5.0.1",
-    "prebuildify-ci": "~1.0.5",
-    "prebuildify-cross": "^5.0.0"
+    "node-addon-api": "~7.1.0",
+    "node-gyp": "^10.0.1",
+    "prebuildify": "^6.0.0",
+    "prebuildify-ci": "^1.0.5",
+    "prebuildify-cross": "^5.1.0"
   },
   "scripts": {
     "install": "node-gyp-build",

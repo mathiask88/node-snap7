@@ -5,7 +5,6 @@
 
 #include <node_snap7_client.h>
 #include <sstream>
-#include <vector>
 #include <string>
 
 namespace node_snap7 {
@@ -78,113 +77,113 @@ Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
     InstanceMethod("ErrorText", &S7Client::ErrorText),
 
     // Error codes
-    StaticValue("errNegotiatingPDU", Napi::Value::From(env, errNegotiatingPDU)),
-    StaticValue("errCliInvalidParams", Napi::Value::From(env, errCliInvalidParams)),
-    StaticValue("errCliJobPending", Napi::Value::From(env, errCliJobPending)),
-    StaticValue("errCliTooManyItems", Napi::Value::From(env, errCliTooManyItems)),
-    StaticValue("errCliInvalidWordLen", Napi::Value::From(env, errCliInvalidWordLen)),
-    StaticValue("errCliPartialDataWritten", Napi::Value::From(env, errCliPartialDataWritten)),
-    StaticValue("errCliSizeOverPDU", Napi::Value::From(env, errCliSizeOverPDU)),
-    StaticValue("errCliInvalidPlcAnswer", Napi::Value::From(env, errCliInvalidPlcAnswer)),
-    StaticValue("errCliAddressOutOfRange", Napi::Value::From(env, errCliAddressOutOfRange)),
-    StaticValue("errCliInvalidTransportSize", Napi::Value::From(env, errCliInvalidTransportSize)),
-    StaticValue("errCliWriteDataSizeMismatch", Napi::Value::From(env, errCliWriteDataSizeMismatch)),
-    StaticValue("errCliItemNotAvailable", Napi::Value::From(env, errCliItemNotAvailable)),
-    StaticValue("errCliInvalidValue", Napi::Value::From(env, errCliInvalidValue)),
-    StaticValue("errCliCannotStartPLC", Napi::Value::From(env, errCliCannotStartPLC)),
-    StaticValue("errCliAlreadyRun", Napi::Value::From(env, errCliAlreadyRun)),
-    StaticValue("errCliCannotStopPLC", Napi::Value::From(env, errCliCannotStopPLC)),
-    StaticValue("errCliCannotCopyRamToRom", Napi::Value::From(env, errCliCannotCopyRamToRom)),
-    StaticValue("errCliCannotCompress", Napi::Value::From(env, errCliCannotCompress)),
-    StaticValue("errCliAlreadyStop", Napi::Value::From(env, errCliAlreadyStop)),
-    StaticValue("errCliFunNotAvailable", Napi::Value::From(env, errCliFunNotAvailable)),
-    StaticValue("errCliUploadSequenceFailed", Napi::Value::From(env, errCliUploadSequenceFailed)),
-    StaticValue("errCliInvalidDataSizeRecvd", Napi::Value::From(env, errCliInvalidDataSizeRecvd)),
-    StaticValue("errCliInvalidBlockType", Napi::Value::From(env, errCliInvalidBlockType)),
-    StaticValue("errCliInvalidBlockNumber", Napi::Value::From(env, errCliInvalidBlockNumber)),
-    StaticValue("errCliInvalidBlockSize", Napi::Value::From(env, errCliInvalidBlockSize)),
-    StaticValue("errCliDownloadSequenceFailed", Napi::Value::From(env, errCliDownloadSequenceFailed)),
-    StaticValue("errCliInsertRefused", Napi::Value::From(env, errCliInsertRefused)),
-    StaticValue("errCliDeleteRefused", Napi::Value::From(env, errCliDeleteRefused)),
-    StaticValue("errCliNeedPassword", Napi::Value::From(env, errCliNeedPassword)),
-    StaticValue("errCliInvalidPassword", Napi::Value::From(env, errCliInvalidPassword)),
-    StaticValue("errCliNoPasswordToSetOrClear", Napi::Value::From(env, errCliNoPasswordToSetOrClear)),
-    StaticValue("errCliJobTimeout", Napi::Value::From(env, errCliJobTimeout)),
-    StaticValue("errCliPartialDataRead", Napi::Value::From(env, errCliPartialDataRead)),
-    StaticValue("errCliBufferTooSmall", Napi::Value::From(env, errCliBufferTooSmall)),
-    StaticValue("errCliFunctionRefused", Napi::Value::From(env, errCliFunctionRefused)),
-    StaticValue("errCliDestroying", Napi::Value::From(env, errCliDestroying)),
-    StaticValue("errCliInvalidParamNumber", Napi::Value::From(env, errCliInvalidParamNumber)),
-    StaticValue("errCliCannotChangeParam", Napi::Value::From(env, errCliCannotChangeParam)),
+    InstanceValue("errNegotiatingPDU", Napi::Value::From(env, errNegotiatingPDU)),
+    InstanceValue("errCliInvalidParams", Napi::Value::From(env, errCliInvalidParams)),
+    InstanceValue("errCliJobPending", Napi::Value::From(env, errCliJobPending)),
+    InstanceValue("errCliTooManyItems", Napi::Value::From(env, errCliTooManyItems)),
+    InstanceValue("errCliInvalidWordLen", Napi::Value::From(env, errCliInvalidWordLen)),
+    InstanceValue("errCliPartialDataWritten", Napi::Value::From(env, errCliPartialDataWritten)),
+    InstanceValue("errCliSizeOverPDU", Napi::Value::From(env, errCliSizeOverPDU)),
+    InstanceValue("errCliInvalidPlcAnswer", Napi::Value::From(env, errCliInvalidPlcAnswer)),
+    InstanceValue("errCliAddressOutOfRange", Napi::Value::From(env, errCliAddressOutOfRange)),
+    InstanceValue("errCliInvalidTransportSize", Napi::Value::From(env, errCliInvalidTransportSize)),
+    InstanceValue("errCliWriteDataSizeMismatch", Napi::Value::From(env, errCliWriteDataSizeMismatch)),
+    InstanceValue("errCliItemNotAvailable", Napi::Value::From(env, errCliItemNotAvailable)),
+    InstanceValue("errCliInvalidValue", Napi::Value::From(env, errCliInvalidValue)),
+    InstanceValue("errCliCannotStartPLC", Napi::Value::From(env, errCliCannotStartPLC)),
+    InstanceValue("errCliAlreadyRun", Napi::Value::From(env, errCliAlreadyRun)),
+    InstanceValue("errCliCannotStopPLC", Napi::Value::From(env, errCliCannotStopPLC)),
+    InstanceValue("errCliCannotCopyRamToRom", Napi::Value::From(env, errCliCannotCopyRamToRom)),
+    InstanceValue("errCliCannotCompress", Napi::Value::From(env, errCliCannotCompress)),
+    InstanceValue("errCliAlreadyStop", Napi::Value::From(env, errCliAlreadyStop)),
+    InstanceValue("errCliFunNotAvailable", Napi::Value::From(env, errCliFunNotAvailable)),
+    InstanceValue("errCliUploadSequenceFailed", Napi::Value::From(env, errCliUploadSequenceFailed)),
+    InstanceValue("errCliInvalidDataSizeRecvd", Napi::Value::From(env, errCliInvalidDataSizeRecvd)),
+    InstanceValue("errCliInvalidBlockType", Napi::Value::From(env, errCliInvalidBlockType)),
+    InstanceValue("errCliInvalidBlockNumber", Napi::Value::From(env, errCliInvalidBlockNumber)),
+    InstanceValue("errCliInvalidBlockSize", Napi::Value::From(env, errCliInvalidBlockSize)),
+    InstanceValue("errCliDownloadSequenceFailed", Napi::Value::From(env, errCliDownloadSequenceFailed)),
+    InstanceValue("errCliInsertRefused", Napi::Value::From(env, errCliInsertRefused)),
+    InstanceValue("errCliDeleteRefused", Napi::Value::From(env, errCliDeleteRefused)),
+    InstanceValue("errCliNeedPassword", Napi::Value::From(env, errCliNeedPassword)),
+    InstanceValue("errCliInvalidPassword", Napi::Value::From(env, errCliInvalidPassword)),
+    InstanceValue("errCliNoPasswordToSetOrClear", Napi::Value::From(env, errCliNoPasswordToSetOrClear)),
+    InstanceValue("errCliJobTimeout", Napi::Value::From(env, errCliJobTimeout)),
+    InstanceValue("errCliPartialDataRead", Napi::Value::From(env, errCliPartialDataRead)),
+    InstanceValue("errCliBufferTooSmall", Napi::Value::From(env, errCliBufferTooSmall)),
+    InstanceValue("errCliFunctionRefused", Napi::Value::From(env, errCliFunctionRefused)),
+    InstanceValue("errCliDestroying", Napi::Value::From(env, errCliDestroying)),
+    InstanceValue("errCliInvalidParamNumber", Napi::Value::From(env, errCliInvalidParamNumber)),
+    InstanceValue("errCliCannotChangeParam", Napi::Value::From(env, errCliCannotChangeParam)),
 
     // Client Connection Type
-    StaticValue("CONNTYPE_PG", Napi::Value::From(env, CONNTYPE_PG)),
-    StaticValue("CONNTYPE_OP", Napi::Value::From(env, CONNTYPE_OP)),
-    StaticValue("CONNTYPE_BASIC", Napi::Value::From(env, CONNTYPE_BASIC)),
+    InstanceValue("CONNTYPE_PG", Napi::Value::From(env, CONNTYPE_PG)),
+    InstanceValue("CONNTYPE_OP", Napi::Value::From(env, CONNTYPE_OP)),
+    InstanceValue("CONNTYPE_BASIC", Napi::Value::From(env, CONNTYPE_BASIC)),
 
     // CPU Status codes
-    StaticValue("S7CpuStatusUnknown", Napi::Value::From(env, S7CpuStatusUnknown)),
-    StaticValue("S7CpuStatusRun", Napi::Value::From(env, S7CpuStatusRun)),
-    StaticValue("S7CpuStatusStop", Napi::Value::From(env, S7CpuStatusStop)),
+    InstanceValue("S7CpuStatusUnknown", Napi::Value::From(env, S7CpuStatusUnknown)),
+    InstanceValue("S7CpuStatusRun", Napi::Value::From(env, S7CpuStatusRun)),
+    InstanceValue("S7CpuStatusStop", Napi::Value::From(env, S7CpuStatusStop)),
 
     // Area ID
-    StaticValue("S7AreaPE", Napi::Value::From(env, S7AreaPE)),
-    StaticValue("S7AreaPA", Napi::Value::From(env, S7AreaPA)),
-    StaticValue("S7AreaMK", Napi::Value::From(env, S7AreaMK)),
-    StaticValue("S7AreaDB", Napi::Value::From(env, S7AreaDB)),
-    StaticValue("S7AreaCT", Napi::Value::From(env, S7AreaCT)),
-    StaticValue("S7AreaTM", Napi::Value::From(env, S7AreaTM)),
+    InstanceValue("S7AreaPE", Napi::Value::From(env, S7AreaPE)),
+    InstanceValue("S7AreaPA", Napi::Value::From(env, S7AreaPA)),
+    InstanceValue("S7AreaMK", Napi::Value::From(env, S7AreaMK)),
+    InstanceValue("S7AreaDB", Napi::Value::From(env, S7AreaDB)),
+    InstanceValue("S7AreaCT", Napi::Value::From(env, S7AreaCT)),
+    InstanceValue("S7AreaTM", Napi::Value::From(env, S7AreaTM)),
 
     // Word Length
-    StaticValue("S7WLBit", Napi::Value::From(env, S7WLBit)),
-    StaticValue("S7WLByte", Napi::Value::From(env, S7WLByte)),
-    StaticValue("S7WLWord", Napi::Value::From(env, S7WLWord)),
-    StaticValue("S7WLDWord", Napi::Value::From(env, S7WLDWord)),
-    StaticValue("S7WLReal", Napi::Value::From(env, S7WLReal)),
-    StaticValue("S7WLCounter", Napi::Value::From(env, S7WLCounter)),
-    StaticValue("S7WLTimer", Napi::Value::From(env, S7WLTimer)),
+    InstanceValue("S7WLBit", Napi::Value::From(env, S7WLBit)),
+    InstanceValue("S7WLByte", Napi::Value::From(env, S7WLByte)),
+    InstanceValue("S7WLWord", Napi::Value::From(env, S7WLWord)),
+    InstanceValue("S7WLDWord", Napi::Value::From(env, S7WLDWord)),
+    InstanceValue("S7WLReal", Napi::Value::From(env, S7WLReal)),
+    InstanceValue("S7WLCounter", Napi::Value::From(env, S7WLCounter)),
+    InstanceValue("S7WLTimer", Napi::Value::From(env, S7WLTimer)),
 
     // Block type
-    StaticValue("Block_OB", Napi::Value::From(env, Block_OB)),
-    StaticValue("Block_DB", Napi::Value::From(env, Block_DB)),
-    StaticValue("Block_SDB", Napi::Value::From(env, Block_SDB)),
-    StaticValue("Block_FC", Napi::Value::From(env, Block_FC)),
-    StaticValue("Block_SFC", Napi::Value::From(env, Block_SFC)),
-    StaticValue("Block_FB", Napi::Value::From(env, Block_FB)),
-    StaticValue("Block_SFB", Napi::Value::From(env, Block_SFB)),
+    InstanceValue("Block_OB", Napi::Value::From(env, Block_OB)),
+    InstanceValue("Block_DB", Napi::Value::From(env, Block_DB)),
+    InstanceValue("Block_SDB", Napi::Value::From(env, Block_SDB)),
+    InstanceValue("Block_FC", Napi::Value::From(env, Block_FC)),
+    InstanceValue("Block_SFC", Napi::Value::From(env, Block_SFC)),
+    InstanceValue("Block_FB", Napi::Value::From(env, Block_FB)),
+    InstanceValue("Block_SFB", Napi::Value::From(env, Block_SFB)),
 
     // Sub Block Type
-    StaticValue("SubBlk_OB", Napi::Value::From(env, SubBlk_OB)),
-    StaticValue("SubBlk_SDB", Napi::Value::From(env, SubBlk_SDB)),
-    StaticValue("SubBlk_FC", Napi::Value::From(env, SubBlk_FC)),
-    StaticValue("SubBlk_SFC", Napi::Value::From(env, SubBlk_SFC)),
-    StaticValue("SubBlk_FB", Napi::Value::From(env, SubBlk_FB)),
-    StaticValue("SubBlk_SFB", Napi::Value::From(env, SubBlk_SFB)),
+    InstanceValue("SubBlk_OB", Napi::Value::From(env, SubBlk_OB)),
+    InstanceValue("SubBlk_SDB", Napi::Value::From(env, SubBlk_SDB)),
+    InstanceValue("SubBlk_FC", Napi::Value::From(env, SubBlk_FC)),
+    InstanceValue("SubBlk_SFC", Napi::Value::From(env, SubBlk_SFC)),
+    InstanceValue("SubBlk_FB", Napi::Value::From(env, SubBlk_FB)),
+    InstanceValue("SubBlk_SFB", Napi::Value::From(env, SubBlk_SFB)),
 
     // Block languages
-    StaticValue("BlockLangAWL", Napi::Value::From(env, BlockLangAWL)),
-    StaticValue("BlockLangKOP", Napi::Value::From(env, BlockLangKOP)),
-    StaticValue("BlockLangFUP", Napi::Value::From(env, BlockLangFUP)),
-    StaticValue("BlockLangSCL", Napi::Value::From(env, BlockLangSCL)),
-    StaticValue("BlockLangDB", Napi::Value::From(env, BlockLangDB)),
-    StaticValue("BlockLangGRAPH", Napi::Value::From(env, BlockLangGRAPH)),
+    InstanceValue("BlockLangAWL", Napi::Value::From(env, BlockLangAWL)),
+    InstanceValue("BlockLangKOP", Napi::Value::From(env, BlockLangKOP)),
+    InstanceValue("BlockLangFUP", Napi::Value::From(env, BlockLangFUP)),
+    InstanceValue("BlockLangSCL", Napi::Value::From(env, BlockLangSCL)),
+    InstanceValue("BlockLangDB", Napi::Value::From(env, BlockLangDB)),
+    InstanceValue("BlockLangGRAPH", Napi::Value::From(env, BlockLangGRAPH)),
 
     // Parameter
-    StaticValue("LocalPort", Napi::Value::From(env, p_u16_LocalPort)),
-    StaticValue("RemotePort", Napi::Value::From(env, p_u16_RemotePort)),
-    StaticValue("PingTimeout", Napi::Value::From(env, p_i32_PingTimeout)),
-    StaticValue("SendTimeout", Napi::Value::From(env, p_i32_SendTimeout)),
-    StaticValue("RecvTimeout", Napi::Value::From(env, p_i32_RecvTimeout)),
-    StaticValue("WorkInterval", Napi::Value::From(env, p_i32_WorkInterval)),
-    StaticValue("SrcRef", Napi::Value::From(env, p_u16_SrcRef)),
-    StaticValue("DstRef", Napi::Value::From(env, p_u16_DstRef)),
-    StaticValue("SrcTSap", Napi::Value::From(env, p_u16_SrcTSap)),
-    StaticValue("PDURequest", Napi::Value::From(env, p_i32_PDURequest)),
-    StaticValue("MaxClients", Napi::Value::From(env, p_i32_MaxClients)),
-    StaticValue("BSendTimeout", Napi::Value::From(env, p_i32_BSendTimeout)),
-    StaticValue("BRecvTimeout", Napi::Value::From(env, p_i32_BRecvTimeout)),
-    StaticValue("RecoveryTime", Napi::Value::From(env, p_u32_RecoveryTime)),
-    StaticValue("KeepAliveTime", Napi::Value::From(env, p_u32_KeepAliveTime))
+    InstanceValue("LocalPort", Napi::Value::From(env, p_u16_LocalPort)),
+    InstanceValue("RemotePort", Napi::Value::From(env, p_u16_RemotePort)),
+    InstanceValue("PingTimeout", Napi::Value::From(env, p_i32_PingTimeout)),
+    InstanceValue("SendTimeout", Napi::Value::From(env, p_i32_SendTimeout)),
+    InstanceValue("RecvTimeout", Napi::Value::From(env, p_i32_RecvTimeout)),
+    InstanceValue("WorkInterval", Napi::Value::From(env, p_i32_WorkInterval)),
+    InstanceValue("SrcRef", Napi::Value::From(env, p_u16_SrcRef)),
+    InstanceValue("DstRef", Napi::Value::From(env, p_u16_DstRef)),
+    InstanceValue("SrcTSap", Napi::Value::From(env, p_u16_SrcTSap)),
+    InstanceValue("PDURequest", Napi::Value::From(env, p_i32_PDURequest)),
+    InstanceValue("MaxClients", Napi::Value::From(env, p_i32_MaxClients)),
+    InstanceValue("BSendTimeout", Napi::Value::From(env, p_i32_BSendTimeout)),
+    InstanceValue("BRecvTimeout", Napi::Value::From(env, p_i32_BRecvTimeout)),
+    InstanceValue("RecoveryTime", Napi::Value::From(env, p_u32_RecoveryTime)),
+    InstanceValue("KeepAliveTime", Napi::Value::From(env, p_u32_KeepAliveTime))
   });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -233,16 +232,10 @@ void S7Client::FreeCallbackSZL(Napi::Env, char* finalizeData) {
 Napi::Value S7Client::Connect(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    int ret = this->snap7Client->Connect();
-    return Napi::Boolean::New(env, ret == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::CONNECT);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::CONNECT);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
@@ -257,23 +250,11 @@ Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
   }
 
   std::string* remAddress = new std::string(info[0].As<Napi::String>().Utf8Value());
-  if (!info[3].IsFunction()) {
-    int ret = this->snap7Client->ConnectTo(
-      remAddress->c_str()
-      , info[1].As<Napi::Number>().Int32Value()
-      , info[2].As<Napi::Number>().Int32Value());
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::CONNECTTO
+    , remAddress, info[1].As<Napi::Number>().Int32Value(), info[2].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    delete remAddress;
-    
-    return Napi::Boolean::New(env, ret == 0);
-  } else {
-    Napi::Function callback = info[3].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::CONNECTTO
-      , remAddress, info[1].As<Napi::Number>().Int32Value(), info[2].As<Napi::Number>().Int32Value());
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
@@ -507,22 +488,12 @@ void IOWorker::Execute() {
 }
 
 void IOWorker::OnOK() {
-  Napi::HandleScope scope(Env());
-
-  std::vector<napi_value> args;
-  args.reserve(2);
-
-  if (returnValue == 0) {
-    args.push_back(Env().Null());
-  } else {
-    args.push_back(Napi::Number::New(Env(), returnValue));
-  }
+  Napi::Value val = Env().Null();
 
   switch (caller) {
   case DataIOFunction::CONNECTTO:
   case DataIOFunction::SETSESSIONPW:
       delete static_cast<std::string*>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::CONNECT:
@@ -537,202 +508,164 @@ void IOWorker::OnOK() {
   case DataIOFunction::DBFILL:
   case DataIOFunction::DELETEBLOCK:
   case DataIOFunction::DOWNLOAD:
-    Callback().Call(args);
       break;
 
   case DataIOFunction::READAREA:
     if (returnValue == 0) {
-      args.push_back(Napi::Buffer<char>::New(Env(),
+      val = Napi::Buffer<char>::New(Env(),
           static_cast<char*>(pData)
         , static_cast<size_t>(int4) * this->s7client->GetByteCountFromWordLen(int5)
-        , S7Client::FreeCallback));
+        , S7Client::FreeCallback);
     } else {
       delete[] static_cast<char*>(pData);
-      args.push_back(Env().Null());
     }
-    Callback().Call(args);
     break;
 
   case DataIOFunction::READMULTI:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
-          , int1, true));
+        val = this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
+          , int1, true);
       } else {
         for (int i = 0; i < int1; i++) {
           delete[] static_cast<char*>(static_cast<PS7DataItem>(pData)[i].pdata);
         }
         delete[] static_cast<PS7DataItem>(pData);
-        args.push_back(Env().Null());
       }
-      Callback().Call(args);
       break;
 
   case DataIOFunction::WRITEMULTI:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
-          , int1, false));
+        val = this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
+          , int1, false);
       } else {
         delete[] static_cast<PS7DataItem>(pData);
-        args.push_back(Env().Null());
       }
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETPROTECTION:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7ProtectionToObject(
-          static_cast<PS7Protection>(pData)));
-      } else {
-        args.push_back(Env().Null());
+        val = this->s7client->S7ProtectionToObject(
+          static_cast<PS7Protection>(pData));
       }
       delete static_cast<PS7Protection>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETCPINFO:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7CpInfoToObject(
-          static_cast<PS7CpInfo>(pData)));
-      } else {
-        args.push_back(Env().Null());
+        val = this->s7client->S7CpInfoToObject(
+          static_cast<PS7CpInfo>(pData));
       }
       delete static_cast<PS7CpInfo>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETCPUINFO:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7CpuInfoToObject(
-          static_cast<PS7CpuInfo>(pData)));
-      } else {
-        args.push_back(Env().Null());
+        val = this->s7client->S7CpuInfoToObject(
+          static_cast<PS7CpuInfo>(pData));
       }
       delete static_cast<PS7CpuInfo>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETORDERCODE:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7OrderCodeToObject(
-          static_cast<PS7OrderCode>(pData)));
-      } else {
-        args.push_back(Env().Null());
+        val = this->s7client->S7OrderCodeToObject(
+          static_cast<PS7OrderCode>(pData));
       }
       delete static_cast<PS7OrderCode>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETPLCDATETIME:
       if (returnValue == 0) {
         double timestamp = static_cast<double>(mktime(static_cast<tm*>(pData)));
-        args.push_back(Napi::Date::New(Env(), timestamp * 1000));
-      } else {
-        args.push_back(Env().Null());
+        val = Napi::Date::New(Env(), timestamp * 1000);
       }
       delete static_cast<tm*>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::SETPLCDATETIME:
       delete static_cast<tm*>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::PLCSTATUS:
       if (returnValue == 0) {
-        args.push_back(Napi::Number::New(Env(), int1));
-      } else {
-        args.push_back(Env().Null());
+        val = Napi::Number::New(Env(), int1);
       }
-      Callback().Call(args);
       break;
 
   case DataIOFunction::DBGET:
       if (returnValue == 0) {
-        args.push_back(Napi::Buffer<char>::New(Env(),
+        val = Napi::Buffer<char>::New(Env(),
             static_cast<char*>(pData)
           , int2
-          , S7Client::FreeCallback));
+          , S7Client::FreeCallback);
       } else {
-        args.push_back(Env().Null());
         delete[] static_cast<char*>(pData);
       }
-      Callback().Call(args);
       break;
 
   case DataIOFunction::FULLUPLOAD:
   case DataIOFunction::UPLOAD:
       if (returnValue == 0) {
-        args.push_back(Napi::Buffer<char>::New(Env(),
+        val = Napi::Buffer<char>::New(Env(),
             static_cast<char*>(pData)
           , int3
-          , S7Client::FreeCallback));
+          , S7Client::FreeCallback);
       } else {
-        args.push_back(Env().Null());
         delete[] static_cast<char*>(pData);
       }
-      Callback().Call(args);
       break;
 
   case DataIOFunction::LISTBLOCKSOFTYPE:
       if (returnValue == 0) {
-        args.push_back(this->s7client->S7BlocksOfTypeToArray(
-            static_cast<PS7BlocksOfType>(pData), int2));
-      } else {
-        args.push_back(Env().Null());
+        val = this->s7client->S7BlocksOfTypeToArray(
+            static_cast<PS7BlocksOfType>(pData), int2);
       }
       delete[] static_cast<PS7BlocksOfType>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::GETAGBLOCKINFO:
       if (returnValue == 0) {
         Napi::Object block_info = this->s7client->S7BlockInfoToObject(
             static_cast<PS7BlockInfo>(pData));
-        args.push_back(block_info);
-      } else {
-        args.push_back(Env().Null());
+        val = block_info;
       }
       delete static_cast<PS7BlockInfo>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::LISTBLOCKS:
       if (returnValue == 0) {
         Napi::Object blocks_list = this->s7client->S7BlocksListToObject(
             static_cast<PS7BlocksList>(pData));
-        args.push_back(blocks_list);
-      } else {
-        args.push_back(Env().Null());
+        val = blocks_list;
       }
       delete static_cast<PS7BlocksList>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::READSZLLIST:
       if (returnValue == 0) {
         Napi::Array szl_list = this->s7client->S7SZLListToArray(
             static_cast<PS7SZLList>(pData), int1);
-        args.push_back(szl_list);
-      } else {
-        args.push_back(Env().Null());
+        val = szl_list;
       }
       delete static_cast<PS7SZLList>(pData);
-      Callback().Call(args);
       break;
 
   case DataIOFunction::READSZL:
       if (returnValue == 0) {
-        args.push_back(Napi::Buffer<char>::New(Env(),
+        val = Napi::Buffer<char>::New(Env(),
             reinterpret_cast<char*>(static_cast<PS7SZL>(pData))
           , int3
-          , S7Client::FreeCallbackSZL));
+          , S7Client::FreeCallbackSZL);
       } else {
-        args.push_back(Env().Null());
         delete static_cast<PS7SZL>(pData);
       }
-      Callback().Call(args);
       break;
+  }
+
+  if (returnValue == 0){
+    m_deferred.Resolve(val);
+  } else {
+    m_deferred.Reject(Napi::Number::New(Env(), returnValue));
   }
 }
 
@@ -752,34 +685,15 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
   int size = amount * byteCount;
   char *bufferData = new char[size];
 
-  if (!info[5].IsFunction()) {
-    int returnValue = this->snap7Client->ReadArea(
-      info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value()
-      , info[2].As<Napi::Number>().Int32Value()
-      , info[3].As<Napi::Number>().Int32Value()
-      , info[4].As<Napi::Number>().Int32Value()
-      , bufferData);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::READAREA
+    , bufferData, info[0].As<Napi::Number>().Int32Value()
+    , info[1].As<Napi::Number>().Int32Value()
+    , info[2].As<Napi::Number>().Int32Value()
+    , info[3].As<Napi::Number>().Int32Value()
+    , info[4].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return Napi::Buffer<char>::New(env,
-          bufferData
-        , size
-        , S7Client::FreeCallback);
-    } else {
-      delete[] bufferData;
-      return Napi::Boolean::New(env, false);
-    }
-
-  } else {
-    Napi::Function callback = info[5].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::READAREA
-      , bufferData, info[0].As<Napi::Number>().Int32Value()
-      , info[4].As<Napi::Number>().Int32Value());
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::WriteArea(const Napi::CallbackInfo &info) {
@@ -793,28 +707,16 @@ Napi::Value S7Client::WriteArea(const Napi::CallbackInfo &info) {
       !info[4].IsNumber() || !info[5].IsBuffer())
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
 
-  if (!info[6].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->WriteArea(
-        info[0].As<Napi::Number>().Int32Value()
-        , info[1].As<Napi::Number>().Int32Value()
-        , info[2].As<Napi::Number>().Int32Value()
-        , info[3].As<Napi::Number>().Int32Value()
-        , info[4].As<Napi::Number>().Int32Value()
-        , info[5].As<Napi::Buffer<char>>().Data()) == 0);
-  } else {
-    Napi::Function callback = info[6].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::WRITEAREA
-      , info[5].As<Napi::Buffer<char>>().Data()
-      , info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value()
-      , info[2].As<Napi::Number>().Int32Value()
-      , info[3].As<Napi::Number>().Int32Value()
-      , info[4].As<Napi::Number>().Int32Value());
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::WRITEAREA
+    , info[5].As<Napi::Buffer<char>>().Data()
+    , info[0].As<Napi::Number>().Int32Value()
+    , info[1].As<Napi::Number>().Int32Value()
+    , info[2].As<Napi::Number>().Int32Value()
+    , info[3].As<Napi::Number>().Int32Value()
+    , info[4].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
@@ -882,26 +784,11 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
     Items[i].pdata = new char[size];
   }
 
-  if (!info[1].IsFunction()) {
-    int returnValue = this->snap7Client->ReadMultiVars(Items, len);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::READMULTI
+    , Items, len);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return this->S7DataItemToArray(Items, len, true);
-    } else {
-      for (uint32_t i = 0; i < len; i++) {
-        delete[] static_cast<char*>(Items[i].pdata);
-      }
-      delete[] Items;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::READMULTI
-      , Items, len);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Array S7Client::S7DataItemToArray(
@@ -1002,23 +889,11 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
     Items[i].pdata = data_obj.Get("Data").As<Napi::Buffer<char>>().Data();
   }
 
-  if (!info[1].IsFunction()) {
-    int returnValue = this->snap7Client->WriteMultiVars(Items, len);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::WRITEMULTI
+    , Items, len);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return this->S7DataItemToArray(Items, len, false);
-    } else {
-      delete[] Items;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::WRITEMULTI
-      , Items, len);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 // Directory functions
@@ -1026,26 +901,11 @@ Napi::Value S7Client::ListBlocks(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   PS7BlocksList BlocksList = new TS7BlocksList;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->ListBlocks(BlocksList);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::LISTBLOCKS
+    , BlocksList);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object blocks_list = this->S7BlocksListToObject(
-          BlocksList);
-      delete BlocksList;
-      return blocks_list;
-    } else {
-      delete BlocksList;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::LISTBLOCKS
-      , BlocksList);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Object S7Client::S7BlocksListToObject(
@@ -1074,29 +934,11 @@ Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
   }
 
   PS7BlockInfo BlockInfo = new TS7BlockInfo;
-  if (!info[2].IsFunction()) {
-    int returnValue = this->snap7Client->GetAgBlockInfo(
-      info[0].As<Napi::Number>().Int32Value()
-    , info[1].As<Napi::Number>().Int32Value(), BlockInfo);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETAGBLOCKINFO
+    , BlockInfo, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object block_info = this->S7BlockInfoToObject(
-          BlockInfo);
-
-      delete BlockInfo;
-      return block_info;
-    } else {
-      delete BlockInfo;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[2].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETAGBLOCKINFO
-      , BlockInfo, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value());
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::GetPgBlockInfo(const Napi::CallbackInfo &info) {
@@ -1154,27 +996,11 @@ Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
 
   int BlockNum = sizeof(TS7BlocksOfType) / sizeof(PS7BlocksOfType);
   PS7BlocksOfType BlockList = new TS7BlocksOfType[BlockNum];
-  if (!info[1].IsFunction()) {
-    int returnValue = this->snap7Client->ListBlocksOfType(
-    info[0].As<Napi::Number>().Int32Value(), BlockList, &BlockNum);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::LISTBLOCKSOFTYPE
+    , BlockList, info[0].As<Napi::Number>().Int32Value(), BlockNum);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Array block_list = this->S7BlocksOfTypeToArray(
-          BlockList, BlockNum);
-      delete[] BlockList;
-      return block_list;
-    } else {
-      delete[] BlockList;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::LISTBLOCKSOFTYPE
-      , BlockList, info[0].As<Napi::Number>().Int32Value(), BlockNum);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Array S7Client::S7BlocksOfTypeToArray(
@@ -1202,28 +1028,11 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
   int size = info[2].As<Napi::Number>().Int32Value();
   char *bufferData = new char[size];
 
-  if (!info[3].IsFunction()) {
-    int returnValue = this->snap7Client->Upload(
-      info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::UPLOAD
+    , bufferData, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value(), size);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return Napi::Buffer<char>::New(env,
-          bufferData
-        , size
-        , S7Client::FreeCallback);
-    } else {
-      delete[] bufferData;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[3].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::UPLOAD
-      , bufferData, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value(), size);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
@@ -1236,28 +1045,11 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
   int size = info[2].As<Napi::Number>().Int32Value();
   char *bufferData = new char[size];
 
-  if (!info[3].IsFunction()) {
-    int returnValue = this->snap7Client->FullUpload(
-      info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value(), bufferData, &size);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::FULLUPLOAD
+    , bufferData, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value(), size);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return Napi::Buffer<char>::New(env,
-          bufferData
-        , size
-        , S7Client::FreeCallback);
-    } else {
-      delete[] bufferData;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[3].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::FULLUPLOAD
-      , bufferData, info[0].As<Napi::Number>().Int32Value(), info[1].As<Napi::Number>().Int32Value(), size);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
@@ -1269,20 +1061,12 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
 
   Napi::Buffer<char> buffer = info[1].As<Napi::Buffer<char>>();
 
-  if (!info[2].IsFunction()) {
-    return Napi::Boolean::New(env, this->snap7Client->Download(
-      info[0].As<Napi::Number>().Int32Value()
-      , buffer.Data()
-      , buffer.Length()) == 0);
-  } else {
-    Napi::Function callback = info[2].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::DOWNLOAD
-      , buffer.Data(), info[0].As<Napi::Number>().Int32Value()
-      , buffer.Length());
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::DOWNLOAD
+    , buffer.Data(), info[0].As<Napi::Number>().Int32Value()
+    , buffer.Length());
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
@@ -1292,19 +1076,12 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  if (!info[2].IsFunction()) {
-    return Napi::Boolean::New(env, this->snap7Client->Delete(
-      info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value()) == 0);
-  } else {
-    Napi::Function callback = info[2].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::DELETEBLOCK
-      , info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value());
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::DELETEBLOCK
+    , info[0].As<Napi::Number>().Int32Value()
+    , info[1].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
@@ -1316,27 +1093,11 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
 
   int size = 65536;
   char *bufferData = new char[size];
-  if (!info[1].IsFunction()) {
-    int returnValue = this->snap7Client->DBGet(
-    info[0].As<Napi::Number>().Int32Value(), bufferData, &size);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::DBGET
+    , bufferData, info[0].As<Napi::Number>().Int32Value(), size);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return Napi::Buffer<char>::New(env,
-          bufferData
-        , size
-        , S7Client::FreeCallback);
-    } else {
-      delete[] bufferData;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::DBGET
-      , bufferData, info[0].As<Napi::Number>().Int32Value(), size);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
@@ -1354,17 +1115,11 @@ Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
     fill = static_cast<int>(*fillstr.c_str());
   }
 
-  if (!info[2].IsFunction()) {
-    return Napi::Boolean::New(env, this->snap7Client->DBFill(
-    info[0].As<Napi::Number>().Int32Value(), fill) == 0);
-  } else {
-    Napi::Function callback = info[2].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::DBFILL
-      , info[0].As<Napi::Number>().Int32Value(), fill);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::DBFILL
+    , info[0].As<Napi::Number>().Int32Value(), fill);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 // Date/Time functions
@@ -1372,25 +1127,11 @@ Napi::Value S7Client::GetPlcDateTime(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   tm *DateTime = new tm;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->GetPlcDateTime(DateTime);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETPLCDATETIME
+    , DateTime);
+  worker->Queue();
 
-    if (returnValue == 0){
-      double timestamp = static_cast<double>(mktime(DateTime));
-      delete DateTime;
-      return Napi::Date::New(env, timestamp * 1000);
-    } else {
-      delete DateTime;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETPLCDATETIME
-      , DateTime);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
@@ -1415,34 +1156,20 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
     DateTime->tm_sec = date_time.Get("seconds").As<Napi::Number>().DoubleValue();
   }
 
-  if (!info[1].IsFunction()) {
-    Napi::Boolean ret = Napi::Boolean::New(env,
-      this->snap7Client->SetPlcDateTime(DateTime) == 0);
-    delete DateTime;
-    return ret;
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::SETPLCDATETIME
-      , DateTime);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::SETPLCDATETIME
+    , DateTime);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::SetPlcSystemDateTime(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->SetPlcSystemDateTime() == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::SETPLCSYSTEMDATETIME);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::SETPLCSYSTEMDATETIME);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 // System Info functions
@@ -1450,25 +1177,11 @@ Napi::Value S7Client::GetOrderCode(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   PS7OrderCode OrderCode = new TS7OrderCode;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->GetOrderCode(OrderCode);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETORDERCODE
+    , OrderCode);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object order_code = this->S7OrderCodeToObject(OrderCode);
-      delete OrderCode;
-      return order_code;
-    } else {
-      delete OrderCode;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETORDERCODE
-      , OrderCode);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Object S7Client::S7OrderCodeToObject(PS7OrderCode OrderCode) {
@@ -1487,24 +1200,10 @@ Napi::Value S7Client::GetCpuInfo(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   PS7CpuInfo CpuInfo = new TS7CpuInfo;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->GetCpuInfo(CpuInfo);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETCPUINFO, CpuInfo);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object cpu_info = this->S7CpuInfoToObject(CpuInfo);
-      delete CpuInfo;
-      return cpu_info;
-    } else {
-      delete CpuInfo;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETCPUINFO, CpuInfo);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Object S7Client::S7CpuInfoToObject(PS7CpuInfo CpuInfo) {
@@ -1525,24 +1224,10 @@ Napi::Value S7Client::GetCpInfo(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   PS7CpInfo CpInfo = new TS7CpInfo;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->GetCpInfo(CpInfo);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETCPINFO, CpInfo);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object cp_info = this->S7CpInfoToObject(CpInfo);
-      delete CpInfo;
-      return cp_info;
-    } else {
-      delete CpInfo;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETCPINFO, CpInfo);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Object S7Client::S7CpInfoToObject(PS7CpInfo CpInfo) {
@@ -1566,28 +1251,12 @@ Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
 
   PS7SZL SZL = new TS7SZL;
   int size = sizeof(TS7SZL);
-  if (!info[2].IsFunction()) {
-    int returnValue = this->snap7Client->ReadSZL(info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value(), SZL, &size);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::READSZL, SZL
+    , info[0].As<Napi::Number>().Int32Value()
+    , info[1].As<Napi::Number>().Int32Value(), size);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      return Napi::Buffer<char>::New(env,
-          reinterpret_cast<char*>(SZL)
-        , size
-        , S7Client::FreeCallbackSZL);
-    } else {
-      delete SZL;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[2].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::READSZL, SZL
-      , info[0].As<Napi::Number>().Int32Value()
-      , info[1].As<Napi::Number>().Int32Value(), size);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::ReadSZLList(const Napi::CallbackInfo &info) {
@@ -1595,26 +1264,11 @@ Napi::Value S7Client::ReadSZLList(const Napi::CallbackInfo &info) {
 
   PS7SZLList SZLList = new TS7SZLList;
   int size = sizeof(TS7SZLList);
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->ReadSZLList(SZLList, &size);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::READSZLLIST, SZLList
+    , size);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Array szl_list = this->S7SZLListToArray(SZLList, size);
-
-      delete SZLList;
-      return szl_list;
-    } else {
-      delete SZLList;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::READSZLLIST, SZLList
-      , size);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Array S7Client::S7SZLListToArray(PS7SZLList SZLList, int count) {
@@ -1632,46 +1286,28 @@ Napi::Array S7Client::S7SZLListToArray(PS7SZLList SZLList, int count) {
 Napi::Value S7Client::PlcHotStart(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->PlcHotStart() == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::PLCHOTSTART);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::PLCHOTSTART);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::PlcColdStart(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->PlcColdStart() == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::PLCCOLDSTART);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::PLCCOLDSTART);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::PlcStop(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->PlcStop() == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::PLCSTOP);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::PLCSTOP);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
@@ -1681,17 +1317,11 @@ Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  if (!info[1].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->CopyRamToRom(info[0].As<Napi::Number>().Int32Value()) == 0);
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::COPYRAMTOROM
-      , info[0].As<Napi::Number>().Int32Value());
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::COPYRAMTOROM
+    , info[0].As<Napi::Number>().Int32Value());
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
@@ -1701,17 +1331,11 @@ Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  if (!info[1].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->Compress(info[0].As<Napi::Number>().Int32Value()) == 0);
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::COMPRESS
-      , info[0]);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::COMPRESS
+    , info[0]);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 // Security functions
@@ -1719,26 +1343,11 @@ Napi::Value S7Client::GetProtection(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   PS7Protection S7Protection = new TS7Protection;
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->GetProtection(S7Protection);
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::GETPROTECTION
+    , S7Protection);
+  worker->Queue();
 
-    if (returnValue == 0) {
-      Napi::Object protection = this->S7ProtectionToObject(
-        S7Protection);
-      delete S7Protection;
-      return protection;
-    } else {
-      delete S7Protection;
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::GETPROTECTION
-      , S7Protection);
-    worker->Queue();
-
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Object S7Client::S7ProtectionToObject(
@@ -1764,34 +1373,20 @@ Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
   }
 
   std::string *password = new std::string(info[0].As<Napi::String>().Utf8Value());
-  if (!info[1].IsFunction()) {
-    Napi::Boolean ret = Napi::Boolean::New(env,
-      this->snap7Client->SetSessionPassword(&*password->begin()) == 0);
-    delete password;
-    return ret;
-  } else {
-    Napi::Function callback = info[1].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::SETSESSIONPW
-      , password);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::SETSESSIONPW
+    , password);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::ClearSessionPassword(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    return Napi::Boolean::New(env,
-      this->snap7Client->ClearSessionPassword() == 0);
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::CLEARSESSIONPW);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::CLEARSESSIONPW);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 // Properties
@@ -1838,22 +1433,10 @@ Napi::Value S7Client::PDULength(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::PlcStatus(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (!info[0].IsFunction()) {
-    int returnValue = this->snap7Client->PlcStatus();
-    if ((returnValue == S7CpuStatusUnknown) ||
-        (returnValue == S7CpuStatusStop) ||
-        (returnValue == S7CpuStatusRun)) {
-      return Napi::Number::New(env, returnValue);
-    } else {
-      return Napi::Boolean::New(env, false);
-    }
-  } else {
-    Napi::Function callback = info[0].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::PLCSTATUS);
-    worker->Queue();
+  IOWorker* worker = new IOWorker(env, this, DataIOFunction::PLCSTATUS);
+  worker->Queue();
 
-    return env.Undefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Client::Connected(const Napi::CallbackInfo &info) {
