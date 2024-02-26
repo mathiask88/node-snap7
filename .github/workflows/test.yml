@@ -1,4 +1,4 @@
-name: Test and Release
+name: Test
 on: [push, pull_request]
 permissions:
   contents: read
@@ -29,6 +29,4 @@ jobs:
       - name: Install
         run: npm install
       - name: Test
-        env:
-          PREBUILD_TOKEN: ${{ secrets.PREBUILD_TOKEN }}
         run: npm test

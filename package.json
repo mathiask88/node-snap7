@@ -39,6 +39,7 @@
     "prebuild": "prebuildify -t 10.17.0 --napi --strip",
     "download-prebuilds": "prebuildify-ci download",
     "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 10.17.0 --napi --strip",
+    "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 8.14.0 --napi --strip",
     "prebuild-linux-x64": "prebuildify-cross -i centos7-devtoolset7 -i alpine -t 10.17.0 --napi --strip",
     "prebuild-darwin-x64+arm64": "prebuildify -t 10.17.0 --napi --strip --arch x64+arm64",
     "prebuild-win32-x86": "prebuildify -t 10.17.0 --napi --strip",
