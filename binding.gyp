@@ -8,10 +8,10 @@
         "sources": [
             "./src/node_snap7.cpp",
             "./src/node_snap7_client.cpp",
-            #"./src/node_snap7_server.cpp",
+            "./src/node_snap7_server.cpp",
             "./src/snap7.cpp"
         ],
-        "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS", "NAPI_EXPERIMENTAL"],
+        "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
         "conditions": [
             ["OS=='win'", {
                 "libraries": ["-lws2_32.lib", "-lwinmm.lib"],

@@ -9,8 +9,6 @@ namespace node_snap7 {
 
 static std::mutex mutex_rw;
 static std::mutex mutex_event;
-static std::condition_variable sem_rw;
-static std::deque<TSrvEvent> event_list_g;
 
 static struct rw_event_baton_t {
   int Sender;
@@ -20,24 +18,12 @@ static struct rw_event_baton_t {
 } rw_event_baton_g;
 
 void S7API EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size) {
-Napi::Function emit =
-      info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
-  emit.Call(info.This(), {Napi::String::New(env, "start")});
+
 }
 
 int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
   , void *pUsrData
 ) {
-  uv_mutex_lock(&mutex_rw);
-  rw_event_baton_g.Sender = Sender;
-  rw_event_baton_g.Operation = Operation;
-  rw_event_baton_g.Tag = *PTag;
-  rw_event_baton_g.pUsrData = pUsrData;
-
-  uv_async_send(&rw_async_g);
-
-  uv_sem_wait(&sem_rw);
-  uv_mutex_unlock(&mutex_rw);
 
   return 0;
 }
@@ -45,7 +31,7 @@ int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
 Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
 
-  Napi::Function func = DefineClass(env, "S7Client", {
+  Napi::Function func = DefineClass(env, "S7Server", {
 
   // Setup the prototype
   InstanceMethod("Start", &S7Server::Start),
@@ -71,212 +57,212 @@ Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
   InstanceMethod("SetCpuStatus", &S7Server::SetCpuStatus),
 
   // Error codes
-  StaticValue("errSrvCannotStart"
+  InstanceValue("errSrvCannotStart"
     , Napi::Value::From(env, errSrvCannotStart)),
-  StaticValue("errSrvDBNullPointer"
+  InstanceValue("errSrvDBNullPointer"
     , Napi::Value::From(env, errSrvDBNullPointer)),
-  StaticValue("errSrvAreaAlreadyExists"
+  InstanceValue("errSrvAreaAlreadyExists"
     , Napi::Value::From(env, errSrvAreaAlreadyExists)),
-  StaticValue("errSrvUnknownArea"
+  InstanceValue("errSrvUnknownArea"
     , Napi::Value::From(env, errSrvUnknownArea)),
-  StaticValue("errSrvInvalidParams"
+  InstanceValue("errSrvInvalidParams"
     , Napi::Value::From(env, errSrvInvalidParams)),
-  StaticValue("errSrvTooManyDB"
+  InstanceValue("errSrvTooManyDB"
     , Napi::Value::From(env, errSrvTooManyDB)),
-  StaticValue("errSrvInvalidParamNumber"
+  InstanceValue("errSrvInvalidParamNumber"
     , Napi::Value::From(env, errSrvInvalidParamNumber)),
-  StaticValue("errSrvCannotChangeParam"
+  InstanceValue("errSrvCannotChangeParam"
     , Napi::Value::From(env, errSrvCannotChangeParam)),
 
   // Server area IDs
-  StaticValue("srvAreaPE"
+  InstanceValue("srvAreaPE"
     , Napi::Value::From(env, srvAreaPE)),
-  StaticValue("srvAreaPA"
+  InstanceValue("srvAreaPA"
     , Napi::Value::From(env, srvAreaPA)),
-  StaticValue("srvAreaMK"
+  InstanceValue("srvAreaMK"
     , Napi::Value::From(env, srvAreaMK)),
-  StaticValue("srvAreaCT"
+  InstanceValue("srvAreaCT"
     , Napi::Value::From(env, srvAreaCT)),
-  StaticValue("srvAreaTM"
+  InstanceValue("srvAreaTM"
     , Napi::Value::From(env, srvAreaTM)),
-  StaticValue("srvAreaDB"
+  InstanceValue("srvAreaDB"
     , Napi::Value::From(env, srvAreaDB)),
-  StaticValue("operationWrite"
+  InstanceValue("operationWrite"
     , Napi::Value::From(env, OperationWrite)),
-  StaticValue("operationRead"
+  InstanceValue("operationRead"
     , Napi::Value::From(env, OperationRead)),
   // TCP server event codes
-  StaticValue("evcServerStarted"
+  InstanceValue("evcServerStarted"
     , Napi::Value::From(env, evcServerStarted)),
-  StaticValue("evcServerStopped"
+  InstanceValue("evcServerStopped"
     , Napi::Value::From(env, evcServerStopped)),
-  StaticValue("evcListenerCannotStart"
+  InstanceValue("evcListenerCannotStart"
     , Napi::Value::From(env, evcListenerCannotStart)),
-  StaticValue("evcClientAdded"
+  InstanceValue("evcClientAdded"
     , Napi::Value::From(env, evcClientAdded)),
-  StaticValue("evcClientRejected"
+  InstanceValue("evcClientRejected"
     , Napi::Value::From(env, evcClientRejected)),
-  StaticValue("evcClientNoRoom"
+  InstanceValue("evcClientNoRoom"
     , Napi::Value::From(env, evcClientNoRoom)),
-  StaticValue("evcClientException"
+  InstanceValue("evcClientException"
     , Napi::Value::From(env, evcClientException)),
-  StaticValue("evcClientDisconnected"
+  InstanceValue("evcClientDisconnected"
     , Napi::Value::From(env, evcClientDisconnected)),
-  StaticValue("evcClientTerminated"
+  InstanceValue("evcClientTerminated"
     , Napi::Value::From(env, evcClientTerminated)),
-  StaticValue("evcClientsDropped"
+  InstanceValue("evcClientsDropped"
     , Napi::Value::From(env, evcClientsDropped)),
 
   // S7 server event codes
-  StaticValue("evcPDUincoming"
+  InstanceValue("evcPDUincoming"
     , Napi::Value::From(env, evcPDUincoming)),
-  StaticValue("evcDataRead"
+  InstanceValue("evcDataRead"
     , Napi::Value::From(env, evcDataRead)),
-  StaticValue("evcDataWrite"
+  InstanceValue("evcDataWrite"
     , Napi::Value::From(env, evcDataWrite)),
-  StaticValue("evcNegotiatePDU"
+  InstanceValue("evcNegotiatePDU"
     , Napi::Value::From(env, evcNegotiatePDU)),
-  StaticValue("evcReadSZL"
+  InstanceValue("evcReadSZL"
     , Napi::Value::From(env, evcReadSZL)),
-  StaticValue("evcClock"
+  InstanceValue("evcClock"
     , Napi::Value::From(env, evcClock)),
-  StaticValue("evcUpload"
+  InstanceValue("evcUpload"
     , Napi::Value::From(env, evcUpload)),
-  StaticValue("evcDownload"
+  InstanceValue("evcDownload"
     , Napi::Value::From(env, evcDownload)),
-  StaticValue("evcDirectory"
+  InstanceValue("evcDirectory"
     , Napi::Value::From(env, evcDirectory)),
-  StaticValue("evcSecurity"
+  InstanceValue("evcSecurity"
     , Napi::Value::From(env, evcSecurity)),
-  StaticValue("evcControl"
+  InstanceValue("evcControl"
     , Napi::Value::From(env, evcControl)),
 
   // Masks to enable/disable all events
-  StaticValue("evcAll"
+  InstanceValue("evcAll"
     , Napi::Value::From(env, evcAll)),
-  StaticValue("evcNone"
+  InstanceValue("evcNone"
     , Napi::Value::From(env, evcNone)),
 
   // Event subcodes
-  StaticValue("evsUnknown"
+  InstanceValue("evsUnknown"
     , Napi::Value::From(env, evsUnknown)),
-  StaticValue("evsStartUpload"
+  InstanceValue("evsStartUpload"
     , Napi::Value::From(env, evsStartUpload)),
-  StaticValue("evsStartDownload"
+  InstanceValue("evsStartDownload"
     , Napi::Value::From(env, evsStartDownload)),
-  StaticValue("evsGetBlockList"
+  InstanceValue("evsGetBlockList"
     , Napi::Value::From(env, evsGetBlockList)),
-  StaticValue("evsStartListBoT"
+  InstanceValue("evsStartListBoT"
     , Napi::Value::From(env, evsStartListBoT)),
-  StaticValue("evsListBoT"
+  InstanceValue("evsListBoT"
     , Napi::Value::From(env, evsListBoT)),
-  StaticValue("evsGetBlockInfo"
+  InstanceValue("evsGetBlockInfo"
     , Napi::Value::From(env, evsGetBlockInfo)),
-  StaticValue("evsGetClock"
+  InstanceValue("evsGetClock"
     , Napi::Value::From(env, evsGetClock)),
-  StaticValue("evsSetClock"
+  InstanceValue("evsSetClock"
     , Napi::Value::From(env, evsSetClock)),
-  StaticValue("evsSetPassword"
+  InstanceValue("evsSetPassword"
     , Napi::Value::From(env, evsSetPassword)),
-  StaticValue("evsClrPassword"
+  InstanceValue("evsClrPassword"
     , Napi::Value::From(env, evsClrPassword)),
 
   // Event params : functions group
-  StaticValue("grProgrammer"
+  InstanceValue("grProgrammer"
     , Napi::Value::From(env, grProgrammer)),
-  StaticValue("grCyclicData"
+  InstanceValue("grCyclicData"
     , Napi::Value::From(env, grCyclicData)),
-  StaticValue("grBlocksInfo"
+  InstanceValue("grBlocksInfo"
     , Napi::Value::From(env, grBlocksInfo)),
-  StaticValue("grSZL"
+  InstanceValue("grSZL"
     , Napi::Value::From(env, grSZL)),
-  StaticValue("grPassword"
+  InstanceValue("grPassword"
     , Napi::Value::From(env, grPassword)),
-  StaticValue("grBSend"
+  InstanceValue("grBSend"
     , Napi::Value::From(env, grBSend)),
-  StaticValue("grClock"
+  InstanceValue("grClock"
     , Napi::Value::From(env, grClock)),
-  StaticValue("grSecurity"
+  InstanceValue("grSecurity"
     , Napi::Value::From(env, grSecurity)),
 
   // Event params : control codes
-  StaticValue("CodeControlUnknown"
+  InstanceValue("CodeControlUnknown"
     , Napi::Value::From(env, CodeControlUnknown)),
-  StaticValue("CodeControlColdStart"
+  InstanceValue("CodeControlColdStart"
     , Napi::Value::From(env, CodeControlColdStart)),
-  StaticValue("CodeControlWarmStart"
+  InstanceValue("CodeControlWarmStart"
     , Napi::Value::From(env, CodeControlWarmStart)),
-  StaticValue("CodeControlStop"
+  InstanceValue("CodeControlStop"
     , Napi::Value::From(env, CodeControlStop)),
-  StaticValue("CodeControlCompress"
+  InstanceValue("CodeControlCompress"
     , Napi::Value::From(env, CodeControlCompress)),
-  StaticValue("CodeControlCpyRamRom"
+  InstanceValue("CodeControlCpyRamRom"
     , Napi::Value::From(env, CodeControlCpyRamRom)),
-  StaticValue("CodeControlInsDel"
+  InstanceValue("CodeControlInsDel"
     , Napi::Value::From(env, CodeControlInsDel)),
 
   // Event results
-  StaticValue("evrNoError"
+  InstanceValue("evrNoError"
     , Napi::Value::From(env, evrNoError)),
-  StaticValue("evrFragmentRejected"
+  InstanceValue("evrFragmentRejected"
     , Napi::Value::From(env, evrFragmentRejected)),
-  StaticValue("evrMalformedPDU"
+  InstanceValue("evrMalformedPDU"
     , Napi::Value::From(env, evrMalformedPDU)),
-  StaticValue("evrSparseBytes"
+  InstanceValue("evrSparseBytes"
     , Napi::Value::From(env, evrSparseBytes)),
-  StaticValue("evrCannotHandlePDU"
+  InstanceValue("evrCannotHandlePDU"
     , Napi::Value::From(env, evrCannotHandlePDU)),
-  StaticValue("evrNotImplemented"
+  InstanceValue("evrNotImplemented"
     , Napi::Value::From(env, evrNotImplemented)),
-  StaticValue("evrErrException"
+  InstanceValue("evrErrException"
     , Napi::Value::From(env, evrErrException)),
-  StaticValue("evrErrAreaNotFound"
+  InstanceValue("evrErrAreaNotFound"
     , Napi::Value::From(env, evrErrAreaNotFound)),
-  StaticValue("evrErrOutOfRange"
+  InstanceValue("evrErrOutOfRange"
     , Napi::Value::From(env, evrErrOutOfRange)),
-  StaticValue("evrErrOverPDU"
+  InstanceValue("evrErrOverPDU"
     , Napi::Value::From(env, evrErrOverPDU)),
-  StaticValue("evrErrTransportSize"
+  InstanceValue("evrErrTransportSize"
     , Napi::Value::From(env, evrErrTransportSize)),
-  StaticValue("evrInvalidGroupUData"
+  InstanceValue("evrInvalidGroupUData"
     , Napi::Value::From(env, evrInvalidGroupUData)),
-  StaticValue("evrInvalidSZL"
+  InstanceValue("evrInvalidSZL"
     , Napi::Value::From(env, evrInvalidSZL)),
-  StaticValue("evrDataSizeMismatch"
+  InstanceValue("evrDataSizeMismatch"
     , Napi::Value::From(env, evrDataSizeMismatch)),
-  StaticValue("evrCannotUpload"
+  InstanceValue("evrCannotUpload"
     , Napi::Value::From(env, evrCannotUpload)),
-  StaticValue("evrCannotDownload"
+  InstanceValue("evrCannotDownload"
     , Napi::Value::From(env, evrCannotDownload)),
-  StaticValue("evrUploadInvalidID"
+  InstanceValue("evrUploadInvalidID"
     , Napi::Value::From(env, evrUploadInvalidID)),
-  StaticValue("evrResNotFound"
+  InstanceValue("evrResNotFound"
     , Napi::Value::From(env, evrResNotFound)),
 
   // Server parameter
-  StaticValue("LocalPort"
+  InstanceValue("LocalPort"
     , Napi::Value::From(env, p_u16_LocalPort)),
-  StaticValue("WorkInterval"
+  InstanceValue("WorkInterval"
     , Napi::Value::From(env, p_i32_WorkInterval)),
-  StaticValue("PDURequest"
+  InstanceValue("PDURequest"
     , Napi::Value::From(env, p_i32_PDURequest)),
-  StaticValue("MaxClients"
+  InstanceValue("MaxClients"
     , Napi::Value::From(env, p_i32_MaxClients)),
 
   // CPU status codes
-  StaticValue("S7CpuStatusUnknown"
+  InstanceValue("S7CpuStatusUnknown"
     , Napi::Value::From(env, S7CpuStatusUnknown)),
-  StaticValue("S7CpuStatusRun"
+  InstanceValue("S7CpuStatusRun"
     , Napi::Value::From(env, S7CpuStatusRun)),
-  StaticValue("S7CpuStatusStop"
+  InstanceValue("S7CpuStatusStop"
     , Napi::Value::From(env, S7CpuStatusStop)),
 
   // Server status codes
-  StaticValue("SrvStopped"
+  InstanceValue("SrvStopped"
     , Napi::Value::From(env, 0)),
-  StaticValue("SrvRunning"
+  InstanceValue("SrvRunning"
     , Napi::Value::From(env, 1)),
-  StaticValue("SrvError"
+  InstanceValue("SrvError"
     , Napi::Value::From(env, 2))
   });
 
@@ -288,11 +274,9 @@ Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-S7Server::S7Server(const Napi::CallbackInfo& info) {
+S7Server::S7Server(const Napi::CallbackInfo &info) : Napi::ObjectWrap<S7Server>(info) {
   lastError = 0;
   snap7Server = new TS7Server();
-
-  event_async_g.data = rw_async_g.data = this;
 
   snap7Server->SetEventsCallback(&EventCallBack, NULL);
 }
@@ -319,395 +303,239 @@ int S7Server::GetByteCountFromWordLen(int WordLen) {
   }
 }
 
-Napi::Value S7Server::RWBufferCallback(const Napi::CallbackInfo& info) {
-  if (rw_event_baton_g.Operation == OperationRead) {
-    if (!info[0].IsBuffer()) {
-      Napi::TypeError::New(info.Env(), "Wrong argument").ThrowAsJavaScriptException();
-    }
-
-    int byteCount, size;
-    byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
-    size = byteCount * rw_event_baton_g.Tag.Size;
-
-    if (info[0].As<Napi::Buffer<char>>().Length() < size) {
-      Napi::TypeError::New(info.Env(), "Buffer length too small").ThrowAsJavaScriptException();
-    }
-
-    memcpy(
-        rw_event_baton_g.pUsrData
-      , node::Buffer::Data(info[0].As<v8::Object>())
-      , size);
-  }
-}
-
-void S7Server::EmitEvent(const Napi::CallbackInfo& info) {
-  S7Server *s7server = static_cast<S7Server*>(handle->data);
-
-    PSrvEvent Event = &event_list_g.front();
-    in_addr sin;
-    sin.s_addr = Event->EvtSender;
-    double time = static_cast<double>(Event->EvtTime * 1000);
-
-    v8::Local<v8::Object> event_obj = Napi::New<v8::Object>();
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtTime")
-      , Napi::New<v8::Date>(time));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtSender")
-      , Napi::New<v8::String>(inet_ntoa(sin)));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtCode")
-      , Napi::New<v8::Uint32>(Event->EvtCode));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtRetCode")
-      , Napi::New<v8::Integer>(Event->EvtRetCode));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam1")
-      , Napi::New<v8::Integer>(Event->EvtParam1));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam2")
-      , Napi::New<v8::Integer>(Event->EvtParam2));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam3")
-      , Napi::New<v8::Integer>(Event->EvtParam3));
-    Napi::Set(event_obj, Napi::New<v8::String>("EvtParam4")
-      , Napi::New<v8::Integer>(Event->EvtParam4));
-
-    Napi::Value argv[2] = {
-      Napi::String::New(env, "event"),
-      event_obj
-    };
-
-    Napi::Function emit = info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
-    emit.Call(info.This(), { Napi::String::New(env, "data"), Napi::String::New(env, "data ...") });
-    s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 2, argv);
-    event_list_g.pop_front();
-  }
-}
-
-
-void S7Server::EmitReadWriteEvent(const Napi::CallbackInfo& info) {
-  S7Server *s7server = static_cast<S7Server*>(handle->data);
-  in_addr sin;
-  sin.s_addr = rw_event_baton_g.Sender;
-
-  v8::Local<v8::Object> rw_tag_obj = Napi::New<v8::Object>();
-  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Area")
-    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Area));
-  Napi::Set(rw_tag_obj, Napi::New<v8::String>("DBNumber")
-    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.DBNumber));
-  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Start")
-    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Start));
-  Napi::Set(rw_tag_obj, Napi::New<v8::String>("Size")
-    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.Size));
-  Napi::Set(rw_tag_obj, Napi::New<v8::String>("WordLen")
-    , Napi::New<v8::Integer>(rw_event_baton_g.Tag.WordLen));
-
-  int byteCount, size;
-  byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
-  size = byteCount * rw_event_baton_g.Tag.Size;
-
-  v8::Local<v8::Object> buffer;
-
-  if (rw_event_baton_g.Operation == OperationWrite) {
-    buffer = Napi::CopyBuffer(
-      static_cast<char*>(rw_event_baton_g.pUsrData),
-      size);
-  } else {
-    buffer = Napi::NewBuffer(size);
-    memset(node::Buffer::Data(buffer), 0, size);
-  }
-
-  v8::Local<v8::Value> argv[6] = {
-    Napi::New("readWrite"),
-    Napi::New<v8::String>(inet_ntoa(sin)),
-    Napi::New<v8::Integer>(rw_event_baton_g.Operation),
-    rw_tag_obj,
-    buffer,
-    Napi::New<v8::Function>(S7Server::RWBufferCallback)
-  };
-
-  s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 6, argv);
-}
-
 void IOWorkerServer::Execute() {
-  uv_mutex_lock(&s7server->mutex);
+  s7server->mutex.lock();
 
   switch (caller) {
   case ServerIOFunction::STARTTO:
-    ret = s7server->snap7Server->StartTo(
-      **static_cast<Napi::Utf8String*>(pData));
-
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
+    returnValue = s7server->snap7Server->StartTo(
+      static_cast<std::string*>(pData)->c_str());
     break;
 
   case ServerIOFunction::START:
-    ret = s7server->snap7Server->Start();
-
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
+    returnValue = s7server->snap7Server->Start();
     break;
 
-  case STOP:
-    ret = s7server->snap7Server->Stop();
-
-    if (ret == 0) {
-      uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
+  case ServerIOFunction::STOP:
+    returnValue = s7server->snap7Server->Stop();
     break;
   }
 
-  uv_mutex_unlock(&s7server->mutex);
+  s7server->mutex.unlock();
 }
 
-void IOWorkerServer::HandleOKCallback() {
-  Napi::HandleScope scope;
-
-  v8::Local<v8::Value> argv1[1];
-  v8::Local<v8::Value> argv2[2];
-
-  if (ret == 0) {
-    argv2[0] = argv1[0] = Napi::Null();
-  } else {
-    argv2[0] = argv1[0] = Napi::New<v8::Integer>(ret);
-  }
-
+void IOWorkerServer::OnOK() {
   switch (caller) {
   case ServerIOFunction::STARTTO:
-    delete static_cast<Napi::Utf8String*>(pData);
-    callback->Call(1, argv1, async_resource);
+      delete static_cast<std::string*>(pData);
     break;
 
   case ServerIOFunction::START:
   case ServerIOFunction::STOP:
-    callback->Call(1, argv1, async_resource);
     break;
+  }
+
+  if (returnValue == 0){
+    m_deferred.Resolve(Env().Null());
+  } else {
+    m_deferred.Reject(Napi::Number::New(Env(), returnValue));
   }
 }
 
 Napi::Value S7Server::Start(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsFunction()) {
-    int ret = s7server->snap7Server->Start();
+  IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::START);
+  worker->Queue();
 
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-
-    s7server->lastError = ret;
-
-    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
-  } else {
-    Napi::Callback *callback = new Napi::Callback(info[0].As<v8::Function>());
-    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::START));
-    info.GetReturnValue().SetUndefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Server::StartTo(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
   if (info.Length() < 1) {
-    return Napi::TypeError::New(info.Env(), "Wrong number of arguments");
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
   }
 
-  if (!info[0]->IsString()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsString()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  Napi::Utf8String *address = new Napi::Utf8String(info[0]);
-  if (!info[1]->IsFunction()) {
-    int ret = s7server->snap7Server->StartTo(**address);
-    delete address;
+  std::string* address = new std::string(info[0].As<Napi::String>().Utf8Value());
+  IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::STARTTO
+    , address);
+  worker->Queue();
 
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-
-    s7server->lastError = ret;
-
-    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
-  } else {
-    Napi::Callback *callback = new Napi::Callback(info[1].As<v8::Function>());
-    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::STARTTO
-      , address));
-    info.GetReturnValue().SetUndefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Server::Stop(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsFunction()) {
-    int ret = s7server->snap7Server->Stop();
+  IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::STOP);
+  worker->Queue();
 
-    if (ret == 0) {
-      uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-
-    s7server->lastError = ret;
-
-    info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
-  } else {
-    Napi::Callback *callback = new Napi::Callback(info[0].As<v8::Function>());
-    Napi::AsyncQueueWorker(new IOWorkerServer(callback, s7server, ServerIOFunction::STOP));
-    info.GetReturnValue().SetUndefined();
-  }
+  return worker->GetPromise();
 }
 
 Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsBoolean()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsBoolean()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  bool resourceless = Napi::To<bool>(info[0]).FromJust();
+  bool resourceless = info[0].ToBoolean().Value();
 
   int ret;
   if (resourceless) {
-    ret = s7server->snap7Server->SetRWAreaCallback(&RWAreaCallBack, NULL);
+    ret = snap7Server->SetRWAreaCallback(&RWAreaCallBack, NULL);
   } else {
-    ret = s7server->snap7Server->SetRWAreaCallback(NULL, NULL);
+    ret = snap7Server->SetRWAreaCallback(NULL, NULL);
   }
-  s7server->lastError = ret;
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int pData;
-  int ret = s7server->snap7Server->GetParam(Napi::To<int32_t>(info[0]).FromJust()
+  int ret = snap7Server->GetParam(info[0].ToNumber().Int32Value()
     , &pData);
-  s7server->lastError = ret;
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!(info[0]->IsInt32() || info[1]->IsInt32())) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!(info[0].IsNumber() || info[1].IsNumber())) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  int pData = Napi::To<int32_t>(info[1]).FromJust();
-  int ret = s7server->snap7Server->SetParam(Napi::To<int32_t>(info[0]).FromJust(), &pData);
-  s7server->lastError = ret;
+  int pData = info[1].ToNumber().Int32Value();
+  int ret = snap7Server->SetParam(info[0].ToNumber().Int32Value(), &pData);
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->GetEventsMask();
+  int ret = snap7Server->GetEventsMask();
 
-  info.GetReturnValue().Set(Napi::New<v8::Uint32>(ret));
+  return Napi::Number::New(env, ret);
 }
 
 Napi::Value S7Server::SetEventsMask(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsUint32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  s7server->snap7Server->SetEventsMask(Napi::To<uint32_t>(info[0]).FromJust());
-  info.GetReturnValue().SetUndefined();
+  snap7Server->SetEventsMask(info[0].ToNumber().Uint32Value());
+
+  return env.Undefined();
 }
 
 Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int index;
   char *pBuffer;
   size_t len;
-  int area = Napi::To<int32_t>(info[0]).FromJust();
+  int area = info[0].ToNumber().Int32Value();
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber() || !info[2].IsBuffer()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
-    len = node::Buffer::Length(info[2].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
-  } else if (!node::Buffer::HasInstance(info[1])) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    index = info[1].ToNumber().Int32Value();
+    len = info[2].As<Napi::Buffer<char>>().Length();
+    pBuffer = info[2].As<Napi::Buffer<char>>().Data();
+  } else if (!info[1].IsBuffer()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   } else {
     index = 0;
-    len = node::Buffer::Length(info[1].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
+    len = info[1].As<Napi::Buffer<char>>().Length();
+    pBuffer = info[1].As<Napi::Buffer<char>>().Data();
   }
 
   if (len > 0xFFFF) {
-    return Napi::ThrowRangeError("Max area buffer size is 65535");
+    Napi::RangeError::New(env, "Max area buffer size is 65535").ThrowAsJavaScriptException();
   }
 
   word size = static_cast<word>(len);
   char *data = new char[size];
   memcpy(data, pBuffer, size);
 
-  int ret = s7server->snap7Server->RegisterArea(area, index, data, size);
-  s7server->lastError = ret;
+  int ret = snap7Server->RegisterArea(area, index, data, size);
+  lastError = ret;
 
   if (ret == 0) {
-    s7server->area2buffer[area][index].pBuffer = data;
-    s7server->area2buffer[area][index].size = size;
+    area2buffer[area][index].pBuffer = data;
+    area2buffer[area][index].size = size;
   } else {
     delete[] data;
   }
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int index = 0;
-  int area = Napi::To<int32_t>(info[0]).FromJust();
+  int area = info[0].ToNumber().Int32Value();
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
+    index = info[1].ToNumber().Int32Value();
   }
 
-  int ret = s7server->snap7Server->UnregisterArea(area, index);
-  s7server->lastError = ret;
+  int ret = snap7Server->UnregisterArea(area, index);
+  lastError = ret;
 
   if (ret == 0) {
-    delete[] s7server->area2buffer[area][index].pBuffer;
-    s7server->area2buffer[area].erase(index);
+    delete[] area2buffer[area][index].pBuffer;
+    area2buffer[area].erase(index);
   }
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  int area = Napi::To<int32_t>(info[0]).FromJust();
-  if (!s7server->area2buffer.count(area)) {
-    return Napi::ThrowError("Unknown area");
+  int area = info[0].ToNumber().Int32Value();
+  if (!area2buffer.count(area)) {
+    Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
   }
 
   int index;
@@ -715,240 +543,234 @@ Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
   size_t len;
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber() || !info[2].IsBuffer()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
-    if (!s7server->area2buffer[area].count(index)) {
-      return Napi::ThrowError("DB index not found");
+    index = info[1].ToNumber().Int32Value();
+    if (!area2buffer[area].count(index)) {
+      Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
     }
 
-    len = node::Buffer::Length(info[2].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
+    len =info[2].As<Napi::Buffer<char>>().Length();;
+    pBuffer = info[2].As<Napi::Buffer<char>>().Data();
   } else {
     index = 0;
-    if (node::Buffer::HasInstance(info[1])) {
-      len = node::Buffer::Length(info[1].As<v8::Object>());
-      pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
-    } else if (node::Buffer::HasInstance(info[2])) {
-      len = node::Buffer::Length(info[2].As<v8::Object>());
-      pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
+    if (info[1].IsBuffer()) {
+      len = info[1].As<Napi::Buffer<char>>().Length();
+      pBuffer = info[1].As<Napi::Buffer<char>>().Data();
+    } else if (info[2].IsBuffer()) {
+      len = info[2].As<Napi::Buffer<char>>().Length();
+      pBuffer = info[2].As<Napi::Buffer<char>>().Data();
     } else {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
   }
 
-  if (len != s7server->area2buffer[area][index].size) {
-    return Napi::ThrowError("Wrong buffer length");
+  if (len != area2buffer[area][index].size) {
+    Napi::Error::New(env, "Wrong buffer length").ThrowAsJavaScriptException();
   }
 
-  s7server->snap7Server->LockArea(area, index);
+  snap7Server->LockArea(area, index);
 
   memcpy(
-    s7server->area2buffer[area][index].pBuffer
-    , pBuffer, s7server->area2buffer[area][index].size);
+    area2buffer[area][index].pBuffer
+    , pBuffer, area2buffer[area][index].size);
 
-  s7server->snap7Server->UnlockArea(area, index);
+  snap7Server->UnlockArea(area, index);
 
-  info.GetReturnValue().SetUndefined();
+  return env.Undefined();
 }
 
 Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int index = 0;
-  int area = Napi::To<int32_t>(info[0]).FromJust();
+  int area = info[0].ToNumber().Int32Value();
 
-  if (!s7server->area2buffer.count(area)) {
-    return Napi::ThrowError("Unknown area");
+  if (!area2buffer.count(area)) {
+    Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
   }
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
-    if (!s7server->area2buffer[area].count(index)) {
-      return Napi::ThrowError("DB index not found");
+    index = info[1].ToNumber().Int32Value();
+    if (!area2buffer[area].count(index)) {
+      Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
     }
   }
 
-  s7server->snap7Server->LockArea(area, index);
+  snap7Server->LockArea(area, index);
 
-  v8::Local<v8::Object> buffer = Napi::CopyBuffer(
-      s7server->area2buffer[area][index].pBuffer
-    , s7server->area2buffer[area][index].size);
+  Napi::Buffer<char> buffer = Napi::Buffer<char>::Copy(env,
+      area2buffer[area][index].pBuffer
+    , area2buffer[area][index].size);
 
-  s7server->snap7Server->UnlockArea(area, index);
+  snap7Server->UnlockArea(area, index);
 
-  info.GetReturnValue().Set(buffer);
+  return buffer;
 }
 
 Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int index = 0;
-  int area = Napi::To<int32_t>(info[0]).FromJust();
+  int area = info[0].ToNumber().Int32Value();
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
+    index = info[1].ToNumber().Int32Value();
   }
 
-  int ret = s7server->snap7Server->LockArea(area, index);
-  s7server->lastError = ret;
+  int ret = snap7Server->LockArea(area, index);
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
   int index = 0;
-  int area = Napi::To<int32_t>(info[0]).FromJust();
+  int area = info[0].ToNumber().Int32Value();
 
   if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Napi::TypeError::New(info.Env(), "Wrong arguments");
+    if (!info[1].IsNumber()) {
+      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     }
 
-    index = Napi::To<int32_t>(info[1]).FromJust();
+    index = info[1].ToNumber().Int32Value();
   }
 
-  int ret = s7server->snap7Server->UnlockArea(area, index);
-  s7server->lastError = ret;
+  int ret = snap7Server->UnlockArea(area, index);
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->ServerStatus();
+  int ret = snap7Server->ServerStatus();
   if ((ret == 0) || (ret == 1) || (ret == 2)) {
-    s7server->lastError = 0;
-    info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
+    lastError = 0;
+    return Napi::Number::New(env, ret);
   } else {
-    s7server->lastError = ret;
-    info.GetReturnValue().Set(Napi::False());
+    lastError = ret;
+    return Napi::Boolean::New(env, false);
   }
 }
 
 Napi::Value S7Server::ClientsCount(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->ClientsCount();
-  info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
+  int ret = snap7Server->ClientsCount();
+  return Napi::Number::New(env, ret);
 }
 
 Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->GetCpuStatus();
+  int ret = snap7Server->GetCpuStatus();
   if ((ret == S7CpuStatusUnknown) ||
     (ret == S7CpuStatusStop) ||
     (ret == S7CpuStatusRun)) {
-    s7server->lastError = 0;
-    info.GetReturnValue().Set(Napi::New<v8::Integer>(ret));
+    lastError = 0;
+    return Napi::Number::New(env, ret);
   } else {
-    s7server->lastError = ret;
-    info.GetReturnValue().Set(Napi::False());
+    lastError = ret;
+    return Napi::Boolean::New(env, false);
   }
 }
 
 Napi::Value S7Server::SetCpuStatus(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  int ret = s7server->snap7Server->SetCpuStatus(Napi::To<int32_t>(info[0]).FromJust());
-  s7server->lastError = ret;
+  int ret = snap7Server->SetCpuStatus(info[0].ToNumber().Int32Value());
+  lastError = ret;
 
-  info.GetReturnValue().Set(Napi::New<v8::Boolean>(ret == 0));
+  return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Server::ErrorText(const Napi::CallbackInfo& info) {
-  if (!info[0]->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  Napi::Env env = info.Env();
+
+  if (!info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  info.GetReturnValue().Set(Napi::New<v8::String>(
-    SrvErrorText(Napi::To<int32_t>(info[0]).FromJust()).c_str()));
+  return Napi::String::New(env,
+    SrvErrorText(info[0].ToNumber().Int32Value()).c_str());
 }
 
 Napi::Value S7Server::EventText(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
   TSrvEvent SrvEvent;
 
-  if (!info[0]->IsObject()) {
-    return Napi::TypeError::New(info.Env(), "Wrong arguments");
+  if (!info[0].IsObject()) {
+    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
   }
 
-  v8::Local<v8::Object> event_obj = v8::Local<v8::Object>::Cast(info[0]);
-  if (!Napi::Has(event_obj, Napi::New<v8::String>("EvtTime")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtSender")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtCode")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtRetCode")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam1")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam2")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam3")).FromJust() ||
-    !Napi::Has(event_obj, Napi::New<v8::String>("EvtParam4")).FromJust()) {
-    return Napi::TypeError::New(info.Env(), "Wrong argument structure");
+  Napi::Object event_obj = info[0].ToObject();
+  if (!event_obj.Has("EvtTime") || !event_obj.Has("EvtSender")  ||
+    !event_obj.Has("EvtCode")   || !event_obj.Has("EvtRetCode") ||
+    !event_obj.Has("EvtParam1") || !event_obj.Has("EvtParam2")  ||
+    !event_obj.Has("EvtParam3") || !event_obj.Has("EvtParam4")) {
+    Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
   }
 
-  if (!Napi::Get(event_obj, Napi::New<v8::String>("EvtTime"))->IsDate() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtSender"))->IsString() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtCode"))->IsUint32() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtRetCode"))->IsInt32() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam1"))->IsInt32() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam2"))->IsInt32() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam3"))->IsInt32() ||
-    !Napi::Get(event_obj, Napi::New<v8::String>("EvtParam4"))->IsInt32()) {
-    return Napi::TypeError::New(info.Env(), "Wrong argument types");
+  if (!event_obj.Get("EvtTime").IsDate() ||
+    !event_obj.Get("EvtSender").IsString() ||
+    !event_obj.Get("EvtCode").IsNumber() ||
+    !event_obj.Get("EvtRetCode").IsNumber() ||
+    !event_obj.Get("EvtParam1").IsNumber() ||
+    !event_obj.Get("EvtParam2").IsNumber() ||
+    !event_obj.Get("EvtParam3").IsNumber() ||
+    !event_obj.Get("EvtParam4").IsNumber()) {
+    Napi::TypeError::New(env, "Wrong argument types").ThrowAsJavaScriptException();
   }
 
-  Napi::Utf8String *remAddress = new Napi::Utf8String(
-    Napi::Get(
-        event_obj
-      , Napi::New<v8::String>("EvtSender")));
+  Napi::String remAddress = event_obj.Get("EvtSender").ToString();
 
-  SrvEvent.EvtTime = static_cast<time_t>(Napi::To<double>(v8::Local<v8::Date>::Cast(Napi::Get(event_obj, Napi::New<v8::String>("EvtTime")))).FromJust() / 1000);
-  SrvEvent.EvtSender = inet_addr(**remAddress);
-  SrvEvent.EvtCode = Napi::To<uint32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtCode"))).FromJust();
-  SrvEvent.EvtRetCode = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtRetCode"))).FromJust();
-  SrvEvent.EvtParam1 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam1"))).FromJust();
-  SrvEvent.EvtParam2 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam2"))).FromJust();
-  SrvEvent.EvtParam3 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam3"))).FromJust();
-  SrvEvent.EvtParam4 = Napi::To<int32_t>(Napi::Get(event_obj, Napi::New<v8::String>("EvtParam4"))).FromJust();
+  SrvEvent.EvtTime = static_cast<time_t>(event_obj.Get("EvtTime").As<Napi::Date>().ValueOf() / 1000);
+  SrvEvent.EvtSender = inet_addr(remAddress.Utf8Value().c_str());
+  SrvEvent.EvtCode =event_obj.Get("EvtCode").ToNumber().Uint32Value();
+  SrvEvent.EvtRetCode = event_obj.Get("EvtRetCode").ToNumber().Uint32Value();
+  SrvEvent.EvtParam1 = event_obj.Get("EvtParam1").ToNumber().Uint32Value();
+  SrvEvent.EvtParam2 = event_obj.Get("EvtParam2").ToNumber().Uint32Value();
+  SrvEvent.EvtParam3 = event_obj.Get("EvtParam3").ToNumber().Uint32Value();
+  SrvEvent.EvtParam4 = event_obj.Get("EvtParam4").ToNumber().Uint32Value();
 
-  delete remAddress;
-
-  info.GetReturnValue().Set(Napi::New<v8::String>(
-    SrvEventText(&SrvEvent).c_str()));
+  return Napi::String::New(env,
+    SrvEventText(&SrvEvent).c_str());
 }
 
 Napi::Value S7Server::LastError(const Napi::CallbackInfo& info) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+  Napi::Env env = info.Env();
 
-  info.GetReturnValue().Set(Napi::New<v8::Integer>(s7server->lastError));
+  return Napi::Number::New(env, lastError);
 }
 
 }  // namespace node_snap7

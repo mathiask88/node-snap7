@@ -269,7 +269,7 @@ Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
   word LocalTSAP = info[1].As<Napi::Number>().Uint32Value();
   word RemoteTSAP = info[2].As<Napi::Number>().Uint32Value();
 
-  int ret = this->snap7Client->SetConnectionParams(
+  int ret = snap7Client->SetConnectionParams(
       remAddress.c_str()
     , LocalTSAP
     , RemoteTSAP);
@@ -286,14 +286,14 @@ Napi::Value S7Client::SetConnectionType(const Napi::CallbackInfo &info) {
 
   word type = info[0].As<Napi::Number>().Uint32Value();;
 
-  int  ret = this->snap7Client->SetConnectionType(type);
+  int  ret = snap7Client->SetConnectionType(type);
   return Napi::Boolean::New(env, ret == 0);
 }
 
 Napi::Value S7Client::Disconnect(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  int ret = this->snap7Client->Disconnect();
+  int ret = snap7Client->Disconnect();
   return Napi::Boolean::New(env, ret == 0);
 }
 
@@ -305,7 +305,7 @@ Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
   }
 
   int pData;
-  int returnValue = this->snap7Client->GetParam(info[0].As<Napi::Number>().Int32Value()
+  int returnValue = snap7Client->GetParam(info[0].As<Napi::Number>().Int32Value()
     , &pData);
 
   if (returnValue == 0) {
@@ -313,6 +313,8 @@ Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
   } else {
     return Napi::Number::New(env, returnValue);
   }
+
+  return env.Undefined();
 }
 
 Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
@@ -323,46 +325,46 @@ Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
   }
 
   int pData = info[1].As<Napi::Number>().Int32Value();
-  int ret = this->snap7Client->SetParam(info[0].As<Napi::Number>().Int32Value(), &pData);
+  int ret = snap7Client->SetParam(info[0].As<Napi::Number>().Int32Value(), &pData);
   return Napi::Boolean::New(env, ret == 0);
 }
 
 // Data I/O Main functions
 void IOWorker::Execute() {
-  this->s7client->mutex.lock();
+  s7client->mutex.lock();
 
   switch (caller) {
   case DataIOFunction::CONNECTTO:
-      returnValue = this->s7client->snap7Client->ConnectTo(
+      returnValue = s7client->snap7Client->ConnectTo(
         static_cast<std::string*>(pData)->c_str(), int1, int2);
       break;
 
   case DataIOFunction::CONNECT:
-      returnValue = this->s7client->snap7Client->Connect();
+      returnValue = s7client->snap7Client->Connect();
       break;
 
   case DataIOFunction::READAREA:
-      returnValue = this->s7client->snap7Client->ReadArea(int1, int2, int3, int4
+      returnValue = s7client->snap7Client->ReadArea(int1, int2, int3, int4
         , int5, pData);
       break;
 
   case DataIOFunction::WRITEAREA:
-      returnValue = this->s7client->snap7Client->WriteArea(int1, int2, int3, int4
+      returnValue = s7client->snap7Client->WriteArea(int1, int2, int3, int4
         , int5, pData);
       break;
 
   case DataIOFunction::READMULTI:
-      returnValue = this->s7client->snap7Client->ReadMultiVars(
+      returnValue = s7client->snap7Client->ReadMultiVars(
           static_cast<PS7DataItem>(pData), int1);
       break;
 
   case DataIOFunction::WRITEMULTI:
-      returnValue = this->s7client->snap7Client->WriteMultiVars(
+      returnValue = s7client->snap7Client->WriteMultiVars(
           static_cast<PS7DataItem>(pData), int1);
       break;
 
   case DataIOFunction::PLCSTATUS:
-      returnValue = this->s7client->snap7Client->PlcStatus();
+      returnValue = s7client->snap7Client->PlcStatus();
       if ((returnValue == S7CpuStatusUnknown) ||
           (returnValue == S7CpuStatusStop) ||
           (returnValue == S7CpuStatusRun)) {
@@ -372,119 +374,119 @@ void IOWorker::Execute() {
       break;
 
   case DataIOFunction::CLEARSESSIONPW:
-      returnValue = this->s7client->snap7Client->ClearSessionPassword();
+      returnValue = s7client->snap7Client->ClearSessionPassword();
       break;
 
   case DataIOFunction::SETSESSIONPW:
-      returnValue = this->s7client->snap7Client->SetSessionPassword(
+      returnValue = s7client->snap7Client->SetSessionPassword(
         &*static_cast<std::string*>(pData)->begin());
       break;
 
   case DataIOFunction::GETPROTECTION:
-      returnValue = this->s7client->snap7Client->GetProtection(
+      returnValue = s7client->snap7Client->GetProtection(
           static_cast<PS7Protection>(pData));
       break;
 
   case DataIOFunction::PLCSTOP:
-      returnValue = this->s7client->snap7Client->PlcStop();
+      returnValue = s7client->snap7Client->PlcStop();
       break;
 
   case DataIOFunction::PLCCOLDSTART:
-      returnValue = this->s7client->snap7Client->PlcColdStart();
+      returnValue = s7client->snap7Client->PlcColdStart();
       break;
 
   case DataIOFunction::PLCHOTSTART:
-      returnValue = this->s7client->snap7Client->PlcHotStart();
+      returnValue = s7client->snap7Client->PlcHotStart();
       break;
 
   case DataIOFunction::GETCPINFO:
-      returnValue = this->s7client->snap7Client->GetCpInfo(
+      returnValue = s7client->snap7Client->GetCpInfo(
           static_cast<PS7CpInfo>(pData));
       break;
 
   case DataIOFunction::GETCPUINFO:
-      returnValue = this->s7client->snap7Client->GetCpuInfo(
+      returnValue = s7client->snap7Client->GetCpuInfo(
           static_cast<PS7CpuInfo>(pData));
       break;
 
   case DataIOFunction::GETORDERCODE:
-      returnValue = this->s7client->snap7Client->GetOrderCode(
+      returnValue = s7client->snap7Client->GetOrderCode(
           static_cast<PS7OrderCode>(pData));
       break;
 
   case DataIOFunction::SETPLCSYSTEMDATETIME:
-      returnValue = this->s7client->snap7Client->SetPlcSystemDateTime();
+      returnValue = s7client->snap7Client->SetPlcSystemDateTime();
       break;
 
   case DataIOFunction::GETPLCDATETIME:
-      returnValue = this->s7client->snap7Client->GetPlcDateTime(
+      returnValue = s7client->snap7Client->GetPlcDateTime(
           static_cast<tm*>(pData));
       break;
 
   case DataIOFunction::SETPLCDATETIME:
-      returnValue = this->s7client->snap7Client->SetPlcDateTime(
+      returnValue = s7client->snap7Client->SetPlcDateTime(
           static_cast<tm*>(pData));
       break;
 
   case DataIOFunction::COMPRESS:
-      returnValue = this->s7client->snap7Client->Compress(int1);
+      returnValue = s7client->snap7Client->Compress(int1);
       break;
 
   case DataIOFunction::COPYRAMTOROM:
-      returnValue = this->s7client->snap7Client->CopyRamToRom(int1);
+      returnValue = s7client->snap7Client->CopyRamToRom(int1);
       break;
 
   case DataIOFunction::DBFILL:
-      returnValue = this->s7client->snap7Client->DBFill(int1, int2);
+      returnValue = s7client->snap7Client->DBFill(int1, int2);
       break;
 
   case DataIOFunction::DBGET:
-      returnValue = this->s7client->snap7Client->DBGet(int1, pData, &int2);
+      returnValue = s7client->snap7Client->DBGet(int1, pData, &int2);
       break;
 
   case DataIOFunction::DELETEBLOCK:
-      returnValue = this->s7client->snap7Client->Delete(int1, int2);
+      returnValue = s7client->snap7Client->Delete(int1, int2);
       break;
 
   case DataIOFunction::DOWNLOAD:
-      returnValue = this->s7client->snap7Client->Download(int1, pData, int2);
+      returnValue = s7client->snap7Client->Download(int1, pData, int2);
       break;
 
   case DataIOFunction::FULLUPLOAD:
-      returnValue = this->s7client->snap7Client->FullUpload(int1, int2, pData, &int3);
+      returnValue = s7client->snap7Client->FullUpload(int1, int2, pData, &int3);
       break;
 
   case DataIOFunction::UPLOAD:
-      returnValue = this->s7client->snap7Client->Upload(int1, int2, pData, &int3);
+      returnValue = s7client->snap7Client->Upload(int1, int2, pData, &int3);
       break;
 
   case DataIOFunction::LISTBLOCKSOFTYPE:
-      returnValue = this->s7client->snap7Client->ListBlocksOfType(int1
+      returnValue = s7client->snap7Client->ListBlocksOfType(int1
         , static_cast<PS7BlocksOfType>(pData), &int2);
       break;
 
   case DataIOFunction::GETAGBLOCKINFO:
-      returnValue = this->s7client->snap7Client->GetAgBlockInfo(int1, int2
+      returnValue = s7client->snap7Client->GetAgBlockInfo(int1, int2
         , static_cast<PS7BlockInfo>(pData));
       break;
 
   case DataIOFunction::LISTBLOCKS:
-      returnValue = this->s7client->snap7Client->ListBlocks(
+      returnValue = s7client->snap7Client->ListBlocks(
           static_cast<PS7BlocksList>(pData));
       break;
 
   case DataIOFunction::READSZLLIST:
-      returnValue = this->s7client->snap7Client->ReadSZLList(
+      returnValue = s7client->snap7Client->ReadSZLList(
           static_cast<PS7SZLList>(pData), &int1);
       break;
 
   case DataIOFunction::READSZL:
-      returnValue = this->s7client->snap7Client->ReadSZL(int1, int2
+      returnValue = s7client->snap7Client->ReadSZL(int1, int2
         , static_cast<PS7SZL>(pData), &int3);
       break;
   }
 
-  this->s7client->mutex.unlock();
+  s7client->mutex.unlock();
 }
 
 void IOWorker::OnOK() {
@@ -514,7 +516,7 @@ void IOWorker::OnOK() {
     if (returnValue == 0) {
       val = Napi::Buffer<char>::New(Env(),
           static_cast<char*>(pData)
-        , static_cast<size_t>(int4) * this->s7client->GetByteCountFromWordLen(int5)
+        , static_cast<size_t>(int4) * s7client->GetByteCountFromWordLen(int5)
         , S7Client::FreeCallback);
     } else {
       delete[] static_cast<char*>(pData);
@@ -523,7 +525,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::READMULTI:
       if (returnValue == 0) {
-        val = this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
+        val = s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
           , int1, true);
       } else {
         for (int i = 0; i < int1; i++) {
@@ -535,7 +537,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::WRITEMULTI:
       if (returnValue == 0) {
-        val = this->s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
+        val = s7client->S7DataItemToArray(static_cast<PS7DataItem>(pData)
           , int1, false);
       } else {
         delete[] static_cast<PS7DataItem>(pData);
@@ -544,7 +546,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::GETPROTECTION:
       if (returnValue == 0) {
-        val = this->s7client->S7ProtectionToObject(
+        val = s7client->S7ProtectionToObject(
           static_cast<PS7Protection>(pData));
       }
       delete static_cast<PS7Protection>(pData);
@@ -552,7 +554,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::GETCPINFO:
       if (returnValue == 0) {
-        val = this->s7client->S7CpInfoToObject(
+        val = s7client->S7CpInfoToObject(
           static_cast<PS7CpInfo>(pData));
       }
       delete static_cast<PS7CpInfo>(pData);
@@ -560,7 +562,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::GETCPUINFO:
       if (returnValue == 0) {
-        val = this->s7client->S7CpuInfoToObject(
+        val = s7client->S7CpuInfoToObject(
           static_cast<PS7CpuInfo>(pData));
       }
       delete static_cast<PS7CpuInfo>(pData);
@@ -568,7 +570,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::GETORDERCODE:
       if (returnValue == 0) {
-        val = this->s7client->S7OrderCodeToObject(
+        val = s7client->S7OrderCodeToObject(
           static_cast<PS7OrderCode>(pData));
       }
       delete static_cast<PS7OrderCode>(pData);
@@ -617,7 +619,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::LISTBLOCKSOFTYPE:
       if (returnValue == 0) {
-        val = this->s7client->S7BlocksOfTypeToArray(
+        val = s7client->S7BlocksOfTypeToArray(
             static_cast<PS7BlocksOfType>(pData), int2);
       }
       delete[] static_cast<PS7BlocksOfType>(pData);
@@ -625,7 +627,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::GETAGBLOCKINFO:
       if (returnValue == 0) {
-        Napi::Object block_info = this->s7client->S7BlockInfoToObject(
+        Napi::Object block_info = s7client->S7BlockInfoToObject(
             static_cast<PS7BlockInfo>(pData));
         val = block_info;
       }
@@ -634,7 +636,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::LISTBLOCKS:
       if (returnValue == 0) {
-        Napi::Object blocks_list = this->s7client->S7BlocksListToObject(
+        Napi::Object blocks_list = s7client->S7BlocksListToObject(
             static_cast<PS7BlocksList>(pData));
         val = blocks_list;
       }
@@ -643,7 +645,7 @@ void IOWorker::OnOK() {
 
   case DataIOFunction::READSZLLIST:
       if (returnValue == 0) {
-        Napi::Array szl_list = this->s7client->S7SZLListToArray(
+        Napi::Array szl_list = s7client->S7SZLListToArray(
             static_cast<PS7SZLList>(pData), int1);
         val = szl_list;
       }
@@ -681,7 +683,7 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
 
   int amount = info[3].As<Napi::Number>().Int32Value();
-  int byteCount = this->GetByteCountFromWordLen(info[4].As<Napi::Number>().Int32Value());
+  int byteCount = GetByteCountFromWordLen(info[4].As<Napi::Number>().Int32Value());
   int size = amount * byteCount;
   char *bufferData = new char[size];
 
@@ -779,7 +781,7 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
     Items[i].Start = data_obj.Get("Start").As<Napi::Number>().Int32Value();
     Items[i].Amount = data_obj.Get("Amount").As<Napi::Number>().Int32Value();
 
-    byteCount = this->GetByteCountFromWordLen(Items[i].WordLen);
+    byteCount = GetByteCountFromWordLen(Items[i].WordLen);
     size = Items[i].Amount * byteCount;
     Items[i].pdata = new char[size];
   }
@@ -951,11 +953,11 @@ Napi::Value S7Client::GetPgBlockInfo(const Napi::CallbackInfo &info) {
   PS7BlockInfo BlockInfo = new TS7BlockInfo;
   Napi::Buffer<char> buffer = info[0].As<Napi::Buffer<char>>();
 
-  int returnValue = this->snap7Client->GetPgBlockInfo(
+  int returnValue = snap7Client->GetPgBlockInfo(
     buffer.Data(), BlockInfo, buffer.Length());
 
   if (returnValue == 0) {
-    Napi::Object block_info = this->S7BlockInfoToObject(BlockInfo);
+    Napi::Object block_info = S7BlockInfoToObject(BlockInfo);
     delete BlockInfo;
     return block_info;
   } else {
@@ -1393,7 +1395,7 @@ Napi::Value S7Client::ClearSessionPassword(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::ExecTime(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  int returnValue = this->snap7Client->ExecTime();
+  int returnValue = snap7Client->ExecTime();
   if (returnValue == errLibInvalidObject) {
     return Napi::Boolean::New(env, false);
   } else {
@@ -1405,13 +1407,13 @@ Napi::Value S7Client::LastError(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   return Napi::Number::New(env,
-    this->snap7Client->LastError());
+    snap7Client->LastError());
 }
 
 Napi::Value S7Client::PDURequested(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  int returnValue = this->snap7Client->PDURequested();
+  int returnValue = snap7Client->PDURequested();
   if (returnValue == 0) {
     return Napi::Boolean::New(env, false);
   } else {
@@ -1422,7 +1424,7 @@ Napi::Value S7Client::PDURequested(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::PDULength(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  int returnValue = this->snap7Client->PDULength();
+  int returnValue = snap7Client->PDULength();
   if (returnValue == 0) {
     return Napi::Boolean::New(env, false);
   } else {
@@ -1443,7 +1445,7 @@ Napi::Value S7Client::Connected(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   return Napi::Boolean::New(env,
-    this->snap7Client->Connected());
+    snap7Client->Connected());
 }
 
 Napi::Value S7Client::ErrorText(const Napi::CallbackInfo &info) {

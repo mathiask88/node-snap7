@@ -4,13 +4,13 @@
  */
 
 #include <node_snap7_client.h>
-//#include <node_snap7_server.h>
+#include <node_snap7_server.h>
 
 namespace node_snap7 {
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
   S7Client::Init(env, exports);
-  //S7Server::Init(env, exports);
+  S7Server::Init(env, exports);
   
   return exports;
 }

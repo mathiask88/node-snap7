@@ -8,6 +8,9 @@
 
 #include <napi.h>
 #include <snap7.h>
+#include <WinSock2.h>
+#include <mutex>
+#include <map>
 
 namespace node_snap7 {
 
@@ -50,8 +53,10 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
   Napi::Value LastError(const Napi::CallbackInfo &info);
 
   static int GetByteCountFromWordLen(int WordLen);
-
+  
+  std::mutex mutex;
   TS7Server *snap7Server;
+  std::map<int, std::map<int, TBufferInfo> > area2buffer;
   int lastError;
 
  private:
@@ -61,23 +66,27 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 class IOWorkerServer : public Napi::AsyncWorker {
  public:
   // No args
-  IOWorkerServer(Napi::Function& callback, S7Server *s7server, ServerIOFunction caller)
-    : Napi::AsyncWorker(callback), s7server(s7server), caller(caller) {}
+  IOWorkerServer(const Napi::Env &env, S7Server *s7server, ServerIOFunction caller)
+    : Napi::AsyncWorker(env, "IOWorkerServer"), m_deferred(env), s7server(s7server), caller(caller) {}
   // 1 args
-  IOWorkerServer(Napi::Function& callback, S7Server *s7server, ServerIOFunction caller
+  IOWorkerServer(const Napi::Env &env, S7Server *s7server, ServerIOFunction caller
     , void *arg1)
-    : Napi::AsyncWorker(callback), s7server(s7server), caller(caller)
+    : Napi::AsyncWorker(env, "IOWorkerServer"), m_deferred(env), s7server(s7server), caller(caller)
     , pData(arg1) {}
 
+  Napi::Promise GetPromise() { return m_deferred.Promise(); }
+
+ protected:
   void Execute();
   void OnOK();
   ~IOWorkerServer() {}
 
  private:
+  Napi::Promise::Deferred m_deferred;
   S7Server *s7server;
   ServerIOFunction caller;
   void *pData = nullptr;
-  int ret = 0;
+  int returnValue = 0;
 };
 
 }  // namespace node_snap7
