@@ -1,5 +1,4 @@
 test/
-.travis.yml
-appveyor.yml
+.github/
 .npmignore
 .gitignore

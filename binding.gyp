@@ -2,7 +2,6 @@
     "targets": [{
         "target_name": "node_snap7",
         "include_dirs": [
-            "<!@(node -p \"require('node-addon-api').include\")",
             "./src"
         ],
         "sources": [
@@ -11,15 +10,21 @@
             "./src/node_snap7_server.cpp",
             "./src/snap7.cpp"
         ],
-        "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
+        "defines": ["NODE_ADDON_API_DISABLE_DEPRECATED"],
         "conditions": [
             ["OS=='win'", {
                 "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
-                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS", "_HAS_EXCEPTIONS=0"] # Make sure the STL doesn't try to use exceptions
+                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"] # Make sure the STL doesn't try to use exceptions
+            }],
+            ['OS=="mac"', {
+                'cflags+': ['-fvisibility=hidden'],
+                'xcode_settings': {
+                    'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES', # -fvisibility=hidden
+                }
             }]
         ],
         "dependencies": [
-            "<!(node -p \"require('node-addon-api').gyp\")",
+            "<!(node -p \"require('node-addon-api').targets\"):node_addon_api",
             "snap7"
         ]
     }, {

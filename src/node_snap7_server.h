@@ -23,6 +23,23 @@ typedef struct {
   word size;
 }TBufferInfo;
 
+typedef struct{
+	int Sender;
+  int Operation;
+  PS7Tag PTag;
+  void *pUsrData;
+}TRWEvent, *PRWEvent;
+
+using Context = Napi::Reference<Napi::Value>;
+using DataTypeEvent = TSrvEvent;
+using DataTypeRW = TRWEvent;
+void CallJsEvent(Napi::Env env, Napi::Function callback, Context* context, DataTypeEvent* data);
+void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataTypeRW* data);
+using TSFN = Napi::TypedThreadSafeFunction<Context, DataTypeEvent, CallJsEvent>;
+using TSFNRW = Napi::TypedThreadSafeFunction<Context, DataTypeRW, CallJsRW>;
+using FinalizerDataType = void;
+static std::mutex mutex_rw;
+
 class S7Server : public Napi::ObjectWrap<S7Server> {
  public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
@@ -56,11 +73,16 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
   
   std::mutex mutex;
   TS7Server *snap7Server;
-  std::map<int, std::map<int, TBufferInfo> > area2buffer;
+  std::map<int, std::map<int, TBufferInfo>> area2buffer;
   int lastError;
 
  private:
-  Napi::ThreadSafeFunction tsfn;
+  static void EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size);
+  static int RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
+  , void *pUsrData);
+  static Napi::Value RWBufferCallback(const Napi::CallbackInfo &info);
+  TSFN tsfn;
+  TSFNRW tsfnrw;
 };
 
 class IOWorkerServer : public Napi::AsyncWorker {

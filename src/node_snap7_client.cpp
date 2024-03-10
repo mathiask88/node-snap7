@@ -243,10 +243,12 @@ Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
 
   if (info.Length() < 3) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   if (!info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   std::string* remAddress = new std::string(info[0].As<Napi::String>().Utf8Value());
@@ -263,6 +265,7 @@ Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
   if (!info[0].IsString() || !info[1].IsNumber() ||
       !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   std::string remAddress = info[0].As<Napi::String>().Utf8Value();
@@ -282,6 +285,7 @@ Napi::Value S7Client::SetConnectionType(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   word type = info[0].As<Napi::Number>().Uint32Value();;
@@ -302,6 +306,7 @@ Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int pData;
@@ -322,6 +327,7 @@ Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
 
   if (!(info[0].IsNumber() || info[1].IsNumber())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int pData = info[1].As<Napi::Number>().Int32Value();
@@ -674,13 +680,17 @@ void IOWorker::OnOK() {
 Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() < 5)
+  if (info.Length() < 5) {
     Napi::TypeError::New(env, "Wrong number of Arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber() || !info[1].IsNumber() ||
       !info[2].IsNumber() || !info[3].IsNumber() ||
-      !info[4].IsNumber())
+      !info[4].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   int amount = info[3].As<Napi::Number>().Int32Value();
   int byteCount = GetByteCountFromWordLen(info[4].As<Napi::Number>().Int32Value());
@@ -701,13 +711,17 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::WriteArea(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() < 6)
+  if (info.Length() < 6) {
     Napi::TypeError::New(env, "Wrong number of Arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber() || !info[1].IsNumber() ||
       !info[2].IsNumber() || !info[3].IsNumber() ||
-      !info[4].IsNumber() || !info[5].IsBuffer())
+      !info[4].IsNumber() || !info[5].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   IOWorker* worker = new IOWorker(env, this, DataIOFunction::WRITEAREA
     , info[5].As<Napi::Buffer<char>>().Data()
@@ -726,26 +740,31 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
 
   if (info.Length() < 1) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   if (!info[0].IsArray()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   const Napi::Array data_arr = info[0].As<Napi::Array>();
   uint32_t len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(env, "Array needs at least 1 item").ThrowAsJavaScriptException();
+    return env.Undefined();
   } else if (len > MaxVars) {
     std::stringstream err;
     err << "Array exceeds max variables (" << MaxVars
         << ") that can be transferred with ReadMultiVars()";
     Napi::TypeError::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   for (uint32_t i = 0; i < len; i++) {
     if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+      return env.Undefined();
     } else {
       Napi::Object data_obj = data_arr[i].As<Napi::Object>();
       if (!data_obj.Has("Area") ||
@@ -753,14 +772,17 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
           !data_obj.Has("Start") ||
           !data_obj.Has("Amount")) {
         Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+        return env.Undefined();
       } else if (!data_obj.Get("Area").IsNumber() ||
                  !data_obj.Get("WordLen").IsNumber() ||
                  !data_obj.Get("Start").IsNumber() ||
                  !data_obj.Get("Amount").IsNumber()) {
         Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+        return env.Undefined();
       } else if (data_obj.Get("Area").As<Napi::Number>().Int32Value() == S7AreaDB) {
         if (!data_obj.Has("DBNumber")) {
           Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+          return env.Undefined();
         }
       } else {
         data_obj.Set("DBNumber", Napi::Number::New(env, 0));
@@ -834,26 +856,31 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
 
   if (info.Length() < 1) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   if (!info[0].IsArray()) {
     Napi::TypeError::New(info.Env(), "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   const Napi::Array data_arr = info[0].As<Napi::Array>();
   uint32_t len = data_arr.Length();
   if (len == 0) {
     Napi::TypeError::New(env, "Array needs at least 1 item").ThrowAsJavaScriptException();
+    return env.Undefined();
   } else if (len > MaxVars) {
     std::stringstream err;
     err << "Array exceeds max variables (" << MaxVars
         << ") that can be transferred with WriteMultiVars()";
     Napi::TypeError::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   for (uint32_t i = 0; i < len; i++) {
     if (!data_arr[i].IsObject()) {
       Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+      return env.Undefined();
     } else {
       Napi::Object data_obj = data_arr[i].As<Napi::Object>();
       if (!data_obj.Has("Area") ||
@@ -862,15 +889,18 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
           !data_obj.Has("Amount") ||
           !data_obj.Has("Data")) {
         Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+        return env.Undefined();
       } else if (!data_obj.Get("Area").IsNumber() ||
                  !data_obj.Get("WordLen").IsNumber() ||
                  !data_obj.Get("Start").IsNumber() ||
                  !data_obj.Get("Amount").IsNumber() ||
                  !data_obj.Get("Data").IsBuffer()) {
         Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+        return env.Undefined();
       } else if (data_obj.Get("Area").As<Napi::Number>().Int32Value() == S7AreaDB) {
         if (!data_obj.Has("DBNumber")) {
           Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+          return env.Undefined();
         }
       } else {
         data_obj.Set("DBNumber", Napi::Number::New(env, 0));
@@ -933,6 +963,7 @@ Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   PS7BlockInfo BlockInfo = new TS7BlockInfo;
@@ -948,6 +979,7 @@ Napi::Value S7Client::GetPgBlockInfo(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsBuffer()) {
     Napi::TypeError::New(env, "Argument should be a Buffer").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   PS7BlockInfo BlockInfo = new TS7BlockInfo;
@@ -994,6 +1026,7 @@ Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int BlockNum = sizeof(TS7BlocksOfType) / sizeof(PS7BlocksOfType);
@@ -1025,6 +1058,7 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int size = info[2].As<Napi::Number>().Int32Value();
@@ -1042,6 +1076,7 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int size = info[2].As<Napi::Number>().Int32Value();
@@ -1059,6 +1094,7 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || info[1].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   Napi::Buffer<char> buffer = info[1].As<Napi::Buffer<char>>();
@@ -1076,6 +1112,7 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   IOWorker* worker = new IOWorker(env, this, DataIOFunction::DELETEBLOCK
@@ -1091,6 +1128,7 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int size = 65536;
@@ -1107,6 +1145,7 @@ Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber() || !(info[1].IsNumber() || info[1].IsString())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   int fill;
@@ -1141,6 +1180,7 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
 
   if (!(info[0].IsObject() || info[0].IsDate())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   tm *DateTime = new tm;
@@ -1249,6 +1289,7 @@ Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
 
   if (!(info[0].IsNumber() || info[1].IsNumber())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   PS7SZL SZL = new TS7SZL;
@@ -1317,6 +1358,7 @@ Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   IOWorker* worker = new IOWorker(env, this, DataIOFunction::COPYRAMTOROM
@@ -1331,6 +1373,7 @@ Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   IOWorker* worker = new IOWorker(env, this, DataIOFunction::COMPRESS
@@ -1372,6 +1415,7 @@ Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsString()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   std::string *password = new std::string(info[0].As<Napi::String>().Utf8Value());
@@ -1453,6 +1497,7 @@ Napi::Value S7Client::ErrorText(const Napi::CallbackInfo &info) {
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   return Napi::String::New(env,
