@@ -8,6 +8,17 @@
 
 #include <napi.h>
 #include <snap7.h>
+
+#ifdef OS_WINDOWS
+# include <winsock2.h>
+#endif
+
+#if defined(PLATFORM_UNIX) || defined(OS_OSX)
+# include <sys/socket.h>
+# include <arpa/inet.h>
+# include <netinet/in.h>
+#endif
+
 #include <mutex>
 #include <map>
 
