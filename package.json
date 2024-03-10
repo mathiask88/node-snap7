@@ -37,6 +37,7 @@
     "install": "node-gyp-build",
     "rebuild": "npm run install --build-from-source",
     "prebuild": "prebuildify -t 10.17.0 --napi --strip",
+    "test": "",
     "download-prebuilds": "prebuildify-ci download",
     "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 10.17.0 --napi --strip",
     "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 8.14.0 --napi --strip",
