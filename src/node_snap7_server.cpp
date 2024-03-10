@@ -279,7 +279,9 @@ int S7Server::RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTa
 }
 
 Napi::Value S7Server::RWBufferCallback(const Napi::CallbackInfo& info) {
-
+  Napi::Env env = info.Env();
+  
+  return env.Undefined();
 }
 
 void CallJsEvent(Napi::Env env,
@@ -383,7 +385,7 @@ S7Server::S7Server(const Napi::CallbackInfo &info) : Napi::ObjectWrap<S7Server>(
   tsfn.Unref(env);
   tsfnrw.Unref(env);
 
-  snap7Server->SetEventsCallback(&EventCallBack, &tsfn);
+  snap7Server->SetEventsCallback(static_cast<pfn_SrvCallBack>(&EventCallBack), &tsfn);
 }
 
 S7Server::~S7Server() {
@@ -500,7 +502,7 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
 
   int ret;
   if (resourceless) {
-    ret = snap7Server->SetRWAreaCallback(&RWAreaCallBack, tsfnrw);
+    ret = snap7Server->SetRWAreaCallback(static_cast<pfn_RWAreaCallBack>(&RWAreaCallBack), tsfnrw);
   } else {
     ret = snap7Server->SetRWAreaCallback(NULL, NULL);
   }
