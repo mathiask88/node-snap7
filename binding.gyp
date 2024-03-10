@@ -14,7 +14,7 @@
         "conditions": [
             ["OS=='win'", {
                 "libraries": ["-lws2_32.lib", "-lwinmm.lib"],
-                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"] # Make sure the STL doesn't try to use exceptions
+                "defines": ["_WINSOCK_DEPRECATED_NO_WARNINGS"]
             }],
             ['OS=="mac"', {
                 'cflags+': ['-fvisibility=hidden'],

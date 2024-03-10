@@ -8,7 +8,6 @@
 
 #include <napi.h>
 #include <snap7.h>
-#include <WinSock2.h>
 #include <mutex>
 #include <map>
 
