@@ -42,7 +42,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 18
           architecture: ${{ matrix.arch }}
 
       - name: Install

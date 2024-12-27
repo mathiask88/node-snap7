@@ -418,7 +418,7 @@ S7Server::S7Server(const Napi::CallbackInfo &info) : Napi::ObjectWrap<S7Server>(
   tsfn.Unref(env);
   tsfnrw.Unref(env);
 
-  snap7Server->SetEventsCallback(&EventCallBack, this);
+  snap7Server->SetEventsCallback(reinterpret_cast<pfn_SrvCallBack>(&EventCallBack), this);
 }
 
 S7Server::~S7Server() {
@@ -551,7 +551,7 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
 
   int ret;
   if (resourceless) {
-    ret = snap7Server->SetRWAreaCallback(&RWAreaCallBack, this);
+    ret = snap7Server->SetRWAreaCallback(reinterpret_cast<pfn_RWAreaCallBack>(&RWAreaCallBack), this);
   } else {
     ret = snap7Server->SetRWAreaCallback(nullptr, nullptr);
   }
