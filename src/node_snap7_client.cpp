@@ -262,6 +262,11 @@ Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsString() || !info[1].IsNumber() ||
       !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -282,6 +287,11 @@ Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::SetConnectionType(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -304,6 +314,11 @@ Napi::Value S7Client::Disconnect(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -324,6 +339,11 @@ Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!(info[0].IsNumber() || info[1].IsNumber())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -961,6 +981,11 @@ Napi::Object S7Client::S7BlocksListToObject(
 Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1024,6 +1049,11 @@ Napi::Object S7Client::S7BlockInfoToObject(PS7BlockInfo BlockInfo) {
 Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1056,6 +1086,11 @@ Napi::Array S7Client::S7BlocksOfTypeToArray(
 Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1073,6 +1108,11 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 3) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1092,6 +1132,11 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber() || info[1].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1110,6 +1155,11 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1125,6 +1175,11 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1142,6 +1197,11 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber() || !(info[1].IsNumber() || info[1].IsString())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1177,6 +1237,11 @@ Napi::Value S7Client::GetPlcDateTime(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!(info[0].IsObject() || info[0].IsDate())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1287,6 +1352,11 @@ Napi::Object S7Client::S7CpInfoToObject(PS7CpInfo CpInfo) {
 Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!(info[0].IsNumber() || info[1].IsNumber())) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1356,6 +1426,11 @@ Napi::Value S7Client::PlcStop(const Napi::CallbackInfo &info) {
 Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -1370,6 +1445,11 @@ Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1412,6 +1492,11 @@ Napi::Object S7Client::S7ProtectionToObject(
 
 Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsString()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
@@ -1494,6 +1579,11 @@ Napi::Value S7Client::Connected(const Napi::CallbackInfo &info) {
 
 Napi::Value S7Client::ErrorText(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (!info[0].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();

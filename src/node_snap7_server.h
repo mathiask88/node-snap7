@@ -20,9 +20,34 @@
 #endif
 
 #include <mutex>
+#include <condition_variable>
 #include <map>
 
 namespace node_snap7 {
+
+class S7Server;
+
+class Semaphore {
+public:
+    explicit Semaphore(int count = 1) : count(count) {}
+
+    void acquire() {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [this]() { return count > 0; });
+        --count;
+    }
+
+    void release() {
+        std::unique_lock<std::mutex> lock(mtx);
+        ++count;
+        cv.notify_one();
+    }
+
+private:
+    std::mutex mtx;
+    std::condition_variable cv;
+    int count;
+};
 
 enum class ServerIOFunction {
   START, STARTTO, STOP
@@ -34,10 +59,11 @@ typedef struct {
 }TBufferInfo;
 
 typedef struct{
-	int Sender;
+  int Sender;
   int Operation;
   PS7Tag PTag;
   void *pUsrData;
+  S7Server *s7server;
 }TRWEvent, *PRWEvent;
 
 using Context = Napi::Reference<Napi::Value>;
@@ -47,8 +73,6 @@ void CallJsEvent(Napi::Env env, Napi::Function callback, Context* context, DataT
 void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataTypeRW* data);
 using TSFN = Napi::TypedThreadSafeFunction<Context, DataTypeEvent, CallJsEvent>;
 using TSFNRW = Napi::TypedThreadSafeFunction<Context, DataTypeRW, CallJsRW>;
-using FinalizerDataType = void;
-static std::mutex mutex_rw;
 
 class S7Server : public Napi::ObjectWrap<S7Server> {
  public:
@@ -81,16 +105,16 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 
   static int GetByteCountFromWordLen(int WordLen);
   
-  std::mutex mutex;
   TS7Server *snap7Server;
+  std::mutex mutex;
   std::map<int, std::map<int, TBufferInfo>> area2buffer;
+  Semaphore sem_rw{0};
   int lastError;
 
  private:
   static void EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size);
   static int RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
   , void *pUsrData);
-  static Napi::Value RWBufferCallback(const Napi::CallbackInfo &info);
   TSFN tsfn;
   TSFNRW tsfnrw;
 };

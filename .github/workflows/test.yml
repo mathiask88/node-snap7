@@ -21,12 +21,15 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 2
+
       - name: Use node ${{ matrix.node }} ${{ matrix.arch }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           architecture: ${{ matrix.arch }}
+
       - name: Install
         run: npm install
+        
       - name: Test
         run: npm test

@@ -38,25 +38,31 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 2
+
       - name: Set up node
         uses: actions/setup-node@v4
         with:
           node-version: 16
           architecture: ${{ matrix.arch }}
+
       - name: Install
         run: npm install --ignore-scripts
+
       - name: Prebuild
         run: npm run prebuild-$BUILD_GROUP
         shell: bash
+
       - name: Prepare artifact
         run: tar -zcvf $BUILD_GROUP.tar.gz -C prebuilds .
         shell: bash
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BUILD_GROUP }}
           path: ${{ env.BUILD_GROUP }}.tar.gz
           retention-days: 1
+
   release:
     needs: build
     permissions:
@@ -66,10 +72,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          
       - name: Create GitHub release
         uses: docker://antonyurchenko/git-release:v4
         env:
