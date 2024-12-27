@@ -24,7 +24,7 @@
             }]
         ],
         "dependencies": [
-            "<!(node -p \"require('node-addon-api').targets\"):node_addon_api",
+            "<!(node -p \"require('node-addon-api').targets\"):node_addon_api_except",
             "snap7"
         ]
     }, {
