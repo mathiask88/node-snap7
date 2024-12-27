@@ -324,7 +324,8 @@ void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataType
     rw_tag_obj.Set("Size", Napi::Number::New(env, data->PTag->Size));
     rw_tag_obj.Set("WordLen", Napi::Number::New(env, data->PTag->WordLen));
 
-    int byteCount, size;
+    int byteCount;
+    size_t size;
     byteCount = S7Server::GetByteCountFromWordLen(data->PTag->WordLen);
     size = byteCount * data->PTag->Size;
     void* pUsrData = data->pUsrData;

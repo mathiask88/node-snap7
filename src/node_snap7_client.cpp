@@ -1059,7 +1059,7 @@ Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  int BlockNum = sizeof(TS7BlocksOfType) / sizeof(PS7BlocksOfType);
+  int BlockNum = sizeof(TS7BlocksOfType) / sizeof(word);
   PS7BlocksOfType BlockList = new TS7BlocksOfType[BlockNum];
   IOWorker* worker = new IOWorker(env, this, DataIOFunction::LISTBLOCKSOFTYPE
     , BlockList, info[0].As<Napi::Number>().Int32Value(), BlockNum);
