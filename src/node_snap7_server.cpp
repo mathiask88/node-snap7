@@ -25,7 +25,7 @@ Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
   InstanceMethod("UnlockArea", &S7Server::UnlockArea),
   InstanceMethod("SetArea", &S7Server::SetArea),
   InstanceMethod("GetArea", &S7Server::GetArea),
-  InstanceMethod("SetEventMask", &S7Server::SetEventsMask),
+  InstanceMethod("SetEventsMask", &S7Server::SetEventsMask),
   InstanceMethod("GetEventsMask", &S7Server::GetEventsMask),
   InstanceMethod("ErrorText", &S7Server::ErrorText),
   InstanceMethod("LastError", &S7Server::LastError),
@@ -328,11 +328,12 @@ void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataType
     size_t size;
     byteCount = S7Server::GetByteCountFromWordLen(data->PTag->WordLen);
     size = byteCount * data->PTag->Size;
+    int operation = data->Operation;
     void* pUsrData = data->pUsrData;
     S7Server* s7server = data->s7server;
 
     Napi::Buffer<char> buffer;
-    if (data->Operation == OperationWrite) {
+    if (operation == OperationWrite) {
       buffer = Napi::Buffer<char>::NewOrCopy(env, static_cast<char*>(pUsrData), size);
     } else {
       buffer = Napi::Buffer<char>::New(env, size);
@@ -341,28 +342,17 @@ void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataType
     callback.Call(context->Value(), {
       Napi::String::New(env, "readWrite"), 
       Napi::String::New(env, inet_ntoa(sin)),
-      Napi::Number::New(env, data->Operation),
+      Napi::Number::New(env, operation),
       rw_tag_obj,
       buffer,
-      Napi::Function::New(env, [pUsrData, s7server, size](const Napi::CallbackInfo& info) {
+      Napi::Function::New(env, [pUsrData, s7server, size, operation](const Napi::CallbackInfo& info) {
         Napi::Env env = info.Env();
 
-        if (info.Length() < 1) {
-          Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
-          return env.Undefined();
+        if (operation == OperationRead) {
+          if(info.Length() > 0 && info[0].IsBuffer()) {
+            memcpy(pUsrData, info[0].As<Napi::Buffer<char>>().Data(), size);
+          }
         }
-
-        if(!info[0].IsBuffer()) {
-          Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-          return env.Undefined();
-        }
-
-        if(info[0].As<Napi::Buffer<char>>().Length() != size) {
-          Napi::RangeError::New(env, "Buffer size mismatch").ThrowAsJavaScriptException();
-          return env.Undefined();
-        }
-
-        memcpy(pUsrData, info[0].As<Napi::Buffer<char>>().Data(), size);
 
         s7server->sem_rw.release();
         return env.Undefined();
@@ -577,9 +567,11 @@ Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
   int pData;
   int ret = snap7Server->GetParam(info[0].ToNumber().Int32Value()
     , &pData);
-  lastError = ret;
 
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == errSrvInvalidParamNumber)
+    lastError = ret;
+
+  return Napi::Number::New(env, ret);
 }
 
 Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {

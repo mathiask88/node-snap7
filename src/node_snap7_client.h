@@ -107,43 +107,41 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
 class IOWorker : public Napi::AsyncWorker {
  public:
   // No args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller) {}
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller) {}
   // 1 args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , void *arg1)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , pData(arg1) {}
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , int arg1)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , int1(arg1) {}
   // 2 args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2) {}
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , int arg1, int arg2)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , int1(arg1), int2(arg2) {}
   // 3 args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3) {}
   // 4 args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4) {}
   // 6 args
-  IOWorker(const Napi::Env &env, S7Client *s7client, DataIOFunction caller
+  IOWorker(Napi::Function &callback, S7Client *s7client, DataIOFunction caller
     , void *arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
-    : Napi::AsyncWorker(env, "IOWorker"), m_deferred(env), s7client(s7client), caller(caller)
+    : Napi::AsyncWorker(callback, "IOWorker"), s7client(s7client), caller(caller)
     , pData(arg1), int1(arg2), int2(arg3), int3(arg4), int4(arg5), int5(arg6) {}
-
-  Napi::Promise GetPromise() { return m_deferred.Promise(); }
 
  protected:
   void Execute();
@@ -151,11 +149,10 @@ class IOWorker : public Napi::AsyncWorker {
   ~IOWorker() {}
 
  private:
-  Napi::Promise::Deferred m_deferred;
   S7Client *s7client;
   DataIOFunction caller;
   void *pData = nullptr;
-  int int1 = 0, int2 = 0, int3 = 0, int4 = 0, int5 = 0, returnValue = 0;
+  int int1 = 0, int2 = 0, int3 = 0, int4 = 0, int5 = 0, ret = 0;
 };
 
 }  // namespace node_snap7
