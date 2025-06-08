@@ -5,19 +5,18 @@ declare module 'node-snap7' {
     // Connection Methods
     Connect(): Promise<void>;
     Connect(callback: (err: Error | null, result: void) => void): void;
-    ConnectSync(): boolean;
+    ConnectSync(): void;
 
     ConnectTo(ip: string, rack: number, slot: number): Promise<void>;
     ConnectTo(ip: string, rack: number, slot: number, callback: (err: Error | null, result: void) => void): void;
-    ConnectToSync(ip: string, rack: number, slot: number): boolean;
-
-    SetConnectionParams(remoteAddress: string, localTSAP: number, remoteTSAP: number): boolean;
-    SetConnectionType(type: ConnectionType): boolean;
-    Disconnect(): boolean;
+    ConnectToSync(ip: string, rack: number, slot: number): void;
+    SetConnectionParams(remoteAddress: string, localTSAP: number, remoteTSAP: number): void;
+    SetConnectionType(type: ConnectionType): void;
+    Disconnect(): void;
 
     // Parameter Methods
-    GetParam(paramNumber: Parameter): number;
-    SetParam(paramNumber: Parameter, value: number): boolean;
+    GetParam(paramNumber: Parameter): void;
+    SetParam(paramNumber: Parameter, value: number): void;
 
     // Data I/O Methods
     ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen): Promise<Buffer>;
@@ -26,7 +25,7 @@ declare module 'node-snap7' {
 
     WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): Promise<void>;
     WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    WriteAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): boolean;
+    WriteAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): void;
 
     ReadMultiVars(items: S7MultiVarRead[]): Promise<S7MultiVarReadResult[]>;
     ReadMultiVars(items: S7MultiVarRead[], callback: (err: Error | null, data: S7MultiVarReadResult[]) => void): void;
@@ -43,7 +42,7 @@ declare module 'node-snap7' {
 
     DBWrite(dbNumber: number, start: number, size: number, buffer: Buffer): Promise<void>;
     DBWrite(dbNumber: number, start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    DBWriteSync(dbNumber: number, start: number, size: number, buffer: Buffer): boolean;
+    DBWriteSync(dbNumber: number, start: number, size: number, buffer: Buffer): void;
 
     MBRead(start: number, size: number): Promise<Buffer>;
     MBRead(start: number, size: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -51,7 +50,7 @@ declare module 'node-snap7' {
 
     MBWrite(start: number, size: number, buffer: Buffer): Promise<void>;
     MBWrite(start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    MBWriteSync(start: number, size: number, buffer: Buffer): boolean;
+    MBWriteSync(start: number, size: number, buffer: Buffer): void;
 
     EBRead(start: number, size: number): Promise<Buffer>;
     EBRead(start: number, size: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -59,7 +58,7 @@ declare module 'node-snap7' {
 
     EBWrite(start: number, size: number, buffer: Buffer): Promise<void>;
     EBWrite(start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    EBWriteSync(start: number, size: number, buffer: Buffer): boolean;
+    EBWriteSync(start: number, size: number, buffer: Buffer): void;
 
     ABRead(start: number, size: number): Promise<Buffer>;
     ABRead(start: number, size: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -67,7 +66,7 @@ declare module 'node-snap7' {
 
     ABWrite(start: number, size: number, buffer: Buffer): Promise<void>;
     ABWrite(start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    ABWriteSync(start: number, size: number, buffer: Buffer): boolean;
+    ABWriteSync(start: number, size: number, buffer: Buffer): void;
 
     TMRead(start: number, size: number): Promise<Buffer>;
     TMRead(start: number, size: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -75,7 +74,7 @@ declare module 'node-snap7' {
 
     TMWrite(start: number, size: number, buffer: Buffer): Promise<void>;
     TMWrite(start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    TMWriteSync(start: number, size: number, buffer: Buffer): boolean;
+    TMWriteSync(start: number, size: number, buffer: Buffer): void;
 
     CTRead(start: number, size: number): Promise<Buffer>;
     CTRead(start: number, size: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -83,7 +82,7 @@ declare module 'node-snap7' {
 
     CTWrite(start: number, size: number, buffer: Buffer): Promise<void>;
     CTWrite(start: number, size: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    CTWriteSync(start: number, size: number, buffer: Buffer): boolean;
+    CTWriteSync(start: number, size: number, buffer: Buffer): void;
 
     // Block Operations
     ListBlocks(): Promise<BlocksList>;
@@ -104,15 +103,15 @@ declare module 'node-snap7' {
 
     Download(blockNumber: number, buffer: Buffer): Promise<void>;
     Download(blockNumber: number, buffer: Buffer, callback: (err: Error | null, result: void) => void): void;
-    DownloadSync(blockNumber: number, buffer: Buffer): boolean;
+    DownloadSync(blockNumber: number, buffer: Buffer): void;
 
     Delete(blockType: BlockType, blockNum: number): Promise<void>;
     Delete(blockType: BlockType, blockNum: number, callback: (err: Error | null, result: void) => void): void;
-    DeleteSync(blockType: BlockType, blockNum: number): boolean;
+    DeleteSync(blockType: BlockType, blockNum: number): void;
 
     DBFill(dbNumber: number, fillChar: number | string): Promise<void>;
     DBFill(dbNumber: number, fillChar: number | string, callback: (err: Error | null, result: void) => void): void;
-    DBFillSync(dbNumber: number, fillChar: number | string): boolean;
+    DBFillSync(dbNumber: number, fillChar: number | string): void;
 
     DBGet(dbNumber: number): Promise<Buffer>;
     DBGet(dbNumber: number, callback: (err: Error | null, data: Buffer) => void): void;
@@ -121,24 +120,24 @@ declare module 'node-snap7' {
     // PLC Control
     PlcHotStart(): Promise<void>;
     PlcHotStart(callback: (err: Error | null, result: void) => void): void;
-    PlcHotStartSync(): boolean;
+    PlcHotStartSync(): void;
 
     PlcColdStart(): Promise<void>;
     PlcColdStart(callback: (err: Error | null, result: void) => void): void;
-    PlcColdStartSync(): boolean;
+    PlcColdStartSync(): void;
 
     PlcStop(): Promise<void>;
     PlcStop(callback: (err: Error | null, result: void) => void): void;
-    PlcStopSync(): boolean;
+    PlcStopSync(): void;
 
     // Control Functions
     CopyRamToRom(timeout: number): Promise<void>;
     CopyRamToRom(timeout: number, callback: (err: Error | null, result: void) => void): void;
-    CopyRamToRomSync(timeout: number): boolean;
+    CopyRamToRomSync(timeout: number): void;
 
     Compress(timeout: number): Promise<void>;
     Compress(timeout: number, callback: (err: Error | null, result: void) => void): void;
-    CompressSync(timeout: number): boolean;
+    CompressSync(timeout: number): void;
 
     PlcStatus(): Promise<PlcStatus>;
     PlcStatus(callback: (err: Error | null, status: PlcStatus) => void): void;
@@ -150,11 +149,11 @@ declare module 'node-snap7' {
 
     SetSessionPassword(password: string): Promise<void>;
     SetSessionPassword(password: string, callback: (err: Error | null, result: void) => void): void;
-    SetSessionPasswordSync(password: string): boolean;
+    SetSessionPasswordSync(password: string): void;
 
     ClearSessionPassword(): Promise<void>;
     ClearSessionPassword(callback: (err: Error | null, result: void) => void): void;
-    ClearSessionPasswordSync(): boolean;
+    ClearSessionPasswordSync(): void;
 
     // DateTime Functions
     GetPlcDateTime(): Promise<Date>;
@@ -163,11 +162,11 @@ declare module 'node-snap7' {
 
     SetPlcDateTime(date: Date | DateTimeObject): Promise<void>;
     SetPlcDateTime(date: Date | DateTimeObject, callback: (err: Error | null, result: void) => void): void;
-    SetPlcDateTimeSync(date: Date | DateTimeObject): boolean;
+    SetPlcDateTimeSync(date: Date | DateTimeObject): void;
 
     SetPlcSystemDateTime(): Promise<void>;
     SetPlcSystemDateTime(callback: (err: Error | null, result: void) => void): void;
-    SetPlcSystemDateTimeSync(): boolean;
+    SetPlcSystemDateTimeSync(): void;
 
     // SZL Operations
     ReadSZL(id: number, index: number): Promise<Buffer>;
@@ -201,10 +200,10 @@ declare module 'node-snap7' {
     GetPgBlockInfoSync(buffer: Buffer): BlockInfo;
 
     // Properties and Info
-    ExecTime(): number | boolean;
-    LastError(): number | boolean;
-    PDURequested(): number | boolean;
-    PDULength(): number | boolean;
+    ExecTime(): number;
+    LastError(): number;
+    PDURequested(): number;
+    PDULength(): number;
     Connected(): boolean;
     ErrorText(code: number): string;
 

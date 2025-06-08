@@ -62,8 +62,8 @@ Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
 
     // Security functions
     InstanceMethod("_GetProtection", &S7Client::GetProtection),
-    InstanceMethod("SetSessionPassword", &S7Client::SetSessionPassword),
-    InstanceMethod("ClearSessionPassword", &S7Client::ClearSessionPassword),
+    InstanceMethod("_SetSessionPassword", &S7Client::SetSessionPassword),
+    InstanceMethod("_ClearSessionPassword", &S7Client::ClearSessionPassword),
 
     // Properties
     InstanceMethod("ExecTime", &S7Client::ExecTime),
@@ -239,7 +239,14 @@ Napi::Value S7Client::Connect(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->Connect();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      std::stringstream err;
+      err << "Connect failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -262,14 +269,20 @@ Napi::Value S7Client::ConnectTo(const Napi::CallbackInfo &info) {
 
   if (info.Length() > 3 && info[3].IsFunction()) {
     Napi::Function callback = info[3].As<Napi::Function>();
-    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::CONNECTTO
-      , remAddress, rack, slot);
+    IOWorker* worker = new IOWorker(callback, this, DataIOFunction::CONNECTTO, remAddress, rack, slot);
     worker->Queue();
     return env.Undefined();
   } else {
     int ret = snap7Client->ConnectTo(remAddress->c_str(), rack, slot);
     delete remAddress;
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      std::stringstream err;
+      err << "ConnectTo failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -281,8 +294,7 @@ Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  if (!info[0].IsString() || !info[1].IsNumber() ||
-      !info[2].IsNumber()) {
+  if (!info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -290,13 +302,15 @@ Napi::Value S7Client::SetConnectionParams(const Napi::CallbackInfo &info) {
   std::string remAddress = info[0].As<Napi::String>().Utf8Value();
   word LocalTSAP = info[1].As<Napi::Number>().Uint32Value();
   word RemoteTSAP = info[2].As<Napi::Number>().Uint32Value();
-
-  int ret = snap7Client->SetConnectionParams(
-      remAddress.c_str()
-    , LocalTSAP
-    , RemoteTSAP);
-
-  return Napi::Boolean::New(env, ret == 0);
+  int ret = snap7Client->SetConnectionParams(remAddress.c_str(), LocalTSAP, RemoteTSAP);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    std::stringstream err;
+    err << "SetConnectionParams failed with error code: " << ret;
+    Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Client::SetConnectionType(const Napi::CallbackInfo &info) {
@@ -312,17 +326,30 @@ Napi::Value S7Client::SetConnectionType(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  word type = info[0].As<Napi::Number>().Uint32Value();;
-
-  int  ret = snap7Client->SetConnectionType(type);
-  return Napi::Boolean::New(env, ret == 0);
+  word type = info[0].As<Napi::Number>().Uint32Value();
+  int ret = snap7Client->SetConnectionType(type);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    std::stringstream err;
+    err << "SetConnectionType failed with error code: " << ret;
+    Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Client::Disconnect(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
   int ret = snap7Client->Disconnect();
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    std::stringstream err;
+    err << "Disconnect failed with error code: " << ret;
+    Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
@@ -345,7 +372,8 @@ Napi::Value S7Client::GetParam(const Napi::CallbackInfo &info) {
   if (ret == 0) {
     return Napi::Number::New(env, pData);
   } else {
-    return Napi::Number::New(env, ret);
+    Napi::Error::New(env, "GetParam failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   return env.Undefined();
@@ -366,7 +394,12 @@ Napi::Value S7Client::SetParam(const Napi::CallbackInfo &info) {
 
   int pData = info[1].As<Napi::Number>().Int32Value();
   int ret = snap7Client->SetParam(info[0].As<Napi::Number>().Int32Value(), &pData);
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    Napi::Error::New(env, "SetParam failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 // Data I/O Main functions
@@ -749,7 +782,10 @@ Napi::Value S7Client::ReadArea(const Napi::CallbackInfo &info) {
       return Napi::Buffer<char>::NewOrCopy(env, bufferData, size, S7Client::FreeCallback);
     } else {
       delete[] bufferData;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ReadArea failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -784,7 +820,14 @@ Napi::Value S7Client::WriteArea(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->WriteArea(area, dbNumber, start, amount, wordLen, buffer.Data());
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      std::stringstream err;
+      err << "WriteArea failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -877,7 +920,10 @@ Napi::Value S7Client::ReadMultiVars(const Napi::CallbackInfo &info) {
         delete[] static_cast<char*>(Items[i].pdata);
       }
       delete[] Items;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ReadMultiVars failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1001,7 +1047,10 @@ Napi::Value S7Client::WriteMultiVars(const Napi::CallbackInfo &info) {
       return res_arr;
     } else {
       delete[] Items;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "WriteMultiVars failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1025,7 +1074,10 @@ Napi::Value S7Client::ListBlocks(const Napi::CallbackInfo &info) {
       return blocks_list;
     } else {
       delete BlocksList;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ListBlocks failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1079,7 +1131,10 @@ Napi::Value S7Client::GetAgBlockInfo(const Napi::CallbackInfo &info) {
       return block_info;
     } else {
       delete BlockInfo;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "GetAgBlockInfo failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1104,7 +1159,10 @@ Napi::Value S7Client::GetPgBlockInfo(const Napi::CallbackInfo &info) {
     return block_info;
   } else {
     delete BlockInfo;
-    return Napi::Boolean::New(env, false);
+    std::stringstream err;
+    err << "GetPgBlockInfo failed with error code: " << ret;
+    Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 }
 
@@ -1162,7 +1220,10 @@ Napi::Value S7Client::ListBlocksOfType(const Napi::CallbackInfo &info) {
       return block_list;
     } else {
       delete[] BlockList;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ListBlocksOfType failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1212,7 +1273,10 @@ Napi::Value S7Client::Upload(const Napi::CallbackInfo &info) {
       return Napi::Buffer<char>::NewOrCopy(env, bufferData, size, S7Client::FreeCallback);
     } else {
       delete[] bufferData;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "Upload failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1247,7 +1311,10 @@ Napi::Value S7Client::FullUpload(const Napi::CallbackInfo &info) {
       return Napi::Buffer<char>::NewOrCopy(env, bufferData, size, S7Client::FreeCallback);
     } else {
       delete[] bufferData;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "FullUpload failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1260,7 +1327,7 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  if (!info[0].IsNumber() || info[1].IsBuffer()) {
+  if (!info[0].IsNumber() || !info[1].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -1276,7 +1343,12 @@ Napi::Value S7Client::Download(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->Download(blockNum, buffer.Data(), buffer.Length());
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "Download failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1304,7 +1376,12 @@ Napi::Value S7Client::Delete(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->Delete(blockType, blockNum);
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "Delete failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1337,7 +1414,10 @@ Napi::Value S7Client::DBGet(const Napi::CallbackInfo &info) {
       return Napi::Buffer<char>::NewOrCopy(env, bufferData, size, S7Client::FreeCallback);
     } else {
       delete[] bufferData;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "DBGet failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1372,7 +1452,12 @@ Napi::Value S7Client::DBFill(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->DBFill(dbNumber, fill);
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "DBFill failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1395,7 +1480,8 @@ Napi::Value S7Client::GetPlcDateTime(const Napi::CallbackInfo &info) {
       return Napi::Date::New(env, timestamp * 1000);
     } else {
       delete DateTime;
-      return Napi::Boolean::New(env, false);
+      Napi::Error::New(env, "GetPlcDateTime failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1437,7 +1523,12 @@ Napi::Value S7Client::SetPlcDateTime(const Napi::CallbackInfo &info) {
   } else {
     int ret = snap7Client->SetPlcDateTime(DateTime);
     delete DateTime;
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "SetPlcDateTime failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1451,7 +1542,12 @@ Napi::Value S7Client::SetPlcSystemDateTime(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->SetPlcSystemDateTime();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "SetPlcSystemDateTime failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1474,7 +1570,10 @@ Napi::Value S7Client::GetOrderCode(const Napi::CallbackInfo &info) {
       return order_code;
     } else {
       delete OrderCode;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "GetOrderCode failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1508,7 +1607,10 @@ Napi::Value S7Client::GetCpuInfo(const Napi::CallbackInfo &info) {
       return cpu_info;
     } else {
       delete CpuInfo;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "GetCpuInfo failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1544,7 +1646,10 @@ Napi::Value S7Client::GetCpInfo(const Napi::CallbackInfo &info) {
       return cp_info;
     } else {
       delete CpInfo;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "GetCpInfo failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1593,7 +1698,10 @@ Napi::Value S7Client::ReadSZL(const Napi::CallbackInfo &info) {
       return ret_buffer;
     } else {
       delete SZL;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ReadSZL failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1618,7 +1726,10 @@ Napi::Value S7Client::ReadSZLList(const Napi::CallbackInfo &info) {
       return szl_list;
     } else {
       delete SZLList;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "ReadSZLList failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1645,7 +1756,12 @@ Napi::Value S7Client::PlcHotStart(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->PlcHotStart();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "PlcHotStart failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1659,7 +1775,12 @@ Napi::Value S7Client::PlcColdStart(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->PlcColdStart();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "PlcColdStart failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1673,7 +1794,12 @@ Napi::Value S7Client::PlcStop(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->PlcStop();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "PlcStop failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1700,7 +1826,12 @@ Napi::Value S7Client::CopyRamToRom(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->CopyRamToRom(timeout);
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "CopyRamToRom failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1727,7 +1858,13 @@ Napi::Value S7Client::Compress(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->Compress(timeout);
-    return Napi::Boolean::New(env, ret == 0);
+
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "Compress failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1751,7 +1888,10 @@ Napi::Value S7Client::GetProtection(const Napi::CallbackInfo &info) {
       return protection;
     } else {
       delete S7Protection;
-      return Napi::Boolean::New(env, false);
+      std::stringstream err;
+      err << "GetProtection failed with error code: " << ret;
+      Napi::Error::New(env, err.str()).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }
@@ -1795,7 +1935,12 @@ Napi::Value S7Client::SetSessionPassword(const Napi::CallbackInfo &info) {
   } else {
     int ret = snap7Client->SetSessionPassword(&*password->begin());
     delete password;
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "SetSessionPassword failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1809,7 +1954,12 @@ Napi::Value S7Client::ClearSessionPassword(const Napi::CallbackInfo &info) {
     return env.Undefined();
   } else {
     int ret = snap7Client->ClearSessionPassword();
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret == 0) {
+      return env.Undefined();
+    } else {
+      Napi::Error::New(env, "ClearSessionPassword failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 }
 
@@ -1819,7 +1969,8 @@ Napi::Value S7Client::ExecTime(const Napi::CallbackInfo &info) {
 
   int ret = snap7Client->ExecTime();
   if (ret == errLibInvalidObject) {
-    return Napi::Boolean::New(env, false);
+    Napi::Error::New(env, "ExecTime failed with error code:" + std::to_string(errLibInvalidObject)).ThrowAsJavaScriptException();
+    return env.Undefined();
   } else {
     return Napi::Number::New(env, ret);
   }
@@ -1830,7 +1981,8 @@ Napi::Value S7Client::LastError(const Napi::CallbackInfo &info) {
 
   int ret = snap7Client->LastError();
   if (ret == errLibInvalidObject) {
-    return Napi::Boolean::New(env, false);
+    Napi::Error::New(env, "LastError failed with error code:" + std::to_string(errLibInvalidObject)).ThrowAsJavaScriptException();
+    return env.Undefined();
   } else {
     return Napi::Number::New(env, ret);
   }
@@ -1841,7 +1993,8 @@ Napi::Value S7Client::PDURequested(const Napi::CallbackInfo &info) {
 
   int ret = snap7Client->PDURequested();
   if (ret == 0) {
-    return Napi::Boolean::New(env, false);
+    Napi::Error::New(env, "PDURequested failed.").ThrowAsJavaScriptException();
+    return env.Undefined();
   } else {
     return Napi::Number::New(env, ret);
   }
@@ -1852,7 +2005,8 @@ Napi::Value S7Client::PDULength(const Napi::CallbackInfo &info) {
 
   int ret = snap7Client->PDULength();
   if (ret == 0) {
-    return Napi::Boolean::New(env, false);
+    Napi::Error::New(env, "PDULength failed.").ThrowAsJavaScriptException();
+    return env.Undefined();
   } else {
     return Napi::Number::New(env, ret);
   }
@@ -1873,7 +2027,8 @@ Napi::Value S7Client::PlcStatus(const Napi::CallbackInfo &info) {
         (ret == S7CpuStatusRun)) {
       return Napi::Number::New(env, ret);
     } else {
-      return Napi::Boolean::New(env, false);
+      Napi::Error::New(env, "PlcStatus failed with error code:" + std::to_string(ret)).ThrowAsJavaScriptException();
+      return env.Undefined();
     }
   }
 }

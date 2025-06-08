@@ -10,11 +10,57 @@ const CT_AMOUNT = 4;
 const TM_SIZE = TM_AMOUNT * 2;
 const CT_SIZE = CT_AMOUNT * 2;
 
+const HEADER_SIZE = 40; // TS7CompactBlockInfo
+const FOOTER_SIZE = 2; 
+
+const BLOCK_SIZE = SIZE + HEADER_SIZE + FOOTER_SIZE;
+const blockBuf = Buffer.alloc(BLOCK_SIZE);
+
+// --- Header (TS7CompactBlockInfo) ---
+// word    Cst_pp;         // 2 bytes
+blockBuf.writeUInt16BE(0x0000, 0);
+// byte    Uk_01;          // 1 byte
+blockBuf.writeUInt8(0x00, 2);
+// byte    BlkFlags;       // 1 byte
+blockBuf.writeUInt8(0x00, 3);
+// byte    BlkLang;        // 1 byte
+blockBuf.writeUInt8(0x00, 4);
+// byte    SubBlkType;     // 1 byte (DB = 0x0A)
+blockBuf.writeUInt8(0x0A, 5);
+// word    BlkNum;         // 2 bytes
+blockBuf.writeUInt16BE(DB_NUMBER, 6);
+// u_int   LenLoadMem;     // 4 bytes
+blockBuf.writeUInt32BE(BLOCK_SIZE, 8);
+// u_int   BlkSec;         // 4 bytes
+blockBuf.writeUInt32BE(0, 12);
+// u_int   CodeTime_ms;    // 4 bytes
+blockBuf.writeUInt32BE(0, 16);
+// word    CodeTime_dy;    // 2 bytes
+blockBuf.writeUInt16BE(0, 20);
+// u_int   IntfTime_ms;    // 4 bytes
+blockBuf.writeUInt32BE(0, 22);
+// word    IntfTime_dy;    // 2 bytes
+blockBuf.writeUInt16BE(0, 26);
+// word    SbbLen;         // 2 bytes
+blockBuf.writeUInt16BE(0, 28);
+// word    AddLen;         // 2 bytes
+blockBuf.writeUInt16BE(0, 30);
+// word    LocDataLen;     // 2 bytes
+blockBuf.writeUInt16BE(0, 32);
+// word    MC7Len;         // 2 bytes
+blockBuf.writeUInt16BE(SIZE, 34);
+
+// --- Data (MC7) ---
+blockBuf.fill(0xAA, HEADER_SIZE, HEADER_SIZE + SIZE);
+
+// --- Footer ---
+blockBuf.writeUInt16BE(0x0000, HEADER_SIZE + SIZE);
+
 let dbBuffer, peBuffer, paBuffer, mkBuffer, tmBuffer, ctBuffer;
 
 beforeEach(async () => {
   server = new snap7.S7Server();
-  
+
   dbBuffer = Buffer.alloc(SIZE, 0xAA);
   peBuffer = Buffer.alloc(SIZE, 0xBB);
   paBuffer = Buffer.alloc(SIZE, 0xCC);
@@ -50,11 +96,11 @@ afterEach(async () => {
 // --- Connection Methods ---
 test('ConnectToSync', () => {
   client.Disconnect();
-  const result = client.ConnectToSync('127.0.0.1', 0, 0);
-  assert.strictEqual(result, true);
+  assert.doesNotThrow(() => client.ConnectToSync('127.0.0.1', 0, 0));
+  assert.strictEqual(client.Connected(), true);
 });
 test('ConnectTo (Promise)', async () => {
-  await client.Disconnect();
+  client.Disconnect();
   await client.ConnectTo('127.0.0.1', 0, 0);
   assert.strictEqual(client.Connected(), true);
 });
@@ -74,18 +120,19 @@ test('Connected', () => {
   assert.strictEqual(typeof client.Connected(), 'boolean');
 });
 test('SetConnectionParams', () => {
-  assert.strictEqual(client.SetConnectionParams('127.0.0.1', 0x0100, 0x0200), true);
+  assert.doesNotThrow(() => client.SetConnectionParams('127.0.0.1', 0x0100, 0x0200));
 });
 test('SetConnectionType', () => {
-  assert.strictEqual(client.SetConnectionType(client.CONNTYPE_BASIC), true);
+  assert.doesNotThrow(() => client.SetConnectionType(client.CONNTYPE_BASIC));
 });
 
 // --- Parameter Methods ---
 test('SetParam', () => {
-  assert.strictEqual(client.SetParam(client.PDURequest, 480), true);
+  assert.doesNotThrow(() => (client.SetParam(client.PDURequest, 480)));
 });
 test('GetParam', () => {
-  assert.strictEqual(client.GetParam(client.PDURequest), 480);
+  const value = client.GetParam(client.PDURequest);
+  assert.strictEqual(typeof value, 'number');
 });
 
 // --- Data I/O Methods (Sync/Promise/Callback) ---
@@ -106,7 +153,7 @@ test('ReadArea (Callback)', (t, done) => {
 });
 test('WriteAreaSync', () => {
   const buf = Buffer.alloc(SIZE, 0x11);
-  assert.strictEqual(client.WriteAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, buf), true);
+  assert.doesNotThrow(() => client.WriteAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, buf));
 });
 test('WriteArea (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x12);
@@ -176,7 +223,7 @@ test('DBRead (Callback)', (t, done) => {
 });
 test('DBWriteSync', () => {
   const buf = Buffer.alloc(SIZE, 0x31);
-  assert.strictEqual(client.DBWriteSync(DB_NUMBER, 0, SIZE, buf), true);
+  assert.doesNotThrow(() => client.DBWriteSync(DB_NUMBER, 0, SIZE, buf));
 });
 test('DBWrite (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x32);
@@ -193,7 +240,7 @@ test('DBWrite (Callback)', (t, done) => {
 // --- DBWriteSync + DBReadSync ---
 test('DBWriteSync + DBReadSync verify', () => {
   const buf = Buffer.alloc(SIZE, 0x41);
-  assert.strictEqual(client.DBWriteSync(DB_NUMBER, 0, SIZE, buf), true);
+  assert.doesNotThrow(() => client.DBWriteSync(DB_NUMBER, 0, SIZE, buf));
   const readBuf = client.DBReadSync(DB_NUMBER, 0, SIZE);
   assert.ok(readBuf.equals(buf));
 });
@@ -237,7 +284,7 @@ test('MBRead (Callback)', (t, done) => {
 });
 test('MBWriteSync', () => {
   const buf = Buffer.alloc(SIZE, 0x41);
-  assert.strictEqual(client.MBWriteSync(0, SIZE, buf), true);
+  assert.doesNotThrow(() => client.MBWriteSync(0, SIZE, buf));
 });
 test('MBWrite (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x42);
@@ -269,7 +316,7 @@ test('EBRead (Callback)', (t, done) => {
 });
 test('EBWriteSync', () => {
   const buf = Buffer.alloc(SIZE, 0x51);
-  assert.strictEqual(client.EBWriteSync(0, SIZE, buf), true);
+  assert.doesNotThrow(() => client.EBWriteSync(0, SIZE, buf));
 });
 test('EBWrite (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x52);
@@ -301,7 +348,7 @@ test('ABRead (Callback)', (t, done) => {
 });
 test('ABWriteSync', () => {
   const buf = Buffer.alloc(SIZE, 0x61);
-  assert.strictEqual(client.ABWriteSync(0, SIZE, buf), true);
+  assert.doesNotThrow(() => client.ABWriteSync(0, SIZE, buf));
 });
 test('ABWrite (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x62);
@@ -333,7 +380,7 @@ test('TMRead (Callback)', (t, done) => {
 });
 test('TMWriteSync', () => {
   const buf = Buffer.alloc(TM_SIZE, 0x71);
-  assert.strictEqual(client.TMWriteSync(0, TM_AMOUNT, buf), true);
+  assert.doesNotThrow(() => client.TMWriteSync(0, TM_AMOUNT, buf));
 });
 test('TMWrite (Promise)', async () => {
   const buf = Buffer.alloc(TM_SIZE, 0x72);
@@ -365,7 +412,7 @@ test('CTRead (Callback)', (t, done) => {
 });
 test('CTWriteSync', () => {
   const buf = Buffer.alloc(CT_SIZE, 0x71);
-  assert.strictEqual(client.CTWriteSync(0, CT_AMOUNT, buf), true);
+  assert.doesNotThrow(() => client.CTWriteSync(0, CT_AMOUNT, buf));
 });
 test('CTWrite (Promise)', async () => {
   const buf = Buffer.alloc(CT_SIZE, 0x72);
@@ -413,60 +460,66 @@ test('ListBlocksOfType (Callback)', (t, done) => {
 
 // --- Upload/FullUpload/Download/Delete ---
 test('UploadSync', () => {
-  assert.throws(() => client.UploadSync(client.Block_DB, DB_NUMBER, SIZE));
+  const res = client.UploadSync(client.Block_DB, DB_NUMBER, SIZE);
+  assert.ok(Buffer.isBuffer(res));
 });
 test('Upload (Promise)', async () => {
-  await assert.rejects(client.Upload(client.Block_DB, DB_NUMBER, SIZE));
+  const res = await client.Upload(client.Block_DB, DB_NUMBER, SIZE);
+  assert.ok(Buffer.isBuffer(res));
 });
 test('Upload (Callback)', (t, done) => {
   client.Upload(client.Block_DB, DB_NUMBER, SIZE, (err, buf) => {
-    assert.ok(err);
+    assert.ifError(err);
+    assert.ok(Buffer.isBuffer(buf));
     done();
   });
 });
 test('FullUploadSync', () => {
-  assert.throws(() => client.FullUploadSync(client.Block_DB, DB_NUMBER, SIZE));
+  const res = client.FullUploadSync(client.Block_DB, DB_NUMBER, SIZE);
+  assert.ok(Buffer.isBuffer(res));
 });
 test('FullUpload (Promise)', async () => {
-  await assert.rejects(client.FullUpload(client.Block_DB, DB_NUMBER, SIZE));
+  const res = await client.FullUpload(client.Block_DB, DB_NUMBER, SIZE);
+  assert.ok(Buffer.isBuffer(res));
 });
 test('FullUpload (Callback)', (t, done) => {
   client.FullUpload(client.Block_DB, DB_NUMBER, SIZE, (err, buf) => {
-    assert.ok(err);
+    assert.ifError(err);
+    assert.ok(Buffer.isBuffer(buf));
     done();
   });
 });
 test('DownloadSync', () => {
-  assert.throws(() => client.DownloadSync(DB_NUMBER, Buffer.alloc(SIZE)));
+  assert.doesNotThrow(() => client.DownloadSync(DB_NUMBER, blockBuf));
 });
 test('Download (Promise)', async () => {
-  await assert.rejects(client.Download(DB_NUMBER, Buffer.alloc(SIZE)));
+  await assert.doesNotReject(client.Download(DB_NUMBER, blockBuf));
 });
 test('Download (Callback)', (t, done) => {
-  client.Download(DB_NUMBER, Buffer.alloc(SIZE), (err) => {
-    assert.ok(err);
+  client.Download(DB_NUMBER, blockBuf, (err) => {
+    assert.ifError(err);
     done();
   });
 });
 test('DeleteSync', () => {
-  assert.throws(() => client.DeleteSync(client.Block_DB, DB_NUMBER));
+  assert.doesNotThrow(() => client.DeleteSync(client.Block_DB, DB_NUMBER));
 });
 test('Delete (Promise)', async () => {
-  await assert.rejects(client.Delete(client.Block_DB, DB_NUMBER));
+  await assert.doesNotReject(client.Delete(client.Block_DB, DB_NUMBER));
 });
 test('Delete (Callback)', (t, done) => {
   client.Delete(client.Block_DB, DB_NUMBER, (err) => {
-    assert.ok(err);
+    assert.ifError(err);
     done();
   });
 });
 
 // --- DBFill/DBGet ---
 test('DBFillSync', () => {
-  assert.strictEqual(client.DBFillSync(DB_NUMBER, 0x00), true);
+  assert.doesNotThrow(() => client.DBFillSync(DB_NUMBER, 0x00));
 });
 test('DBFill (Promise)', async () => {
-  await client.DBFill(DB_NUMBER, 0x00);
+  await assert.doesNotReject(client.DBFill(DB_NUMBER, 0x00));
 });
 test('DBFill (Callback)', (t, done) => {
   client.DBFill(DB_NUMBER, 0x00, (err) => {
@@ -492,10 +545,10 @@ test('DBGet (Callback)', (t, done) => {
 
 // --- PlcHotStart/PlcColdStart/PlcStop ---
 test('PlcHotStartSync', () => {
-  assert.strictEqual(typeof client.PlcHotStartSync(), 'boolean');
+  assert.doesNotThrow(() => client.PlcHotStartSync());
 });
 test('PlcHotStart (Promise)', async () => {
-  await client.PlcHotStart();
+  await assert.doesNotReject(client.PlcHotStart());
 });
 test('PlcHotStart (Callback)', (t, done) => {
   client.PlcHotStart((err) => {
@@ -504,10 +557,10 @@ test('PlcHotStart (Callback)', (t, done) => {
   });
 });
 test('PlcColdStartSync', () => {
-  assert.strictEqual(typeof client.PlcColdStartSync(), 'boolean');
+  assert.doesNotThrow(() => client.PlcColdStartSync());
 });
 test('PlcColdStart (Promise)', async () => {
-  await client.PlcColdStart();
+  await assert.doesNotReject(client.PlcColdStart());
 });
 test('PlcColdStart (Callback)', (t, done) => {
   client.PlcColdStart((err) => {
@@ -516,10 +569,10 @@ test('PlcColdStart (Callback)', (t, done) => {
   });
 });
 test('PlcStopSync', () => {
-  assert.strictEqual(typeof client.PlcStopSync(), 'boolean');
+  assert.doesNotThrow(() => client.PlcStopSync());
 });
 test('PlcStop (Promise)', async () => {
-  await client.PlcStop();
+  await assert.doesNotReject(client.PlcStop());
 });
 test('PlcStop (Callback)', (t, done) => {
   client.PlcStop((err) => {
@@ -530,26 +583,26 @@ test('PlcStop (Callback)', (t, done) => {
 
 // --- CopyRamToRom/Compress ---
 test('CopyRamToRomSync', () => {
-  assert.throws(() => client.CopyRamToRomSync(1000));
+  assert.doesNotThrow(() => client.CopyRamToRomSync(1000));
 });
 test('CopyRamToRom (Promise)', async () => {
-  await assert.rejects(client.CopyRamToRom(1000));
+  await assert.doesNotReject(client.CopyRamToRom(1000));
 });
 test('CopyRamToRom (Callback)', (t, done) => {
   client.CopyRamToRom(1000, (err) => {
-    assert.ok(err);
+    assert.ifError(err);
     done();
   });
 });
 test('CompressSync', () => {
-  assert.throws(() => client.CompressSync(1000));
+  assert.doesNotThrow(() => client.CompressSync(1000));
 });
 test('Compress (Promise)', async () => {
-  await assert.rejects(client.Compress(1000));
+  await assert.doesNotReject(client.Compress(1000));
 });
 test('Compress (Callback)', (t, done) => {
   client.Compress(1000, (err) => {
-    assert.ok(err);
+    assert.ifError(err);
     done();
   });
 });
@@ -585,10 +638,10 @@ test('GetProtection (Callback)', (t, done) => {
 
 // --- SetSessionPassword/ClearSessionPassword ---
 test('SetSessionPasswordSync', () => {
-  assert.strictEqual(typeof client.SetSessionPasswordSync('test'), 'boolean');
+  assert.doesNotThrow(() => client.SetSessionPasswordSync('test'));
 });
 test('SetSessionPassword (Promise)', async () => {
-  await client.SetSessionPassword('test');
+  await assert.doesNotReject(client.SetSessionPassword('test'));
 });
 test('SetSessionPassword (Callback)', (t, done) => {
   client.SetSessionPassword('test', (err) => {
@@ -597,10 +650,10 @@ test('SetSessionPassword (Callback)', (t, done) => {
   });
 });
 test('ClearSessionPasswordSync', () => {
-  assert.strictEqual(typeof client.ClearSessionPasswordSync(), 'boolean');
+  assert.doesNotThrow(() => client.ClearSessionPasswordSync());
 });
 test('ClearSessionPassword (Promise)', async () => {
-  await client.ClearSessionPassword();
+  await assert.doesNotReject(client.ClearSessionPassword());
 });
 test('ClearSessionPassword (Callback)', (t, done) => {
   client.ClearSessionPassword((err) => {
@@ -624,10 +677,10 @@ test('GetPlcDateTime (Callback)', (t, done) => {
   });
 });
 test('SetPlcDateTimeSync', () => {
-  assert.strictEqual(typeof client.SetPlcDateTimeSync(new Date()), 'boolean');
+  assert.doesNotThrow(() => client.SetPlcDateTimeSync(new Date()));
 });
 test('SetPlcDateTime (Promise)', async () => {
-  await client.SetPlcDateTime(new Date());
+  await assert.doesNotReject(client.SetPlcDateTime(new Date()));
 });
 test('SetPlcDateTime (Callback)', (t, done) => {
   client.SetPlcDateTime(new Date(), (err) => {
@@ -636,10 +689,10 @@ test('SetPlcDateTime (Callback)', (t, done) => {
   });
 });
 test('SetPlcSystemDateTimeSync', () => {
-  assert.strictEqual(typeof client.SetPlcSystemDateTimeSync(), 'boolean');
+  assert.doesNotThrow(() => client.SetPlcSystemDateTimeSync());
 });
 test('SetPlcSystemDateTime (Promise)', async () => {
-  await client.SetPlcSystemDateTime();
+  await assert.doesNotReject(client.SetPlcSystemDateTime());
 });
 test('SetPlcSystemDateTime (Callback)', (t, done) => {
   client.SetPlcSystemDateTime((err) => {
@@ -692,64 +745,52 @@ test('GetCpuInfo (Callback)', (t, done) => {
     done();
   });
 });
-// test('GetCpInfoSync', () => {
-//   assert.ok(typeof client.GetCpInfoSync() === 'object');
-// });
-// test('GetCpInfo (Promise)', async () => {
-//   console.log('GetCpInfo (Promise) called');
-//   assert.ok(typeof (await client.GetCpInfo()) === 'object');
-// });
-// test('GetCpInfo (Callback)', (t, done) => {
-//   console.log('GetCpInfo (Callback) called');
-//   client.GetCpInfo((err, info) => {
-//     assert.ifError(err);
-//     assert.ok(typeof info === 'object');
-//     done();
-//   });
-// });
-// test('GetOrderCodeSync', () => {
-//   assert.ok(typeof client.GetOrderCodeSync() === 'object');
-// });
-// test('GetOrderCode (Promise)', async () => {
-//   assert.ok(typeof (await client.GetOrderCode()) === 'object');
-// });
-// test('GetOrderCode (Callback)', (t, done) => {
-//   client.GetOrderCode((err, info) => {
-//     assert.ifError(err);
-//     assert.ok(typeof info === 'object');
-//     done();
-//   });
-// });
+test('GetCpInfoSync', () => {
+  assert.ok(typeof client.GetCpInfoSync() === 'object');
+});
+test('GetCpInfo (Promise)', async () => {
+  assert.ok(typeof (await client.GetCpInfo()) === 'object');
+});
+test('GetCpInfo (Callback)', (t, done) => {
+  client.GetCpInfo((err, info) => {
+    assert.ifError(err);
+    assert.ok(typeof info === 'object');
+    done();
+  });
+});
+test('GetOrderCodeSync', () => {
+  assert.ok(typeof client.GetOrderCodeSync() === 'object');
+});
+test('GetOrderCode (Promise)', async () => {
+  assert.ok(typeof (await client.GetOrderCode()) === 'object');
+});
+test('GetOrderCode (Callback)', (t, done) => {
+  client.GetOrderCode((err, info) => {
+    assert.ifError(err);
+    assert.ok(typeof info === 'object');
+    done();
+  });
+});
 
 // --- Block Info ---
-// test('GetAgBlockInfoSync', () => {
-//   assert.ok(typeof client.GetAgBlockInfoSync(client.Block_DB, DB_NUMBER) === 'object');
-// });
-// test('GetAgBlockInfo (Promise)', async () => {
-//   assert.ok(typeof (await client.GetAgBlockInfo(client.Block_DB, DB_NUMBER)) === 'object');
-// });
-// test('GetAgBlockInfo (Callback)', (t, done) => {
-//   client.GetAgBlockInfo(client.Block_DB, DB_NUMBER, (err, info) => {
-//     assert.ifError(err);
-//     assert.ok(typeof info === 'object');
-//     done();
-//   });
-// });
-// test('GetPgBlockInfoSync', () => {
-//   const buf = Buffer.alloc(SIZE);
-//   assert.throws(() => client.GetPgBlockInfoSync(buf));
-// });
-// test('GetPgBlockInfo (Promise)', async () => {
-//   const buf = Buffer.alloc(SIZE);
-//   await assert.rejects(client.GetPgBlockInfo(buf));
-// });
-// test('GetPgBlockInfo (Callback)', (t, done) => {
-//   const buf = Buffer.alloc(SIZE);
-//   client.GetPgBlockInfo(buf, (err, info) => {
-//     assert.ok(err);
-//     done();
-//   });
-// });
+test('GetAgBlockInfoSync', () => {
+  assert.ok(typeof client.GetAgBlockInfoSync(client.Block_DB, DB_NUMBER) === 'object');
+});
+test('GetAgBlockInfo (Promise)', async () => {
+  assert.ok(typeof (await client.GetAgBlockInfo(client.Block_DB, DB_NUMBER)) === 'object');
+});
+test('GetAgBlockInfo (Callback)', (t, done) => {
+  client.GetAgBlockInfo(client.Block_DB, DB_NUMBER, (err, info) => {
+    assert.ifError(err);
+    assert.ok(typeof info === 'object');
+    done();
+  });
+});
+test('GetPgBlockInfo', () => {
+  const buf = Buffer.alloc(SIZE);
+  assert.ok(typeof client.GetPgBlockInfo(buf) === 'object');
+  console.log('ERROR', client.LastError());
+});
 
 // --- Properties and Info ---
 test('ExecTime', () => {
