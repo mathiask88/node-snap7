@@ -23,7 +23,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "^2.22.0",
+    "nan": "^2.23.0",
     "bindings": "^1.5.0",
     "prebuild-install": "^7.1.2"
   },
