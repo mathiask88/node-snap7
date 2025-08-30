@@ -548,7 +548,12 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
   }
   lastError = ret;
 
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    Napi::Error::New(env, "SetResourceless failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
@@ -571,7 +576,12 @@ Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
   if (ret == errSrvInvalidParamNumber)
     lastError = ret;
 
-  return Napi::Number::New(env, ret);
+  if (ret == 0) {
+    return Napi::Number::New(env, pData);
+  } else {
+    Napi::Error::New(env, "GetParam failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
@@ -582,7 +592,7 @@ Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
     return env.Undefined();
   }
 
-  if (!(info[0].IsNumber() || info[1].IsNumber())) {
+  if (!info[0].IsNumber() || !info[1].IsNumber()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
@@ -591,7 +601,12 @@ Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
   int ret = snap7Server->SetParam(info[0].ToNumber().Int32Value(), &pData);
   lastError = ret;
 
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    Napi::Error::New(env, "SetParam failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
@@ -623,42 +638,24 @@ Napi::Value S7Server::SetEventsMask(const Napi::CallbackInfo& info) {
 Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() < 1) {
+  if (info.Length() < 3) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
-  if (!info[0].IsNumber()) {
+  if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
-  int index;
-  size_t len;
-  char *pBuffer;
   int area = info[0].ToNumber().Int32Value();
+  int index = 0;
+
+  char *pBuffer = info[2].As<Napi::Buffer<char>>().Data();
+  size_t len = info[2].As<Napi::Buffer<char>>().Length();
 
   if (area == srvAreaDB) {
-    if (!info[1].IsNumber() || !info[2].IsBuffer()) {
-      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-      return env.Undefined();
-    }
-
     index = info[1].ToNumber().Int32Value();
-    len = info[2].As<Napi::Buffer<char>>().Length();
-    pBuffer = info[2].As<Napi::Buffer<char>>().Data();
-  } else if (!info[1].IsBuffer()) {
-    Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-    return env.Undefined();
-  } else {
-    index = 0;
-    len = info[1].As<Napi::Buffer<char>>().Length();
-    pBuffer = info[1].As<Napi::Buffer<char>>().Data();
-  }
-
-  if (len > 0xFFFF) {
-    Napi::RangeError::New(env, "Max area buffer size is 65535").ThrowAsJavaScriptException();
-    return env.Undefined();
   }
 
   word size = static_cast<word>(len);
@@ -675,7 +672,12 @@ Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
     delete[] data;
   }
 
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    Napi::Error::New(env, "RegisterArea failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
@@ -691,8 +693,13 @@ Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
     return env.Undefined();
   }
 
-  int index = 0;
   int area = info[0].ToNumber().Int32Value();
+  int index = 0;
+
+  if (!area2buffer.count(area)) {
+    Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (area == srvAreaDB) {
     if (info.Length() < 2) {
@@ -706,6 +713,10 @@ Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
     }
 
     index = info[1].ToNumber().Int32Value();
+    if (!area2buffer[area].count(index)) {
+      Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
   }
 
   int ret = snap7Server->UnregisterArea(area, index);
@@ -714,58 +725,48 @@ Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
   if (ret == 0) {
     delete[] area2buffer[area][index].pBuffer;
     area2buffer[area].erase(index);
+    
+    if (area2buffer[area].empty()) {
+      area2buffer.erase(area);
+    }
   }
 
-  return Napi::Boolean::New(env, ret == 0);
+  if (ret == 0) {
+    return env.Undefined();
+  } else {
+    Napi::Error::New(env, "UnregisterArea failed with error code: " + std::to_string(ret)).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 }
 
 Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
-  if (info.Length() < 1) {
+  if (info.Length() < 3) {
     Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
-  if (!info[0].IsNumber()) {
+  if (!info[0].IsNumber() || !info[1].IsNumber() || !info[2].IsBuffer()) {
     Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
   int area = info[0].ToNumber().Int32Value();
+  int index = 0;
+
   if (!area2buffer.count(area)) {
     Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
-  int index;
-  char *pBuffer;
-  size_t len;
+  char *pBuffer = info[2].As<Napi::Buffer<char>>().Data();
+  size_t len = info[2].As<Napi::Buffer<char>>().Length();
 
   if (area == srvAreaDB) {
-    if (!info[1].IsNumber() || !info[2].IsBuffer()) {
-      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
-      return env.Undefined();
-    }
-
     index = info[1].ToNumber().Int32Value();
     if (!area2buffer[area].count(index)) {
       Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
-      return env.Undefined();
-    }
-
-    len =info[2].As<Napi::Buffer<char>>().Length();;
-    pBuffer = info[2].As<Napi::Buffer<char>>().Data();
-  } else {
-    index = 0;
-    if (info[1].IsBuffer()) {
-      len = info[1].As<Napi::Buffer<char>>().Length();
-      pBuffer = info[1].As<Napi::Buffer<char>>().Data();
-    } else if (info[2].IsBuffer()) {
-      len = info[2].As<Napi::Buffer<char>>().Length();
-      pBuffer = info[2].As<Napi::Buffer<char>>().Data();
-    } else {
-      Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
       return env.Undefined();
     }
   }
@@ -799,8 +800,8 @@ Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
     return env.Undefined();
   }
 
-  int index = 0;
   int area = info[0].ToNumber().Int32Value();
+  int index = 0;
 
   if (!area2buffer.count(area)) {
     Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
@@ -808,6 +809,11 @@ Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
   }
 
   if (area == srvAreaDB) {
+    if(info.Length() < 2) {
+      Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+
     if (!info[1].IsNumber()) {
       Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
       return env.Undefined();

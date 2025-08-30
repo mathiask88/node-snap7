@@ -9,6 +9,9 @@
     "type": "git",
     "url": "git://github.com/mathiask88/node-snap7.git"
   },
+  "bugs": {
+    "url": "https://github.com/mathiask88/node-snap7/issues"
+  },
   "keywords": [
     "snap7",
     "sps",
@@ -37,7 +40,7 @@
     "install": "node-gyp-build",
     "rebuild": "npm run install --build-from-source",
     "prebuild": "prebuildify -t 18.20.4 --napi --strip",
-    "test": "",
+    "test": "node --test",
     "download-prebuilds": "prebuildify-ci download",
     "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 18.20.4 --napi --strip",
     "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 8.14.0 --napi --strip",
