@@ -1,4 +1,4 @@
 .vscode/
 build/
+prebuilds/
 node_modules/
-test/
