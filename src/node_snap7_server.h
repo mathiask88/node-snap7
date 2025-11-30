@@ -105,7 +105,6 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
 
     Napi::Value ErrorText(const Napi::CallbackInfo& info);
     Napi::Value EventText(const Napi::CallbackInfo& info);
-    Napi::Value LastError(const Napi::CallbackInfo& info);
 
     static int GetByteCountFromWordLen(int WordLen);
 
@@ -113,7 +112,6 @@ class S7Server : public Napi::ObjectWrap<S7Server> {
     std::mutex mutex;
     std::map<int, std::map<int, TBufferInfo>> area2buffer;
     Semaphore sem_rw{0};
-    int lastError;
 
   private:
     static void S7API EventCallBack(void* usrPtr, PSrvEvent PEvent, int Size);

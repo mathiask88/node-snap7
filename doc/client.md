@@ -539,7 +539,6 @@ Read the PLC protection levels.
 
 ## Properties & diagnostics
 - `ExecTime() -> number` — execution time (ms) of the last job.
-- `LastError() -> number` — numeric code of the last error.
 - `PDURequested() -> number` — requested PDU length during negotiation.
 - `PDULength() -> number` — negotiated PDU length.
 - `Connected() -> boolean` — connection state.

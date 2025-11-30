@@ -30,7 +30,6 @@ Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
          InstanceMethod("SetEventsMask", &S7Server::SetEventsMask),
          InstanceMethod("GetEventsMask", &S7Server::GetEventsMask),
          InstanceMethod("ErrorText", &S7Server::ErrorText),
-         InstanceMethod("LastError", &S7Server::LastError),
          InstanceMethod("EventText", &S7Server::EventText),
          InstanceMethod("ServerStatus", &S7Server::ServerStatus),
          InstanceMethod("ClientsCount", &S7Server::ClientsCount),
@@ -321,7 +320,6 @@ void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataType
 S7Server::S7Server(const Napi::CallbackInfo& info) : Napi::ObjectWrap<S7Server>(info) {
     Napi::Env env = info.Env();
 
-    lastError = 0;
     snap7Server = new TS7Server();
 
     Napi::Function Emit = info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
@@ -483,7 +481,6 @@ Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
     } else {
         ret = snap7Server->SetRWAreaCallback(nullptr, nullptr);
     }
-    lastError = ret;
 
     if (ret == 0) {
         return env.Undefined();
@@ -502,8 +499,6 @@ Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
     int pData;
     int ret = snap7Server->GetParam(info[0].ToNumber().Int32Value(), &pData);
 
-    if (ret == errSrvInvalidParamNumber) lastError = ret;
-
     if (ret == 0) {
         return Napi::Number::New(env, pData);
     }
@@ -521,7 +516,6 @@ Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
 
     int pData = info[1].ToNumber().Int32Value();
     int ret = snap7Server->SetParam(info[0].ToNumber().Int32Value(), &pData);
-    lastError = ret;
 
     if (ret == 0) {
         return env.Undefined();
@@ -573,7 +567,6 @@ Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
     memcpy(data, pBuffer, size);
 
     int ret = snap7Server->RegisterArea(area, index, data, size);
-    lastError = ret;
 
     if (ret == 0) {
         area2buffer[area][index].pBuffer = data;
@@ -614,7 +607,6 @@ Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
     }
 
     int ret = snap7Server->UnregisterArea(area, index);
-    lastError = ret;
 
     if (ret == 0) {
         delete[] area2buffer[area][index].pBuffer;
@@ -666,7 +658,6 @@ Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
     }
 
     int ret = snap7Server->LockArea(area, index);
-    lastError = ret;
     if (ret != 0) {
         MakeError(env, "SetArea failed", ret).ThrowAsJavaScriptException();
         return env.Undefined();
@@ -675,7 +666,6 @@ Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
     memcpy(area2buffer[area][index].pBuffer, pBuffer, area2buffer[area][index].size);
 
     ret = snap7Server->UnlockArea(area, index);
-    lastError = ret;
 
     if (ret == 0) {
         return env.Undefined();
@@ -711,7 +701,6 @@ Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
     }
 
     int ret = snap7Server->LockArea(area, index);
-    lastError = ret;
     if (ret != 0) {
         MakeError(env, "GetArea failed", ret).ThrowAsJavaScriptException();
         return env.Undefined();
@@ -723,7 +712,6 @@ Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
                                       area2buffer[area][index].size);
 
     ret = snap7Server->UnlockArea(area, index);
-    lastError = ret;
 
     if (ret == 0) {
         return buffer;
@@ -749,7 +737,6 @@ Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
     }
 
     int ret = snap7Server->LockArea(area, index);
-    lastError = ret;
 
     if (ret != 0) {
         MakeError(env, "LockArea failed", ret).ThrowAsJavaScriptException();
@@ -773,7 +760,6 @@ Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
     }
 
     int ret = snap7Server->UnlockArea(area, index);
-    lastError = ret;
 
     if (ret != 0) {
         MakeError(env, "UnlockArea failed", ret).ThrowAsJavaScriptException();
@@ -786,10 +772,8 @@ Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
 
     int ret = snap7Server->ServerStatus();
     if ((ret == 0) || (ret == 1) || (ret == 2)) {
-        lastError = 0;
         return Napi::Number::New(env, ret);
     } else {
-        lastError = ret;
         MakeError(env, "ServerStatus failed", ret).ThrowAsJavaScriptException();
         return env.Undefined();
     }
@@ -807,10 +791,8 @@ Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
 
     int ret = snap7Server->GetCpuStatus();
     if ((ret == S7CpuStatusUnknown) || (ret == S7CpuStatusStop) || (ret == S7CpuStatusRun)) {
-        lastError = 0;
         return Napi::Number::New(env, ret);
     } else {
-        lastError = ret;
         MakeError(env, "GetCpuStatus failed", ret).ThrowAsJavaScriptException();
         return env.Undefined();
     }
@@ -823,7 +805,6 @@ Napi::Value S7Server::SetCpuStatus(const Napi::CallbackInfo& info) {
     REQUIRE_ARG(env, info, 0, IsNumber);
 
     int ret = snap7Server->SetCpuStatus(info[0].ToNumber().Int32Value());
-    lastError = ret;
 
     return Napi::Boolean::New(env, ret == 0);
 }
@@ -873,12 +854,6 @@ Napi::Value S7Server::EventText(const Napi::CallbackInfo& info) {
     SrvEvent.EvtParam4 = event_obj.Get("EvtParam4").ToNumber().Uint32Value();
 
     return Napi::String::New(env, SrvEventText(&SrvEvent).c_str());
-}
-
-Napi::Value S7Server::LastError(const Napi::CallbackInfo& info) {
-    Napi::Env env = info.Env();
-
-    return Napi::Number::New(env, lastError);
 }
 
 } // namespace node_snap7

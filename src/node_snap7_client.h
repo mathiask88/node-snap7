@@ -95,7 +95,6 @@ class S7Client : public Napi::ObjectWrap<S7Client> {
     Napi::Value ClearSessionPassword(const Napi::CallbackInfo& info);
     // Properties
     Napi::Value ExecTime(const Napi::CallbackInfo& info);
-    Napi::Value LastError(const Napi::CallbackInfo& info);
     Napi::Value PDURequested(const Napi::CallbackInfo& info);
     Napi::Value PDULength(const Napi::CallbackInfo& info);
     Napi::Value PlcStatus(const Napi::CallbackInfo& info);

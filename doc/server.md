@@ -31,7 +31,6 @@ Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises;
   - [readWrite](#readwrite)
   - [error](#error)
 - [Diagnostics & status](#diagnostics--status)
-  - [LastError](#lasterror)
   - [EventText](#eventtext)
   - [ErrorText](#errortext)
   - [ServerStatus](#serverstatus)
@@ -224,13 +223,6 @@ Emitted when the server encounters an error.
 ---
 
 ## Diagnostics & status
-
-### LastError
-```
-LastError(): number
-```
-Return the last Snap7 error code.
-- Returns: error code
 
 ### EventText
 ```

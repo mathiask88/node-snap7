@@ -204,7 +204,6 @@ declare module 'node-snap7' {
 
     // Properties and Info
     ExecTime(): number;
-    LastError(): number;
     PDURequested(): number;
     PDULength(): number;
     Connected(): boolean;
@@ -573,7 +572,6 @@ declare module 'node-snap7' {
     SetEventsMask(mask: number): void;
 
     // Miscellaneous Methods
-    LastError(): number;
     EventText(evt: SrvEvent): string;
     ErrorText(errNum: number): string;
     ServerStatus(): number;

@@ -923,9 +923,6 @@ test('GetPgBlockInfo', () => {
 test('ExecTime', () => {
   assert.ok(typeof client.ExecTime() === 'number' || typeof client.ExecTime() === 'boolean');
 });
-test('LastError', () => {
-  assert.ok(typeof client.LastError() === 'number' || typeof client.LastError() === 'boolean');
-});
 test('PDURequested', () => {
   assert.ok(typeof client.PDURequested() === 'number' || typeof client.PDURequested() === 'boolean');
 });

@@ -68,7 +68,6 @@ Napi::Object S7Client::Init(Napi::Env env, Napi::Object exports) {
 
          // Properties
          InstanceMethod("ExecTime", &S7Client::ExecTime),
-         InstanceMethod("LastError", &S7Client::LastError),
          InstanceMethod("PDURequested", &S7Client::PDURequested),
          InstanceMethod("PDULength", &S7Client::PDULength),
          InstanceMethod("_PlcStatus", &S7Client::PlcStatus),
@@ -1799,18 +1798,6 @@ Napi::Value S7Client::ExecTime(const Napi::CallbackInfo& info) {
     int ret = snap7Client->ExecTime();
     if (ret == errLibInvalidObject) {
         MakeError(env, "ExecTime failed", errLibInvalidObject).ThrowAsJavaScriptException();
-        return env.Undefined();
-    } else {
-        return Napi::Number::New(env, ret);
-    }
-}
-
-Napi::Value S7Client::LastError(const Napi::CallbackInfo& info) {
-    Napi::Env env = info.Env();
-
-    int ret = snap7Client->LastError();
-    if (ret == errLibInvalidObject) {
-        MakeError(env, "LastError failed", errLibInvalidObject).ThrowAsJavaScriptException();
         return env.Undefined();
     } else {
         return Napi::Number::New(env, ret);
