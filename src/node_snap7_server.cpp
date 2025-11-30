@@ -392,6 +392,7 @@ Napi::Error S7Server::MakeError(Napi::Env env, const std::string& context, int c
         msg << ": " << text;
     }
     Napi::Error err = Napi::Error::New(env, msg.str());
+    err.Set("name", Napi::String::New(env, "Snap7Error"));
     err.Set("code", Napi::String::New(env, "SNAP7_SERVER_CODE_" + std::to_string(code)));
     err.Set("errno", Napi::Number::New(env, code));
     return err;
