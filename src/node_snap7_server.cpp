@@ -433,7 +433,8 @@ void IOWorkerServer::OnOK() {
         return;
     }
 
-    m_deferred.Reject(Napi::Number::New(Env(), returnValue));
+    Napi::Error err = S7Server::MakeError(Env(), "Snap7 server operation failed", returnValue);
+    m_deferred.Reject(err.Value());
 }
 
 Napi::Value S7Server::Start(const Napi::CallbackInfo& info) {
@@ -750,7 +751,10 @@ Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
     int ret = snap7Server->LockArea(area, index);
     lastError = ret;
 
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret != 0) {
+        MakeError(env, "LockArea failed", ret).ThrowAsJavaScriptException();
+    }
+    return env.Undefined();
 }
 
 Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
@@ -771,7 +775,10 @@ Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
     int ret = snap7Server->UnlockArea(area, index);
     lastError = ret;
 
-    return Napi::Boolean::New(env, ret == 0);
+    if (ret != 0) {
+        MakeError(env, "UnlockArea failed", ret).ThrowAsJavaScriptException();
+    }
+    return env.Undefined();
 }
 
 Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
@@ -783,7 +790,8 @@ Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
         return Napi::Number::New(env, ret);
     } else {
         lastError = ret;
-        return Napi::Boolean::New(env, false);
+        MakeError(env, "ServerStatus failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
     }
 }
 
@@ -803,7 +811,8 @@ Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
         return Napi::Number::New(env, ret);
     } else {
         lastError = ret;
-        return Napi::Boolean::New(env, false);
+        MakeError(env, "GetCpuStatus failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
     }
 }
 

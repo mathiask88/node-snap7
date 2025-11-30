@@ -200,9 +200,7 @@ declare module 'node-snap7' {
     GetAgBlockInfo(blockType: BlockType, blockNumber: number, callback: (err: Snap7Error | null, data: BlockInfo) => void): void;
     GetAgBlockInfoSync(blockType: BlockType, blockNumber: number): BlockInfo;
 
-    GetPgBlockInfo(buffer: Buffer): Promise<BlockInfo>;
-    GetPgBlockInfo(buffer: Buffer, callback: (err: Snap7Error | null, data: BlockInfo) => void): void;
-    GetPgBlockInfoSync(buffer: Buffer): BlockInfo;
+    GetPgBlockInfo(buffer: Buffer): BlockInfo;
 
     // Properties and Info
     ExecTime(): number;
@@ -563,12 +561,12 @@ declare module 'node-snap7' {
     SetResourceless(value: boolean): void;
 
     // Memory Methods
-    RegisterArea(areaCode: number, index: number, buffer: Buffer): boolean;
-    UnregisterArea(areaCode: number, index: number): boolean;
+    RegisterArea(areaCode: number, index: number, buffer: Buffer): void;
+    UnregisterArea(areaCode: number, index: number): void;
     GetArea(areaCode: number, index: number): Buffer;
-    SetArea(areaCode: number, index: number, buffer: Buffer): boolean;
-    LockArea(areaCode: number, index: number): boolean;
-    UnlockArea(areaCode: number, index: number): boolean;
+    SetArea(areaCode: number, index: number, buffer: Buffer): void;
+    LockArea(areaCode: number, index: number): void;
+    UnlockArea(areaCode: number, index: number): void;
 
     // Event Methods
     GetEventsMask(): number;
@@ -584,11 +582,10 @@ declare module 'node-snap7' {
     SetCpuStatus(status: number): boolean;
 
     // EventEmitter overloads
-    on(event: 'event', listener: (type: string, evt: SrvEvent) => void): this;
+    on(event: 'event', listener: (evt: SrvEvent) => void): this;
     on(
       event: 'readWrite',
       listener: (
-        type: string,
         sender: string,
         operation: number,
         tag: S7Tag,

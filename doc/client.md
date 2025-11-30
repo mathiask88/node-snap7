@@ -1,6 +1,6 @@
 ﻿# S7Client API
 
-High-level access to Siemens S7 PLCs via Snap7. All methods support Promise and callback forms; most also provide a `Sync` variant.
+High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and callback forms plus a `Sync` variant.
 
 - Promise form: resolves with the value below; rejects with `Snap7Error` (`code`, `errno`).
 - Callback form: pass `(err, result)` as the last argument; function returns `void`.
@@ -271,14 +271,12 @@ Get metadata for a block on the PLC.
 
 ### GetPgBlockInfo
 ```
-GetPgBlockInfo(buffer: Buffer): Promise<BlockInfo>
-GetPgBlockInfo(buffer: Buffer, callback: (err: Snap7Error | null, data: BlockInfo) => void): void
-GetPgBlockInfoSync(buffer: Buffer): BlockInfo
+GetPgBlockInfo(buffer: Buffer): BlockInfo
 ```
 Get metadata for a block stored in a buffer.
 - Parameters:
   - `buffer`: block buffer
-- Returns: Promise resolves with `BlockInfo`; callback receives `(err, info)`; Sync returns `BlockInfo` (throws on error)
+- Returns: `BlockInfo` (throws on error)
 
 ---
 

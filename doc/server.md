@@ -60,7 +60,7 @@ Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises;
 - `Start()` binds to the last IP set by `StartTo()` or `0.0.0.0` if none was set; `StartTo(ip)` binds explicitly.
 - `SetResourceless(true)` enables the `readWrite` hook; the worker waits for your callback to continue.
 - `RegisterArea`/`SetArea` expose buffers as PLC areas. For DB areas, `index` is the DB number; otherwise `index` is ignored.
-- Boolean returns indicate success (`true`) or failure (`false`); check `LastError()`/exceptions for details.
+- Sync methods throw on error; otherwise they return `void` or the documented value.
 
 ---
 
@@ -139,24 +139,24 @@ Set the events mask.
 
 ### RegisterArea
 ```
-RegisterArea(areaCode: number, index: number, buffer: Buffer): boolean
+RegisterArea(areaCode: number, index: number, buffer: Buffer): void
 ```
 Expose a buffer as a PLC area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
   - `buffer`: data buffer
-- Returns: `true` on success, otherwise `false`
+- Returns: `void`; throws `Snap7Error` on failure
 
 ### UnregisterArea
 ```
-UnregisterArea(areaCode: number, index: number): boolean
+UnregisterArea(areaCode: number, index: number): void
 ```
 Remove a previously registered area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `true` on success, otherwise `false`
+- Returns: `void`; throws `Snap7Error` on failure
 
 ### GetArea
 ```
@@ -170,34 +170,34 @@ Get the buffer for a registered area.
 
 ### SetArea
 ```
-SetArea(areaCode: number, index: number, buffer: Buffer): boolean
+SetArea(areaCode: number, index: number, buffer: Buffer): void
 ```
 Replace the buffer for a registered area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
   - `buffer`: new data buffer
-- Returns: `true` on success, otherwise `false`
+- Returns: `void`; throws `Snap7Error` on failure
 
 ### LockArea
 ```
-LockArea(areaCode: number, index: number): boolean
+LockArea(areaCode: number, index: number): void
 ```
 Lock a registered area; worker threads block until unlocked.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `true` on success, otherwise `false`
+- Returns: `void`; throws `Snap7Error` on failure
 
 ### UnlockArea
 ```
-UnlockArea(areaCode: number, index: number): boolean
+UnlockArea(areaCode: number, index: number): void
 ```
 Unlock a locked area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `true` on success, otherwise `false`
+- Returns: `void`; throws `Snap7Error` on failure
 
 ---
 
