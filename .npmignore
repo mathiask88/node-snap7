@@ -1,5 +1,7 @@
+.github/
+.vscode/
 test/
-.travis.yml
-appveyor.yml
-.npmignore
+build/
+.clang-format
 .gitignore
+.npmignore
