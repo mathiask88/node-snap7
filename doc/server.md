@@ -3,8 +3,8 @@
 Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises; most other calls are synchronous and throw `Snap7Error` on invalid arguments or runtime failures.
 
 - Promise form: resolves on success, rejects with `Snap7Error` (contains `code`, `errno`).
-- Callback form: `(err, result)` when provided; function returns `void`.
-- Sync form: returns value or throws `Snap7Error`.
+- Callback form: `(err, result)` when provided; function returns `undefined`.
+- Sync form: returns value or `undefined`, or throws `Snap7Error`.
 
 ---
 
@@ -59,7 +59,7 @@ Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises;
 - `Start()` binds to the last IP set by `StartTo()` or `0.0.0.0` if none was set; `StartTo(ip)` binds explicitly.
 - `SetResourceless(true)` enables the `readWrite` hook; the worker waits for your callback to continue.
 - `RegisterArea`/`SetArea` expose buffers as PLC areas. For DB areas, `index` is the DB number; otherwise `index` is ignored.
-- Sync methods throw on error; otherwise they return `void` or the documented value.
+- Sync methods throw on error; otherwise they return `undefined` or the documented value.
 
 ---
 
@@ -67,26 +67,26 @@ Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises;
 
 ### Start
 ```
-Start(): Promise<void>
+Start(): Promise<undefined>
 ```
 Start the server using the current bind address.
-- Returns: resolves with `void`, rejects with `Snap7Error`
+- Returns: resolves with `undefined`, rejects with `Snap7Error`
 
 ### StartTo
 ```
-StartTo(ip: string): Promise<void>
+StartTo(ip: string): Promise<undefined>
 ```
 Start the server and bind to a specific IP address.
 - Parameters:
   - `ip`: IPv4 address to bind
-- Returns: resolves with `void`, rejects with `Snap7Error`
+- Returns: resolves with `undefined`, rejects with `Snap7Error`
 
 ### Stop
 ```
-Stop(): Promise<void>
+Stop(): Promise<undefined>
 ```
 Stop the server and disconnect clients.
-- Returns: resolves with `void`, rejects with `Snap7Error`
+- Returns: resolves with `undefined`, rejects with `Snap7Error`
 
 ### GetParam
 ```
@@ -99,22 +99,22 @@ Read a server parameter.
 
 ### SetParam
 ```
-SetParam(paramNumber: number, value: number): void
+SetParam(paramNumber: number, value: number): undefined
 ```
 Write a server parameter.
 - Parameters:
   - `paramNumber`: see [Server parameters](#server-parameters)
   - `value`: new value
-- Returns: `void`
+- Returns: `undefined`
 
 ### SetResourceless
 ```
-SetResourceless(value: boolean): void
+SetResourceless(value: boolean): undefined
 ```
 Enable/disable resourceless mode (required for `readWrite` events).
 - Parameters:
   - `value`: `true` to enable, `false` to disable
-- Returns: `void`
+- Returns: `undefined`
 
 ### GetEventsMask
 ```
@@ -125,12 +125,12 @@ Read the current events mask.
 
 ### SetEventsMask
 ```
-SetEventsMask(mask: number): void
+SetEventsMask(mask: number): undefined
 ```
 Set the events mask.
 - Parameters:
   - `mask`: bitmask (see [Event codes](#event-codes) or [Event masks](#event-masks))
-- Returns: `void`
+- Returns: `undefined`
 
 ---
 
@@ -138,24 +138,24 @@ Set the events mask.
 
 ### RegisterArea
 ```
-RegisterArea(areaCode: number, index: number, buffer: Buffer): void
+RegisterArea(areaCode: number, index: number, buffer: Buffer): undefined
 ```
 Expose a buffer as a PLC area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
   - `buffer`: data buffer
-- Returns: `void`; throws `Snap7Error` on failure
+- Returns: `undefined`; throws `Snap7Error` on failure
 
 ### UnregisterArea
 ```
-UnregisterArea(areaCode: number, index: number): void
+UnregisterArea(areaCode: number, index: number): undefined
 ```
 Remove a previously registered area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `void`; throws `Snap7Error` on failure
+- Returns: `undefined`; throws `Snap7Error` on failure
 
 ### GetArea
 ```
@@ -169,34 +169,34 @@ Get the buffer for a registered area.
 
 ### SetArea
 ```
-SetArea(areaCode: number, index: number, buffer: Buffer): void
+SetArea(areaCode: number, index: number, buffer: Buffer): undefined
 ```
 Replace the buffer for a registered area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
   - `buffer`: new data buffer
-- Returns: `void`; throws `Snap7Error` on failure
+- Returns: `undefined`; throws `Snap7Error` on failure
 
 ### LockArea
 ```
-LockArea(areaCode: number, index: number): void
+LockArea(areaCode: number, index: number): undefined
 ```
 Lock a registered area; worker threads block until unlocked.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `void`; throws `Snap7Error` on failure
+- Returns: `undefined`; throws `Snap7Error` on failure
 
 ### UnlockArea
 ```
-UnlockArea(areaCode: number, index: number): void
+UnlockArea(areaCode: number, index: number): undefined
 ```
 Unlock a locked area.
 - Parameters:
   - `areaCode`: see [Areas](#areas)
   - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
-- Returns: `void`; throws `Snap7Error` on failure
+- Returns: `undefined`; throws `Snap7Error` on failure
 
 ---
 
@@ -204,19 +204,19 @@ Unlock a locked area.
 
 ### event
 ```
-'on("event", (evt: SrvEvent) => void)
+'on("event", (evt: SrvEvent) => undefined)
 ```
 Emitted for server lifecycle/protocol events.
 
 ### readWrite
 ```
-'on("readWrite", (sender: string, operation: number, tag: S7Tag, buffer: Buffer, callback: (buf?: Buffer) => void) => void)
+'on("readWrite", (sender: string, operation: number, tag: S7Tag, buffer: Buffer, callback: (buf?: Buffer) => undefined) => undefined)
 ```
 Emitted on every data read/write when resourceless mode is enabled. The worker waits until `callback` is invoked; for read operations supply the response buffer.
 
 ### error
 ```
-'on("error", (err: Snap7Error) => void)
+'on("error", (err: Snap7Error) => undefined)
 ```
 Emitted when the server encounters an error.
 

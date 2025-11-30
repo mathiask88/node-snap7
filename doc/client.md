@@ -3,8 +3,8 @@
 High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and callback forms plus a `Sync` variant.
 
 - Promise form: resolves with the value below; rejects with `Snap7Error` (`code`, `errno`).
-- Callback form: pass `(err, result)` as the last argument; function returns `void`.
-- Sync form: `*Sync` variant returns the value or throws `Snap7Error`.
+- Callback form: pass `(err, result)` as the last argument; function returns `undefined`.
+- Sync form: `*Sync` variant returns the value or `undefined`, or throws `Snap7Error`.
 
 ---
 
@@ -101,52 +101,52 @@ High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and
 
 ### Connect
 ```
-Connect(): Promise<void>
-Connect(callback: (err: Snap7Error | null) => void): void
-ConnectSync(): void
+Connect(): Promise<undefined>
+Connect(callback: (err: Snap7Error | null) => undefined): undefined
+ConnectSync(): undefined
 ```
 Connect using the parameters set via `ConnectTo` or `SetConnectionParams`.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### ConnectTo
 ```
-ConnectTo(ip: string, rack: number, slot: number): Promise<void>
-ConnectTo(ip: string, rack: number, slot: number, callback: (err: Snap7Error | null) => void): void
-ConnectToSync(ip: string, rack: number, slot: number): void
+ConnectTo(ip: string, rack: number, slot: number): Promise<undefined>
+ConnectTo(ip: string, rack: number, slot: number, callback: (err: Snap7Error | null) => undefined): undefined
+ConnectToSync(ip: string, rack: number, slot: number): undefined
 ```
 Connect directly to the given IP, rack, and slot.
 - Parameters:
   - `ip`: PLC IPv4 address
   - `rack`: rack number
   - `slot`: slot number
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### SetConnectionParams
 ```
-SetConnectionParams(ip: string, localTSAP: number, remoteTSAP: number): void
+SetConnectionParams(ip: string, localTSAP: number, remoteTSAP: number): undefined
 ```
 Set ISO-on-TCP parameters prior to connecting.
 - Parameters:
   - `ip`: PLC IPv4 address
   - `localTSAP`: local TSAP
   - `remoteTSAP`: remote TSAP
-- Returns: `void`
+- Returns: `undefined`
 
 ### SetConnectionType
 ```
-SetConnectionType(type: number): void
+SetConnectionType(type: number): undefined
 ```
 Set the connection resource type.
 - Parameters:
   - `type`: see [Connection types](#connection-types)
-- Returns: `void`
+- Returns: `undefined`
 
 ### Disconnect
 ```
-Disconnect(): void
+Disconnect(): undefined
 ```
 Close the connection.
-- Returns: `void`
+- Returns: `undefined`
 
 ### GetParam
 ```
@@ -159,13 +159,13 @@ Read a client parameter.
 
 ### SetParam
 ```
-SetParam(paramNumber: number, value: number): void
+SetParam(paramNumber: number, value: number): undefined
 ```
 Write a client parameter.
 - Parameters:
   - `paramNumber`: see [Client parameters](#client-parameters)
   - `value`: new value
-- Returns: `void`
+- Returns: `undefined`
 
 ---
 
@@ -174,7 +174,7 @@ Write a client parameter.
 ### ReadArea
 ```
 ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen): Promise<Buffer>
-ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, callback: (err: Snap7Error | null, data: Buffer) => void): void
+ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
 ReadAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen): Buffer
 ```
 Read raw data from the PLC.
@@ -188,9 +188,9 @@ Read raw data from the PLC.
 
 ### WriteArea
 ```
-WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): Promise<void>
-WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer, callback: (err: Snap7Error | null) => void): void
-WriteAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): void
+WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): Promise<undefined>
+WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
+WriteAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): undefined
 ```
 Write raw data to the PLC.
 - Parameters:
@@ -200,10 +200,10 @@ Write raw data to the PLC.
   - `amount`: element count in units of `wordLen`
   - `wordLen`: element type/size
   - `buffer`: data to write
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### Convenience read/write wrappers
-Each wrapper supports Promise/Callback/Sync variants like `Foo(...) -> Promise<...>`, `Foo(..., callback) -> void`, `FooSync(...) -> ...`.
+Each wrapper supports Promise/Callback/Sync variants like `Foo(...) -> Promise<...>`, `Foo(..., callback) -> undefined`, `FooSync(...) -> ...`.
 - DB: `DBRead`, `DBWrite`
 - Merker: `MBRead`, `MBWrite`
 - Inputs: `EBRead`, `EBWrite`
@@ -214,7 +214,7 @@ Each wrapper supports Promise/Callback/Sync variants like `Foo(...) -> Promise<.
 ### ReadMultiVars
 ```
 ReadMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[]): Promise<S7MultiVarReadResult[]>
-ReadMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[], callback: (err: Snap7Error | null, data: S7MultiVarReadResult[]) => void): void
+ReadMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[], callback: (err: Snap7Error | null, data: S7MultiVarReadResult[]) => undefined): undefined
 ReadMultiVarsSync(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[]): S7MultiVarReadResult[]
 ```
 Read multiple addresses in one request.
@@ -225,7 +225,7 @@ Read multiple addresses in one request.
 ### WriteMultiVars
 ```
 WriteMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): Promise<S7MultiVarWriteResult[]>
-WriteMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[], callback: (err: Snap7Error | null, data: S7MultiVarWriteResult[]) => void): void
+WriteMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[], callback: (err: Snap7Error | null, data: S7MultiVarWriteResult[]) => undefined): undefined
 WriteMultiVarsSync(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): S7MultiVarWriteResult[]
 ```
 Write multiple addresses in one request.
@@ -240,7 +240,7 @@ Write multiple addresses in one request.
 ### ListBlocks
 ```
 ListBlocks(): Promise<BlocksList>
-ListBlocks(callback: (err: Snap7Error | null, data: BlocksList) => void): void
+ListBlocks(callback: (err: Snap7Error | null, data: BlocksList) => undefined): undefined
 ListBlocksSync(): BlocksList
 ```
 Get a count of blocks on the PLC.
@@ -249,7 +249,7 @@ Get a count of blocks on the PLC.
 ### ListBlocksOfType
 ```
 ListBlocksOfType(blockType: BlockType): Promise<number[]>
-ListBlocksOfType(blockType: BlockType, callback: (err: Snap7Error | null, data: number[]) => void): void
+ListBlocksOfType(blockType: BlockType, callback: (err: Snap7Error | null, data: number[]) => undefined): undefined
 ListBlocksOfTypeSync(blockType: BlockType): number[]
 ```
 List block numbers of a specific type.
@@ -260,7 +260,7 @@ List block numbers of a specific type.
 ### GetAgBlockInfo
 ```
 GetAgBlockInfo(blockType: BlockType, blockNum: number): Promise<BlockInfo>
-GetAgBlockInfo(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null, data: BlockInfo) => void): void
+GetAgBlockInfo(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null, data: BlockInfo) => undefined): undefined
 GetAgBlockInfoSync(blockType: BlockType, blockNum: number): BlockInfo
 ```
 Get metadata for a block on the PLC.
@@ -285,7 +285,7 @@ Get metadata for a block stored in a buffer.
 ### FullUpload
 ```
 FullUpload(blockType: BlockType, blockNum: number, size: number): Promise<Buffer>
-FullUpload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => void): void
+FullUpload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
 FullUploadSync(blockType: BlockType, blockNum: number, size: number): Buffer
 ```
 Download an entire block including headers.
@@ -298,7 +298,7 @@ Download an entire block including headers.
 ### Upload
 ```
 Upload(blockType: BlockType, blockNum: number, size: number): Promise<Buffer>
-Upload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => void): void
+Upload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
 UploadSync(blockType: BlockType, blockNum: number, size: number): Buffer
 ```
 Download the MC7 code portion of a block.
@@ -310,32 +310,32 @@ Download the MC7 code portion of a block.
 
 ### Download
 ```
-Download(blockNum: number, buffer: Buffer): Promise<void>
-Download(blockNum: number, buffer: Buffer, callback: (err: Snap7Error | null) => void): void
-DownloadSync(blockNum: number, buffer: Buffer): void
+Download(blockNum: number, buffer: Buffer): Promise<undefined>
+Download(blockNum: number, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
+DownloadSync(blockNum: number, buffer: Buffer): undefined
 ```
 Upload a compiled block buffer to the PLC.
 - Parameters:
   - `blockNum`: block number
   - `buffer`: compiled block data
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### Delete
 ```
-Delete(blockType: BlockType, blockNum: number): Promise<void>
-Delete(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null) => void): void
-DeleteSync(blockType: BlockType, blockNum: number): void
+Delete(blockType: BlockType, blockNum: number): Promise<undefined>
+Delete(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null) => undefined): undefined
+DeleteSync(blockType: BlockType, blockNum: number): undefined
 ```
 Delete a block on the PLC.
 - Parameters:
   - `blockType`: block type code
   - `blockNum`: block number
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### DBGet
 ```
 DBGet(dbNumber: number): Promise<Buffer>
-DBGet(dbNumber: number, callback: (err: Snap7Error | null, data: Buffer) => void): void
+DBGet(dbNumber: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
 DBGetSync(dbNumber: number): Buffer
 ```
 Fetch the raw content of a DB.
@@ -345,15 +345,15 @@ Fetch the raw content of a DB.
 
 ### DBFill
 ```
-DBFill(dbNumber: number, fillChar: number | string): Promise<void>
-DBFill(dbNumber: number, fillChar: number | string, callback: (err: Snap7Error | null) => void): void
-DBFillSync(dbNumber: number, fillChar: number | string): void
+DBFill(dbNumber: number, fillChar: number | string): Promise<undefined>
+DBFill(dbNumber: number, fillChar: number | string, callback: (err: Snap7Error | null) => undefined): undefined
+DBFillSync(dbNumber: number, fillChar: number | string): undefined
 ```
 Fill an entire DB with a byte or character.
 - Parameters:
   - `dbNumber`: DB number
   - `fillChar`: fill byte or single-character string
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ---
 
@@ -362,7 +362,7 @@ Fill an entire DB with a byte or character.
 ### GetPlcDateTime
 ```
 GetPlcDateTime(): Promise<Date>
-GetPlcDateTime(callback: (err: Snap7Error | null, data: Date) => void): void
+GetPlcDateTime(callback: (err: Snap7Error | null, data: Date) => undefined): undefined
 GetPlcDateTimeSync(): Date
 ```
 Read the PLC system clock.
@@ -370,23 +370,23 @@ Read the PLC system clock.
 
 ### SetPlcDateTime
 ```
-SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject)): Promise<void>
-SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject), callback: (err: Snap7Error | null) => void): void
-SetPlcDateTimeSync(dateTime: Date | [DateTimeObject](#datetimeobject)): void
+SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject)): Promise<undefined>
+SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject), callback: (err: Snap7Error | null) => undefined): undefined
+SetPlcDateTimeSync(dateTime: Date | [DateTimeObject](#datetimeobject)): undefined
 ```
 Set the PLC system clock.
 - Parameters:
   - `dateTime`: desired time (Date or [DateTimeObject](#datetimeobject))
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### SetPlcSystemDateTime
 ```
-SetPlcSystemDateTime(): Promise<void>
-SetPlcSystemDateTime(callback: (err: Snap7Error | null) => void): void
-SetPlcSystemDateTimeSync(): void
+SetPlcSystemDateTime(): Promise<undefined>
+SetPlcSystemDateTime(callback: (err: Snap7Error | null) => undefined): undefined
+SetPlcSystemDateTimeSync(): undefined
 ```
 Set the PLC system clock to the host time.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ---
 
@@ -395,7 +395,7 @@ Set the PLC system clock to the host time.
 ### ReadSZL
 ```
 ReadSZL(id: number, index: number): Promise<Buffer>
-ReadSZL(id: number, index: number, callback: (err: Snap7Error | null, data: Buffer) => void): void
+ReadSZL(id: number, index: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
 ReadSZLSync(id: number, index: number): Buffer
 ```
 Read a System-Zustands-Listen (SZL) record.
@@ -407,7 +407,7 @@ Read a System-Zustands-Listen (SZL) record.
 ### ReadSZLList
 ```
 ReadSZLList(): Promise<number[]>
-ReadSZLList(callback: (err: Snap7Error | null, data: number[]) => void): void
+ReadSZLList(callback: (err: Snap7Error | null, data: number[]) => undefined): undefined
 ReadSZLListSync(): number[]
 ```
 List available SZL IDs.
@@ -416,7 +416,7 @@ List available SZL IDs.
 ### GetOrderCode
 ```
 GetOrderCode(): Promise<OrderCode>
-GetOrderCode(callback: (err: Snap7Error | null, data: OrderCode) => void): void
+GetOrderCode(callback: (err: Snap7Error | null, data: OrderCode) => undefined): undefined
 GetOrderCodeSync(): OrderCode
 ```
 Retrieve the PLC order code.
@@ -425,7 +425,7 @@ Retrieve the PLC order code.
 ### GetCpuInfo
 ```
 GetCpuInfo(): Promise<CpuInfo>
-GetCpuInfo(callback: (err: Snap7Error | null, data: CpuInfo) => void): void
+GetCpuInfo(callback: (err: Snap7Error | null, data: CpuInfo) => undefined): undefined
 GetCpuInfoSync(): CpuInfo
 ```
 Get CPU identification data.
@@ -434,7 +434,7 @@ Get CPU identification data.
 ### GetCpInfo
 ```
 GetCpInfo(): Promise<CpInfo>
-GetCpInfo(callback: (err: Snap7Error | null, data: CpInfo) => void): void
+GetCpInfo(callback: (err: Snap7Error | null, data: CpInfo) => undefined): undefined
 GetCpInfoSync(): CpInfo
 ```
 Get communication processor information.
@@ -446,57 +446,57 @@ Get communication processor information.
 
 ### PlcHotStart
 ```
-PlcHotStart(): Promise<void>
-PlcHotStart(callback: (err: Snap7Error | null) => void): void
-PlcHotStartSync(): void
+PlcHotStart(): Promise<undefined>
+PlcHotStart(callback: (err: Snap7Error | null) => undefined): undefined
+PlcHotStartSync(): undefined
 ```
 Warm-start the PLC.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### PlcColdStart
 ```
-PlcColdStart(): Promise<void>
-PlcColdStart(callback: (err: Snap7Error | null) => void): void
-PlcColdStartSync(): void
+PlcColdStart(): Promise<undefined>
+PlcColdStart(callback: (err: Snap7Error | null) => undefined): undefined
+PlcColdStartSync(): undefined
 ```
 Cold-start the PLC.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### PlcStop
 ```
-PlcStop(): Promise<void>
-PlcStop(callback: (err: Snap7Error | null) => void): void
-PlcStopSync(): void
+PlcStop(): Promise<undefined>
+PlcStop(callback: (err: Snap7Error | null) => undefined): undefined
+PlcStopSync(): undefined
 ```
 Stop the PLC CPU.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### CopyRamToRom
 ```
-CopyRamToRom(timeout: number): Promise<void>
-CopyRamToRom(timeout: number, callback: (err: Snap7Error | null) => void): void
-CopyRamToRomSync(timeout: number): void
+CopyRamToRom(timeout: number): Promise<undefined>
+CopyRamToRom(timeout: number, callback: (err: Snap7Error | null) => undefined): undefined
+CopyRamToRomSync(timeout: number): undefined
 ```
 Copy RAM to ROM on the PLC.
 - Parameters:
   - `timeout`: timeout in milliseconds
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### Compress
 ```
-Compress(timeout: number): Promise<void>
-Compress(timeout: number, callback: (err: Snap7Error | null) => void): void
-CompressSync(timeout: number): void
+Compress(timeout: number): Promise<undefined>
+Compress(timeout: number, callback: (err: Snap7Error | null) => undefined): undefined
+CompressSync(timeout: number): undefined
 ```
 Compress PLC memory.
 - Parameters:
   - `timeout`: timeout in milliseconds
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### PlcStatus
 ```
 PlcStatus(): Promise<PlcStatus>
-PlcStatus(callback: (err: Snap7Error | null, data: PlcStatus) => void): void
+PlcStatus(callback: (err: Snap7Error | null, data: PlcStatus) => undefined): undefined
 PlcStatusSync(): PlcStatus
 ```
 Read the current CPU status.
@@ -508,28 +508,28 @@ Read the current CPU status.
 
 ### SetSessionPassword
 ```
-SetSessionPassword(password: string): Promise<void>
-SetSessionPassword(password: string, callback: (err: Snap7Error | null) => void): void
-SetSessionPasswordSync(password: string): void
+SetSessionPassword(password: string): Promise<undefined>
+SetSessionPassword(password: string, callback: (err: Snap7Error | null) => undefined): undefined
+SetSessionPasswordSync(password: string): undefined
 ```
 Set a session password for the current connection.
 - Parameters:
   - `password`: session password
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### ClearSessionPassword
 ```
-ClearSessionPassword(): Promise<void>
-ClearSessionPassword(callback: (err: Snap7Error | null) => void): void
-ClearSessionPasswordSync(): void
+ClearSessionPassword(): Promise<undefined>
+ClearSessionPassword(callback: (err: Snap7Error | null) => undefined): undefined
+ClearSessionPasswordSync(): undefined
 ```
 Clear the active session password.
-- Returns: Promise resolves with `void`; callback receives `(err)`; Sync returns `void` (throws on error)
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
 ### GetProtection
 ```
 GetProtection(): Promise<Protection>
-GetProtection(callback: (err: Snap7Error | null, data: Protection) => void): void
+GetProtection(callback: (err: Snap7Error | null, data: Protection) => undefined): undefined
 GetProtectionSync(): Protection
 ```
 Read the PLC protection levels.
