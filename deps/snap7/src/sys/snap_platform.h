@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.4.1 |
+|  PROJECT SNAP7                                                         1.4.3 |
 |==============================================================================|
-|  Copyright (C) 2013, 2015 Davide Nardella                                    |
+|  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -73,29 +73,7 @@
 # error platform still unsupported (please add it yourself and report ;-)
 #endif
 
-// Visual C++ not C99 compliant (VS2008--)
-#ifdef _MSC_VER
-# if _MSC_VER >= 1600
-#  include <stdint.h>  // VS2010++ have it 
-# else
-   typedef signed __int8     int8_t;
-   typedef signed __int16    int16_t;
-   typedef signed __int32    int32_t;
-   typedef signed __int64    int64_t;
-   typedef unsigned __int8   uint8_t;
-   typedef unsigned __int16  uint16_t;
-   typedef unsigned __int32  uint32_t;
-   typedef unsigned __int64  uint64_t;
-   #ifdef _WIN64
-     typedef unsigned __int64  uintptr_t;
-   #else
-     typedef unsigned __int32  uintptr_t;
-   #endif
-# endif
-#else
-# include <stdint.h>
-#endif
-
+#include <stdint.h>
 #include <time.h>
 #include <cstring>
 #include <stdlib.h>
