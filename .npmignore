@@ -1,6 +1,7 @@
 .github/
 .vscode/
 test/
+scripts/
 build/
 .clang-format
 .gitignore

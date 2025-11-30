@@ -30,6 +30,17 @@ jobs:
 
       - name: Install
         run: npm install
-        
+
       - name: Test
         run: npm test
+
+      # https://github.com/electron/electron/issues/42510#issuecomment-2171583086
+      - name: Disable AppArmor restriction
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Test Electron
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '18'
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npm run test-electron

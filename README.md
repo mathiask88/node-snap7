@@ -127,6 +127,11 @@ s7server.on('readWrite', (sender, operation, tag, buffer, done) => {
 s7server.StartTo('127.0.0.1');
 ```
 
+## Testing
+- Run Node.js tests (Node runtime): `npm test`
+- Run the same suite inside Electron's Node runtime: `npm run test-electron`  
+  On headless CI, wrap with `xvfb-run npm run test-electron`.
+
 ## License & copyright
 Copyright (c) 2025, Mathias Küsel
 
