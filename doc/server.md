@@ -1,326 +1,439 @@
-## S7Server
+# S7Server API
+
+Simulate a PLC and handle requests via Snap7. Lifecycle methods return Promises; most other calls are synchronous and throw `Snap7Error` on invalid arguments or runtime failures.
+
+- Promise form: resolves on success, rejects with `Snap7Error` (contains `code`, `errno`).
+- Callback form: `(err, result)` when provided; function returns `void`.
+- Sync form: returns value or throws `Snap7Error`.
+
+---
+
+## Table of Contents
+- [Usage basics](#usage-basics)
 - [Administrative functions](#administrative-functions)
-  - [Start()](#start)
-  - [StartTo()](#start-to)
-  - [Stop()](#stop)
-  - [GetParam()](#get-param)
-  - [SetParam()](#set-param)
-  - [SetResourceless()](#set-resourceless)
+  - [Start](#start)
+  - [StartTo](#startto)
+  - [Stop](#stop)
+  - [GetParam](#getparam)
+  - [SetParam](#setparam)
+  - [SetResourceless](#setresourceless)
+  - [GetEventsMask](#geteventsmask)
+  - [SetEventsMask](#seteventsmask)
 - [Memory functions](#memory-functions)
-  - [RegisterArea()](#register-area)
-  - [UnregisterArea()](#unregister-area)
-  - [GetArea()](#get-area)
-  - [SetArea()](#set-area)
-  - [LockArea()](#lock-area)
-  - [UnlockArea()](#unlock-area)
-- [Event functions](#event-functions)
-  - [Event 'event'](#event-event)
-  - [Event 'readWrite'](#event-read-write)
-  - [GetEventMask()](#get-event-mask)
-  - [SetEventMask()](#set-event-mask)
-- [Miscellaneous functions](#miscellaneous-functions)
-  - [LastError()](#last-error)
-  - [EventText()](#event-text)
-  - [ErrorText()](#error-text)
-  - [ServerStatus()](#server-status)
-  - [ClientsCount()](#clients-count)
-  - [GetCpuStatus()](#get-cpu-status)
-  - [SetCpuStatus()](#set-cpu-status)
+  - [RegisterArea](#registerarea)
+  - [UnregisterArea](#unregisterarea)
+  - [GetArea](#getarea)
+  - [SetArea](#setarea)
+  - [LockArea](#lockarea)
+  - [UnlockArea](#unlockarea)
+- [Events](#events)
+  - [event](#event)
+  - [readWrite](#readwrite)
+  - [error](#error)
+- [Diagnostics & status](#diagnostics--status)
+  - [LastError](#lasterror)
+  - [EventText](#eventtext)
+  - [ErrorText](#errortext)
+  - [ServerStatus](#serverstatus)
+  - [ClientsCount](#clientscount)
+  - [GetCpuStatus](#getcpustatus)
+  - [SetCpuStatus](#setcpustatus)
+- [Constants](#constants)
+  - [Areas](#areas)
+  - [Operation types](#operation-types)
+  - [Server status codes](#server-status-codes)
+  - [CPU status codes](#cpu-status-codes)
+  - [Server parameters](#server-parameters)
+  - [Event masks](#event-masks)
+  - [Event codes](#event-codes)
+  - [Event subcodes](#event-subcodes)
+  - [Event control codes](#event-control-codes)
+  - [Event results](#event-results)
+  - [Error codes](#error-codes)
+- [Type definitions](#type-definitions)
+  - [SrvEvent](#srvevent)
+  - [S7Tag](#s7tag)
 
-### <a name="administrative-functions"></a>API - Administrative functions
+---
 
-----------
+## Usage basics
+- `Start()` binds to the last IP set by `StartTo()` or `0.0.0.0` if none was set; `StartTo(ip)` binds explicitly.
+- `SetResourceless(true)` enables the `readWrite` hook; the worker waits for your callback to continue.
+- `RegisterArea`/`SetArea` expose buffers as PLC areas. For DB areas, `index` is the DB number; otherwise `index` is ignored.
+- Boolean returns indicate success (`true`) or failure (`false`); check `LastError()`/exceptions for details.
 
-#### <a name="start"></a>S7Server.Start([callback])
-Starts the server and binds it to the IP address specified in the previous call of `StartTo()`. If `StartTo()` was not previously called, `0.0.0.0` is assumed as IP address.
+---
 
-- The optional `callback` parameter will be executed after completion
+## Administrative functions
 
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="start-to"></a>S7Server.StartTo(ip[, callback])
-Starts the server and binds it to the specified IP address and the IsoTCP port.
-
-- `ip` PLC/Equipment IPV4 Address ex. “192.168.1.12”
-- The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns the CPU status on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="stop"></a>S7Server.Stop([callback])
-Stops the server, disconnects gracefully all clients, destroys al S7 workers and unbinds the listener socket from its address.
-
-- The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns the CPU status on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="get-param"></a>S7Server.GetParam(paramNumber)
-Returns an internal server parameter.
-
- - `paramNumber` One from the parameter list [below](#table-area)
-
-<a name="table-parameter"></a>
-
-| Name                    | Value | Description |
-|:------------------------|:-----:|:------------|
-| `S7Server.LocalPort`    | 1     | Socket local port
-| `S7Server.WorkInterval` | 6     | Socket worker interval
-| `S7Server.PDURequest`   | 10    | Initial PDU length request
-| `S7Server.MaxClients`   | 11    | Max clients allowed
-
-Returns the `parameter value` on success or `false` on error.
-
-#### <a name="set-param"></a>S7Server.SetParam(paramNumber, value)
-Sets an internal server parameter.
-
- - `paramNumber` One from the parameter list [above](#table-area)
- - `value` New parameter value
-
-Returns `true` on success or `false` on error.
-
-#### <a name="set-resourceless"></a>S7Server.SetResourceless(value)
-Sets the server to resourceless mode.
-
- - `value` new value
-
-Returns `true` on success or `false` on error.
-
-### <a name="memory-functions"></a>API - Memory functions
-
-----------
-
-#### <a name="register-area"></a>S7Server.RegisterArea(areaCode[, index], buffer)
-Registers a memory area in the server. That memory block will be visible by the clients.
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
- - `buffer` User buffer
-
-Returns `true` on success or `false` on error.
-
-#### <a name="unregister-area"></a>S7Server.UnregisterArea(areaCode[, index])
-Unregisters a memory area in the server.
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
-
-Returns `true` on success or `false` on error.
-
-#### <a name="get-area"></a>S7Server.GetArea(areaCode[, index])
-Gets the content of a previously registered memory area block.
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
-
-Returns a `buffer` object.
-
-#### <a name="set-area"></a>S7Server.SetArea(areaCode[, index], buffer)
-Sets the content of a previously registered memory area block.
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
- - `buffer` Buffer object
-
-#### <a name="lock-area"></a>S7Server.LockArea(areaCode[, index])
-Locks the memory area so that a server worker thread is blocked on access attempt until the lock is released with [UnlockArea()](#unlock-area).
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
-
-#### <a name="unlock-area"></a>S7Server.UnlockArea(areaCode[, index])
-Unlocks a previously locked memory area.
-
-
- - `areaCode` Area identifier (see table [below](#table-area))
- - `index` DB number if `areaCode` equals `srvAreaDB`, otherwise ignored
-
-<a name="table-area"></a>
-
-| Area                   | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Server.srvAreaPE`   |   0   | Process inputs
-| `S7Server.srvAreaPA`   |   1   | Process outputs
-| `S7Server.srvAreaMK`   |   2   | Merkers
-| `S7Server.srvAreaCT`   |   3   | Counters
-| `S7Server.srvAreaTM`   |   4   | Timers
-| `S7Server.srvAreaDB`   |   5   | DB
-
-### <a name="event-functions"></a>API - Event functions
-
-----------
-
-#### <a name="event-event"></a>S7Server event: 'event'
-Emitted on server events.
-
- - `event` Event object
-
-<a name="event-object"></a> Event object:
-
-```javascript
-{
-  EvtTime;    // <Date>   Date
-  EvtSender;  // <String> Sender
-  EvtCode;    // <Number> Event code
-  EvtRetCode; // <Number> Event result
-  EvtParam1;  // <Number> Param 1 (if available)
-  EvtParam2;  // <Number> Param 2 (if available)
-  EvtParam3;  // <Number> Param 3 (if available)
-  EvtParam4;  // <Number> Param 4 (if available)
-}
+### Start
 ```
-Example:
-
-```javascript
-var s7server = new snap7.S7Server();
-
-s7server.on("event", function(event) {
-    console.log(s7server.EventText(event));
-});
-
-s7server.StartTo('127.0.0.1');
+Start(): Promise<void>
 ```
+Start the server using the current bind address.
+- Returns: resolves with `void`, rejects with `Snap7Error`
 
-#### <a name="event-read-write"></a>S7Server event: 'readWrite'
-Emitted on every read/write event. Only available in resourceless mode.
-
- - `sender` IPv4 address of the sender
- - `operation` Operation type
- - `tagObj` Tag object
- - `buffer` Buffer object
- - `callback` Callback function
-
-The server worker thread is **blocked** until `callback` is called. Therefore **calling is crucial**, to prevent a deadlock in the worker thread.<br />
-On a read event the `callback` expects a buffer as argument that is provided to the client. You can use the `buffer` argument which is an empty buffer of the correct size.
-
-<a name="table-operation-type"></a>
-
-| Operation type            | Value | Description          |
-|:--------------------------|:-----:|:---------------------|
-| `S7Server.operationRead`  | 0x00  | Read operation
-| `S7Server.operationWrite` | 0x01  | Write operation
-
-<a name="tag-object"></a> Tag object:
-
-```javascript
-{
-  Area;     // <Number> Area code (DB, MK,…)
-  DBNumber; // <Number> DB number (if any or 0)
-  Start;    // <Number> Offset start
-  Size;     // <Number> Number of elements
-  WordLen;  // <Number> Tag WordLength
-}
+### StartTo
 ```
-
-Example:
-
-```javascript
-var s7server = new snap7.S7Server();
-
-s7server.SetResourceless(true);
-
-s7server.on("readWrite", function(sender, operation, tagObj, buffer, callback) {
-  console.log((operation === s7server.operationRead ? 'Read' : 'Write') + ' event from ' + sender);
-  console.log('Area     : ' + tagObj.Area);
-  console.log('DBNumber : ' + tagObj.DBNumber);
-  console.log('Start    : ' + tagObj.Start);
-  console.log('Size     : ' + tagObj.Size);
-  console.log('WordLen  : ' + tagObj.WordLen);
-
-  if (operation === s7server.operationRead) {
-    buffer.fill(255);
-    return callback(buffer);
-  } else {
-    console.log('Buffer   : ' + buffer);
-    return callback();
-  }
-});
-
-s7server.StartTo('127.0.0.1');
+StartTo(ip: string): Promise<void>
 ```
+Start the server and bind to a specific IP address.
+- Parameters:
+  - `ip`: IPv4 address to bind
+- Returns: resolves with `void`, rejects with `Snap7Error`
 
-#### <a name="get-event-mask"></a>S7Server.GetEventMask()
-Returns the server event filter mask.
+### Stop
+```
+Stop(): Promise<void>
+```
+Stop the server and disconnect clients.
+- Returns: resolves with `void`, rejects with `Snap7Error`
 
+### GetParam
+```
+GetParam(paramNumber: number): number
+```
+Read a server parameter.
+- Parameters:
+  - `paramNumber`: see [Server parameters](#server-parameters)
+- Returns: parameter value
 
-#### <a name="set-event-mask"></a>S7Server.SetEventMask(mask)
-Sets the server event filter mask.
+### SetParam
+```
+SetParam(paramNumber: number, value: number): void
+```
+Write a server parameter.
+- Parameters:
+  - `paramNumber`: see [Server parameters](#server-parameters)
+  - `value`: new value
+- Returns: `void`
 
- - `mask` Bit mask (see table [below](#table-mask))
+### SetResourceless
+```
+SetResourceless(value: boolean): void
+```
+Enable/disable resourceless mode (required for `readWrite` events).
+- Parameters:
+  - `value`: `true` to enable, `false` to disable
+- Returns: `void`
 
-<a name="table-mask"></a>
+### GetEventsMask
+```
+GetEventsMask(): number
+```
+Read the current events mask.
+- Returns: mask value
 
-| Event code                          | Value          |
-|:------------------------------------|:--------------:|
-| `S7Server.evcAll`                   |   0xFFFFFFFF
-| `S7Server.evcNone`                  |   0x00000000
-| `S7Server.evcServerStarted`         |   0x00000001
-| `S7Server.evcServerStopped`         |   0x00000002
-| `S7Server.evcListenerCannotStart`   |   0x00000004
-| `S7Server.evcClientAdded`           |   0x00000008
-| `S7Server.evcClientRejected`        |   0x00000010
-| `S7Server.evcClientNoRoom`          |   0x00000020
-| `S7Server.evcClientException`       |   0x00000040
-| `S7Server.evcClientDisconnected`    |   0x00000080
-| `S7Server.evcClientTerminated`      |   0x00000100
-| `S7Server.evcClientsDropped`        |   0x00000200
-| `S7Server.evcPDUincoming`           |   0x00010000
-| `S7Server.evcDataRead`              |   0x00020000
-| `S7Server.evcDataWrite`             |   0x00040000
-| `S7Server.evcNegotiatePDU`          |   0x00080000
-| `S7Server.evcReadSZL`               |   0x00100000
-| `S7Server.evcClock`                 |   0x00200000
-| `S7Server.evcUpload`                |   0x00400000
-| `S7Server.evcDownload`              |   0x00800000
-| `S7Server.evcDirectory`             |   0x01000000
-| `S7Server.evcSecurity`              |   0x02000000
-| `S7Server.evcControl`               |   0x04000000
+### SetEventsMask
+```
+SetEventsMask(mask: number): void
+```
+Set the events mask.
+- Parameters:
+  - `mask`: bitmask (see [Event codes](#event-codes) or [Event masks](#event-masks))
+- Returns: `void`
 
+---
 
-### <a name="miscellaneous-functions"></a>API - Miscellaneous functions
+## Memory functions
 
-----------
+### RegisterArea
+```
+RegisterArea(areaCode: number, index: number, buffer: Buffer): boolean
+```
+Expose a buffer as a PLC area.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+  - `buffer`: data buffer
+- Returns: `true` on success, otherwise `false`
 
-#### <a name="last-error"></a>S7Server.LastError()
-Returns the last job result.
+### UnregisterArea
+```
+UnregisterArea(areaCode: number, index: number): boolean
+```
+Remove a previously registered area.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+- Returns: `true` on success, otherwise `false`
 
-#### <a name="event-text"></a>S7Server.EventText(eventObj)
-Returns a textual explanation of a given event.
+### GetArea
+```
+GetArea(areaCode: number, index: number): Buffer
+```
+Get the buffer for a registered area.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+- Returns: registered area buffer
 
- - `eventObj` Event object (example [here](#event-object))
+### SetArea
+```
+SetArea(areaCode: number, index: number, buffer: Buffer): boolean
+```
+Replace the buffer for a registered area.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+  - `buffer`: new data buffer
+- Returns: `true` on success, otherwise `false`
 
-#### <a name="error-text"></a>S7Server.ErrorText(errNum)
-Returns a textual explanation of a given error number.
+### LockArea
+```
+LockArea(areaCode: number, index: number): boolean
+```
+Lock a registered area; worker threads block until unlocked.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+- Returns: `true` on success, otherwise `false`
 
- - `errNum` Error number
+### UnlockArea
+```
+UnlockArea(areaCode: number, index: number): boolean
+```
+Unlock a locked area.
+- Parameters:
+  - `areaCode`: see [Areas](#areas)
+  - `index`: DB number when `areaCode` is `srvAreaDB`; ignored for other areas
+- Returns: `true` on success, otherwise `false`
 
-#### <a name="server-status"></a>S7Server.ServerStatus()
-Returns the server status. (see table [below](#table-server-status))
+---
 
-<a name="table-server-status"></a>
+## Events
 
-| Status                | Value | Description          |
-|:----------------------|:-----:|:---------------------|
-| `S7Server.SrvStopped` | 0x00  | The Server is stopped
-| `S7Server.SrvRunning` | 0x01  | The Server is Running
-| `S7Server.SrvError`   | 0x02  | Server Error
+### event
+```
+'on("event", (evt: SrvEvent) => void)
+```
+Emitted for server lifecycle/protocol events.
 
-#### <a name="clients-count"></a>S7Server.ClientsCount()
-Returns the number of clients connected to the server.
+### readWrite
+```
+'on("readWrite", (sender: string, operation: number, tag: S7Tag, buffer: Buffer, callback: (buf?: Buffer) => void) => void)
+```
+Emitted on every data read/write when resourceless mode is enabled. The worker waits until `callback` is invoked; for read operations supply the response buffer.
 
-#### <a name="get-cpu-status"></a>S7Server.GetCpuStatus()
-Returns the Virtual CPU status. (see table [below](#table-cpu-status))
+### error
+```
+'on("error", (err: Snap7Error) => void)
+```
+Emitted when the server encounters an error.
 
-#### <a name="set-cpu-status"></a>S7Server.SetCpuStatus(cpuStatus)
-Sets the Virtual CPU status.
+---
 
- - `cpuStatus` Status value (see table [below](#table-cpu-status))
+## Diagnostics & status
 
-<a name="table-cpu-status"></a>
+### LastError
+```
+LastError(): number
+```
+Return the last Snap7 error code.
+- Returns: error code
 
-| Status                        | Value | Description              |
-|:------------------------------|:-----:|:-------------------------|
-| `S7Server.S7CpuStatusUnknown` | 0x00  | The CPU status is unknown
-| `S7Server.S7CpuStatusRun`     | 0x08  | The CPU is running
-| `S7Server.S7CpuStatusStop`    | 0x04  | The CPU is stopped
+### EventText
+```
+EventText(evt: SrvEvent): string
+```
+Return human-readable text for an event.
+- Parameters:
+  - `evt`: event object
+- Returns: event text
+
+### ErrorText
+```
+ErrorText(errNum: number): string
+```
+Return human-readable text for an error code.
+- Parameters:
+  - `errNum`: error code
+- Returns: error text
+
+### ServerStatus
+```
+ServerStatus(): number
+```
+Return the server status (see [Server status codes](#server-status-codes)).
+- Returns: server status code
+
+### ClientsCount
+```
+ClientsCount(): number
+```
+Return the number of connected clients.
+- Returns: client count
+
+### GetCpuStatus
+```
+GetCpuStatus(): number
+```
+Return the simulated CPU status (see [CPU status codes](#cpu-status-codes)).
+- Returns: CPU status code
+
+### SetCpuStatus
+```
+SetCpuStatus(status: number): boolean
+```
+Set the simulated CPU status.
+- Parameters:
+  - `status`: see [CPU status codes](#cpu-status-codes)
+- Returns: `true` on success, otherwise `false`
+
+---
+
+## Constants
+
+### Areas
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `srvAreaPE` | 0 | Process inputs |
+| `srvAreaPA` | 1 | Process outputs |
+| `srvAreaMK` | 2 | Merkers |
+| `srvAreaCT` | 3 | Counters |
+| `srvAreaTM` | 4 | Timers |
+| `srvAreaDB` | 5 | Data blocks |
+
+### Operation types
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `operationRead` | 0x00 | Read operation |
+| `operationWrite` | 0x01 | Write operation |
+
+### Server status codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `SrvStopped` | 0x00 | Server stopped |
+| `SrvRunning` | 0x01 | Server running |
+| `SrvError` | 0x02 | Server error |
+
+### CPU status codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `S7CpuStatusUnknown` | 0x00 | Status not known |
+| `S7CpuStatusRun` | 0x08 | CPU is running |
+| `S7CpuStatusStop` | 0x04 | CPU is stopped |
+
+### Server parameters
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `LocalPort` | 1 | Listener port |
+| `WorkInterval` | 6 | Worker interval |
+| `PDURequest` | 10 | Requested PDU length |
+| `MaxClients` | 11 | Maximum clients |
+
+### Event masks
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `evcAll` | 0xFFFFFFFF | Enable all events |
+| `evcNone` | 0x00000000 | Disable all events |
+
+### Event codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `evcServerStarted` | 0x00000001 | Server started |
+| `evcServerStopped` | 0x00000002 | Server stopped |
+| `evcListenerCannotStart` | 0x00000004 | Listener failed to start |
+| `evcClientAdded` | 0x00000008 | Client added |
+| `evcClientRejected` | 0x00000010 | Client rejected |
+| `evcClientNoRoom` | 0x00000020 | No room for client |
+| `evcClientException` | 0x00000040 | Client exception |
+| `evcClientDisconnected` | 0x00000080 | Client disconnected |
+| `evcClientTerminated` | 0x00000100 | Client terminated |
+| `evcClientsDropped` | 0x00000200 | Clients dropped |
+| `evcPDUincoming` | 0x00010000 | Incoming PDU |
+| `evcDataRead` | 0x00020000 | Data read |
+| `evcDataWrite` | 0x00040000 | Data write |
+| `evcNegotiatePDU` | 0x00080000 | PDU negotiation |
+| `evcReadSZL` | 0x00100000 | SZL read |
+| `evcClock` | 0x00200000 | Clock event |
+| `evcUpload` | 0x00400000 | Upload |
+| `evcDownload` | 0x00800000 | Download |
+| `evcDirectory` | 0x01000000 | Directory |
+| `evcSecurity` | 0x02000000 | Security |
+| `evcControl` | 0x04000000 | Control |
+
+### Event subcodes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `evsUnknown` | 0x00000000 | Unknown |
+| `evsStartUpload` | 0x00000001 | Start upload |
+| `evsStartDownload` | 0x00000002 | Start download |
+| `evsGetBlockList` | 0x00000003 | Get block list |
+| `evsStartListBoT` | 0x00000004 | Start list BoT |
+| `evsListBoT` | 0x00000005 | List BoT |
+| `evsGetBlockInfo` | 0x00000006 | Get block info |
+| `evsGetClock` | 0x00000007 | Get clock |
+| `evsSetClock` | 0x00000008 | Set clock |
+| `evsSetPassword` | 0x00000009 | Set password |
+| `evsClrPassword` | 0x0000000A | Clear password |
+
+### Event control codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `CodeControlUnknown` | 0x00 | Unknown control |
+| `CodeControlColdStart` | 0x01 | Cold start |
+| `CodeControlWarmStart` | 0x02 | Warm start |
+| `CodeControlStop` | 0x03 | Stop |
+| `CodeControlCompress` | 0x04 | Compress |
+| `CodeControlCpyRamRom` | 0x05 | Copy RAM to ROM |
+| `CodeControlInsDel` | 0x06 | Insert/Delete |
+
+### Event results
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `evrNoError` | 0x00000000 | No error |
+| `evrFragmentRejected` | 0x00000001 | Fragment rejected |
+| `evrMalformedPDU` | 0x00000002 | Malformed PDU |
+| `evrSparseBytes` | 0x00000003 | Sparse bytes |
+| `evrCannotHandlePDU` | 0x00000004 | Cannot handle PDU |
+| `evrNotImplemented` | 0x00000005 | Not implemented |
+| `evrErrException` | 0x00000006 | Exception |
+| `evrErrAreaNotFound` | 0x00000007 | Area not found |
+| `evrErrOutOfRange` | 0x00000008 | Out of range |
+| `evrErrOverPDU` | 0x00000009 | Over PDU |
+| `evrErrTransportSize` | 0x0000000A | Transport size error |
+| `evrInvalidGroupUData` | 0x0000000B | Invalid group UData |
+| `evrInvalidSZL` | 0x0000000C | Invalid SZL |
+| `evrDataSizeMismatch` | 0x0000000D | Data size mismatch |
+| `evrCannotUpload` | 0x0000000E | Cannot upload |
+| `evrCannotDownload` | 0x0000000F | Cannot download |
+| `evrUploadInvalidID` | 0x00000010 | Upload invalid ID |
+| `evrResNotFound` | 0x00000011 | Resource not found |
+
+### Error codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `errSrvCannotStart` | 0x00100000 | Cannot start server |
+| `errSrvDBNullPointer` | 0x00200000 | DB null pointer |
+| `errSrvAreaAlreadyExists` | 0x00300000 | Area already exists |
+| `errSrvUnknownArea` | 0x00400000 | Unknown area |
+| `errSrvInvalidParams` | 0x00500000 | Invalid params |
+| `errSrvTooManyDB` | 0x00600000 | Too many DBs |
+| `errSrvInvalidParamNumber` | 0x00700000 | Invalid param number |
+| `errSrvCannotChangeParam` | 0x00800000 | Cannot change param |
+
+---
+
+## Type definitions
+
+### SrvEvent
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `EvtTime` | Date | Event timestamp |
+| `EvtSender` | string | Sender IP |
+| `EvtCode` | number | Event code (see [Event codes](#event-codes)) |
+| `EvtRetCode` | number | Return code (see [Event results](#event-results)) |
+| `EvtParam1` | number | Event parameter 1 |
+| `EvtParam2` | number | Event parameter 2 |
+| `EvtParam3` | number | Event parameter 3 |
+| `EvtParam4` | number | Event parameter 4 |
+
+### S7Tag
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Area` | number | Area code (see [Areas](#areas)) |
+| `DBNumber` | number | DB number (for DB areas) |
+| `Start` | number | Start offset |
+| `Size` | number | Number of elements |
+| `WordLen` | number | Word length code |
