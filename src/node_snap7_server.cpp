@@ -976,18 +976,36 @@ NAN_METHOD(S7Server::SetResourceless) {
 }
 
 NAN_METHOD(S7Server::GetParam) {
+  int paramNumber, ret;
+  int pData = 0;
+  uint16_t pU16Data = 0;
+
   S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
 
   if (!info[0]->IsInt32()) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int pData;
-  int ret = s7server->snap7Server->GetParam(Nan::To<int32_t>(info[0]).FromJust()
-    , &pData);
+  paramNumber = Nan::To<int32_t>(info[0]).FromJust();
+
+  if (paramNumber == p_u16_LocalPort) {
+    ret = s7server->snap7Server->GetParam(paramNumber, &pU16Data);
+  } else {
+    ret = s7server->snap7Server->GetParam(paramNumber, &pData);
+  }
+
   s7server->lastError = ret;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+  if (ret != 0) {
+    info.GetReturnValue().Set(Nan::False());
+    return;
+  }
+
+  if (paramNumber == p_u16_LocalPort) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(pU16Data));
+  } else {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(pData)); 
+  }
 }
 
 NAN_METHOD(S7Server::SetParam) {
