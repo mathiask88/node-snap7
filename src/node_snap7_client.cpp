@@ -829,20 +829,42 @@ NAN_METHOD(S7Client::Disconnect) {
 }
 
 NAN_METHOD(S7Client::GetParam) {
+  int paramNumber, ret;
+  int pData = 0;
+  uint16_t pU16Data = 0;
+
   S7Client *s7client = ObjectWrap::Unwrap<S7Client>(info.Holder());
 
   if (!info[0]->IsInt32()) {
     return Nan::ThrowTypeError("Wrong arguments");
   }
 
-  int pData;
-  int returnValue = s7client->snap7Client->GetParam(Nan::To<int32_t>(info[0]).FromJust()
-    , &pData);
+  paramNumber = Nan::To<int32_t>(info[0]).FromJust();
 
-  if (returnValue == 0) {
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(pData));
+  switch (paramNumber) {
+    case p_u16_RemotePort:
+    case p_u16_SrcRef:
+    case p_u16_DstRef:
+    case p_u16_SrcTSap:
+      ret = s7client->snap7Client->GetParam(paramNumber, &pU16Data);
+      break;
+    default:
+      ret = s7client->snap7Client->GetParam(paramNumber, &pData);
+      break;
+  }
+
+  if (ret != 0) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
+    return;
+  }
+
+  if (paramNumber == p_u16_RemotePort ||
+    paramNumber == p_u16_SrcRef ||
+    paramNumber == p_u16_DstRef ||
+    paramNumber == p_u16_SrcTSap) {
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(pU16Data));
   } else {
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(returnValue));
+    info.GetReturnValue().Set(Nan::New<v8::Integer>(pData));
   }
 }
 
