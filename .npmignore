@@ -3,3 +3,10 @@ test/
 appveyor.yml
 .npmignore
 .gitignore
+
+# AI assistant files
+AGENTS.md
+.opencode/
+.claude/
+.cursorrules
+.github/copilot-instructions.md
