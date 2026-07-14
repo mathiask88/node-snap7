@@ -679,8 +679,6 @@ S7Server::~S7Server() {
   snap7Server->Stop();
   delete snap7Server;
 
-  constructor.Reset();
-
   uv_close(reinterpret_cast<uv_handle_t *>(&event_async_g), 0);
   uv_close(reinterpret_cast<uv_handle_t *>(&rw_async_g), 0);
   uv_sem_destroy(&sem_rw);

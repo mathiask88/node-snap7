@@ -719,7 +719,6 @@ S7Client::S7Client() {
 S7Client::~S7Client() {
   snap7Client->Disconnect();
   delete snap7Client;
-  constructor.Reset();
   uv_mutex_destroy(&mutex);
 }
 

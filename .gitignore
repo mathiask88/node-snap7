@@ -2,3 +2,10 @@
 build/
 node_modules/
 test/
+
+# AI assistant files
+AGENTS.md
+.opencode/
+.claude/
+.cursorrules
+.github/copilot-instructions.md
