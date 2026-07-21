@@ -1,4 +1,11 @@
-const snap7 = require('../lib/node-snap7');
+const {
+  S7Server,
+  S7Client,
+  ServerArea,
+  ServerParameter,
+  ClientParameter,
+  ServerOperation
+} = require('../lib/node-snap7');
 const { test, before, after } = require('node:test');
 const assert = require('assert');
 
@@ -20,39 +27,39 @@ before(async () => {
     });
   });
 
-  server = new snap7.S7Server();
+  server = new S7Server();
   server.SetResourceless(true);
 
   dbBuffer = Buffer.alloc(SIZE, 0xAA);
 
   // Register DB area (required for tag info, but data is handled by event)
-  server.RegisterArea(server.srvAreaDB, DB_NUMBER, dbBuffer);
+  server.RegisterArea(ServerArea.DB, DB_NUMBER, dbBuffer);
 
   // Handle read/write events
   server.on('readWrite', (sender, operation, tag, buffer, callback) => {
-    if (operation === server.operationRead) {
+    if (operation === ServerOperation.Read) {
       // Fill buffer with current DB content
       dbBuffer.copy(buffer, 0, tag.Start, tag.Start + tag.Size);
       callback(buffer);
-    } else if (operation === server.operationWrite) {
+    } else if (operation === ServerOperation.Write) {
       // Write incoming data to DB buffer
       buffer.copy(dbBuffer, tag.Start, 0, tag.Size);
       callback();
     }
   });
 
-  server.SetParam(server.LocalPort, dynamicPort);
+  server.SetParam(ServerParameter.LocalPort, dynamicPort);
   await server.StartTo('127.0.0.1');
 });
 
 after(async () => {
   await server.Stop();
-  server.UnregisterArea(server.srvAreaDB, DB_NUMBER);
+  server.UnregisterArea(ServerArea.DB, DB_NUMBER);
 });
 
 test('ressourceless server: write and read DB', async () => {
-  client = new snap7.S7Client();
-  client.SetParam(client.RemotePort, dynamicPort);
+  client = new S7Client();
+  client.SetParam(ClientParameter.RemotePort, dynamicPort);
   await client.ConnectTo('127.0.0.1', 0, 0);
 
   const writeBuf = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);

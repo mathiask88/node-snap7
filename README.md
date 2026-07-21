@@ -46,9 +46,9 @@ Each exported method is available as a Promise-returning async function, a callb
 
 ### Client Example
 ```javascript
-const snap7 = require('node-snap7');
+const { S7Client } = require('node-snap7');
 
-const s7client = new snap7.S7Client();
+const s7client = new S7Client();
 
 async function main() {
     try {
@@ -81,8 +81,8 @@ console.log(res);
 
 ### Server Example
 ```javascript
-const snap7 = require('node-snap7');
-const s7server = new snap7.S7Server();
+const { S7Server, ServerArea } = require('node-snap7');
+const s7server = new S7Server();
 
 // Set up event listener
 s7server.on("event", function(event) {
@@ -91,7 +91,7 @@ s7server.on("event", function(event) {
 
 // Create a new Buffer and register it to the server as DB1
 const db1 = Buffer.alloc(100, 0);
-s7server.RegisterArea(s7server.srvAreaDB, 1, db1);
+s7server.RegisterArea(ServerArea.DB, 1, db1);
 
 // Start the server
 s7server.StartTo('127.0.0.1');
@@ -99,23 +99,23 @@ s7server.StartTo('127.0.0.1');
 // Close the server after 20s in this example
 setTimeout(function() {
     s7server.Stop();
-    s7server.UnregisterArea(s7server.srvAreaDB, 1);
+    s7server.UnregisterArea(ServerArea.DB, 1);
 }, 20000);
 ```
 
 ### Resourceless server example
 ```javascript
-const snap7 = require('node-snap7');
-const s7server = new snap7.S7Server();
+const { S7Server, ServerOperation } = require('node-snap7');
+const s7server = new S7Server();
 
 // Enable resourceless mode to handle requests manually
 s7server.SetResourceless(true);
 
 s7server.on('readWrite', (sender, operation, tag, buffer, done) => {
-    console.log(`${operation === s7server.operationRead ? 'Read' : 'Write'} from ${sender}`);
+    console.log(`${operation === ServerOperation.Read ? 'Read' : 'Write'} from ${sender}`);
     console.log(tag);
 
-    if (operation === s7server.operationRead) {
+    if (operation === ServerOperation.Read) {
         buffer.fill(0x42); // respond with dummy data
         return done(buffer);
     }

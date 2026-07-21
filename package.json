@@ -38,18 +38,21 @@
     "node-gyp-build": "~4.8.4"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "node-addon-api": "~8.5.0",
-    "node-gyp": "^12.1.0",
+    "electron": "^43.2.0",
+    "node-addon-api": "~8.9.0",
+    "node-gyp": "^13.0.1",
     "prebuildify": "^6.0.1",
     "prebuildify-ci": "^1.0.5",
-    "prebuildify-cross": "^5.1.1"
+    "prebuildify-cross": "^5.1.1",
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "install": "node-gyp-build",
     "rebuild": "npm run install --build-from-source",
     "prebuild": "prebuildify -t 18.20.8 --napi --strip",
-    "test": "node ./scripts/run-node-tests.js",
+    "test": "node ./scripts/run-node-tests.js && npm run test:types",
+    "test:types": "tsc -p scripts/type-tests/tsconfig.json",
     "test-electron": "node ./scripts/run-electron-tests.js",
     "download-prebuilds": "prebuildify-ci download",
     "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 18.20.8 --napi --strip",

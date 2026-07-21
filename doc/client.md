@@ -74,6 +74,8 @@ High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and
   - [Word lengths](#word-lengths)
   - [Connection types](#connection-types)
   - [Block types](#block-types)
+  - [Block languages](#block-languages)
+  - [Sub block types](#sub-block-types)
   - [PLC status codes](#plc-status-codes)
   - [Client parameters](#client-parameters)
 - [Type definitions](#type-definitions)
@@ -90,10 +92,10 @@ High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and
 ---
 
 ## Usage basics
-- Use constants from [Constants](#constants) for `Area`, `WordLen`, connection types, etc.
-- `start` is a byte offset unless `WordLen` is `S7WLBit`, in which case it is a bit index within the byte.
-- `amount` counts elements of the chosen `WordLen` (bytes for `S7WLByte`, words for `S7WLWord`, etc.).
-- Buffers you pass must be large enough for `amount * WordLen`.
+- Use grouped constants from [Constants](#constants), e.g. `const { S7Area, S7WordLen, ConnectionType } = require('node-snap7');`.
+- `start` is a byte offset unless `wordLen` is `S7WordLen.Bit`, in which case it is a bit index within the byte.
+- `amount` counts elements of the chosen `S7WordLen` (bytes for `S7WordLen.Byte`, words for `S7WordLen.Word`, etc.).
+- Buffers you pass must be large enough for `amount * S7WordLen` sized elements.
 
 ---
 
@@ -173,30 +175,30 @@ Write a client parameter.
 
 ### ReadArea
 ```
-ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen): Promise<Buffer>
-ReadArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
-ReadAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen): Buffer
+ReadArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen): Promise<Buffer>
+ReadArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+ReadAreaSync(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen): Buffer
 ```
 Read raw data from the PLC.
 - Parameters:
   - `area`: memory area
-  - `dbNumber`: DB number (only for `S7AreaDB`)
-  - `start`: byte offset (bit index if `S7WLBit`)
+  - `dbNumber`: DB number (only for `S7Area.DB`)
+  - `start`: byte offset (bit index if `S7WordLen.Bit`)
   - `amount`: element count in units of `wordLen`
   - `wordLen`: element type/size
 - Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
 
 ### WriteArea
 ```
-WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): Promise<undefined>
-WriteArea(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
-WriteAreaSync(area: Area, dbNumber: number, start: number, amount: number, wordLen: WordLen, buffer: Buffer): undefined
+WriteArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer): Promise<undefined>
+WriteArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
+WriteAreaSync(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer): undefined
 ```
 Write raw data to the PLC.
 - Parameters:
   - `area`: memory area
-  - `dbNumber`: DB number (only for `S7AreaDB`)
-  - `start`: byte offset (bit index if `S7WLBit`)
+  - `dbNumber`: DB number (only for `S7Area.DB`)
+  - `start`: byte offset (bit index if `S7WordLen.Bit`)
   - `amount`: element count in units of `wordLen`
   - `wordLen`: element type/size
   - `buffer`: data to write
@@ -213,24 +215,24 @@ Each wrapper supports Promise/Callback/Sync variants like `Foo(...) -> Promise<.
 
 ### ReadMultiVars
 ```
-ReadMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[]): Promise<S7MultiVarReadResult[]>
-ReadMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[], callback: (err: Snap7Error | null, data: S7MultiVarReadResult[]) => undefined): undefined
-ReadMultiVarsSync(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number }[]): S7MultiVarReadResult[]
+ReadMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[]): Promise<S7MultiVarReadResult[]>
+ReadMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[], callback: (err: Snap7Error | null, data: S7MultiVarReadResult[]) => undefined): undefined
+ReadMultiVarsSync(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[]): S7MultiVarReadResult[]
 ```
 Read multiple addresses in one request.
 - Parameters:
-  - `items`: `{ Area, WordLen, DBNumber?, Start, Amount }`
+  - `items`: `{ Area: S7Area, WordLen: S7WordLen, DBNumber?, Start, Amount }`
 - Returns: Promise resolves with `S7MultiVarReadResult[]`; callback receives `(err, results)`; Sync returns `S7MultiVarReadResult[]` (throws on error)
 
 ### WriteMultiVars
 ```
-WriteMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): Promise<S7MultiVarWriteResult[]>
-WriteMultiVars(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[], callback: (err: Snap7Error | null, data: S7MultiVarWriteResult[]) => undefined): undefined
-WriteMultiVarsSync(items: { Area: Area; WordLen: WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): S7MultiVarWriteResult[]
+WriteMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): Promise<S7MultiVarWriteResult[]>
+WriteMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[], callback: (err: Snap7Error | null, data: S7MultiVarWriteResult[]) => undefined): undefined
+WriteMultiVarsSync(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): S7MultiVarWriteResult[]
 ```
 Write multiple addresses in one request.
 - Parameters:
-  - `items`: `{ Area, WordLen, DBNumber?, Start, Amount, Data: Buffer }`
+  - `items`: `{ Area: S7Area, WordLen: S7WordLen, DBNumber?, Start, Amount, Data: Buffer }`
 - Returns: Promise resolves with `S7MultiVarWriteResult[]`; callback receives `(err, results)`; Sync returns `S7MultiVarWriteResult[]` (throws on error)
 
 ---
@@ -548,159 +550,173 @@ Read the PLC protection levels.
 
 ## Constants
 
+All constants are grouped exports; use the object/property names below (e.g. `S7Area.DB`, `S7WordLen.Real`).
+
 ### Areas
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `srvAreaPE` | 0 | Process inputs |
-| `srvAreaPA` | 1 | Process outputs |
-| `srvAreaMK` | 2 | Merkers |
-| `srvAreaCT` | 3 | Counters |
-| `srvAreaTM` | 4 | Timers |
-| `srvAreaDB` | 5 | Data blocks |
+| `S7Area.PE` | 0x81 | Process inputs |
+| `S7Area.PA` | 0x82 | Process outputs |
+| `S7Area.MK` | 0x83 | Merkers |
+| `S7Area.CT` | 0x1C | Counters |
+| `S7Area.TM` | 0x1D | Timers |
+| `S7Area.DB` | 0x84 | Data blocks |
 
-### Operation types
+### Word lengths
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `operationRead` | 0x00 | Read operation |
-| `operationWrite` | 0x01 | Write operation |
+| `S7WordLen.Bit` | 0x01 | Bit |
+| `S7WordLen.Byte` | 0x02 | Byte |
+| `S7WordLen.Word` | 0x04 | Word (2 bytes) |
+| `S7WordLen.DWord` | 0x06 | Double word (4 bytes) |
+| `S7WordLen.Real` | 0x08 | Real (float) |
+| `S7WordLen.Counter` | 0x1C | Counter (word) |
+| `S7WordLen.Timer` | 0x1D | Timer (word) |
 
-### Server status codes
+### Connection types
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `SrvStopped` | 0x00 | Server stopped |
-| `SrvRunning` | 0x01 | Server running |
-| `SrvError` | 0x02 | Server error |
+| `ConnectionType.PG` | 0x0001 | Programming device |
+| `ConnectionType.OP` | 0x0002 | Operator panel |
+| `ConnectionType.BASIC` | 0x0003 | Basic connection |
 
-### CPU status codes
+### Block types
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `S7CpuStatusUnknown` | 0x00 | Status not known |
-| `S7CpuStatusRun` | 0x08 | CPU is running |
-| `S7CpuStatusStop` | 0x04 | CPU is stopped |
+| `BlockType.OB` | 0x38 | Organization block |
+| `BlockType.DB` | 0x41 | Data block |
+| `BlockType.SDB` | 0x42 | System data block |
+| `BlockType.FC` | 0x43 | Function |
+| `BlockType.SFC` | 0x44 | System function |
+| `BlockType.FB` | 0x45 | Function block |
+| `BlockType.SFB` | 0x46 | System function block |
 
-### Server parameters
+### Block languages
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `LocalPort` | 1 | Listener port |
-| `WorkInterval` | 6 | Worker interval |
-| `PDURequest` | 10 | Requested PDU length |
-| `MaxClients` | 11 | Maximum clients |
+| `BlockLang.AWL` | 0x01 | AWL |
+| `BlockLang.KOP` | 0x02 | KOP |
+| `BlockLang.FUP` | 0x03 | FUP |
+| `BlockLang.SCL` | 0x04 | SCL |
+| `BlockLang.DB` | 0x05 | DB |
+| `BlockLang.GRAPH` | 0x06 | GRAPH |
 
-### Event masks
+### Sub block types
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `evcAll` | 0xFFFFFFFF | Enable all events |
-| `evcNone` | 0x00000000 | Disable all events |
+| `SubBlockType.OB` | 0x08 | Organization sub-block |
+| `SubBlockType.DB` | 0x0A | Data sub-block |
+| `SubBlockType.SDB` | 0x0B | System data sub-block |
+| `SubBlockType.FC` | 0x0C | Function sub-block |
+| `SubBlockType.SFC` | 0x0D | System function sub-block |
+| `SubBlockType.FB` | 0x0E | Function block sub-block |
+| `SubBlockType.SFB` | 0x0F | System function block sub-block |
 
-### Event codes
+### PLC status codes
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `evcServerStarted` | 0x00000001 | Server started |
-| `evcServerStopped` | 0x00000002 | Server stopped |
-| `evcListenerCannotStart` | 0x00000004 | Listener failed to start |
-| `evcClientAdded` | 0x00000008 | Client added |
-| `evcClientRejected` | 0x00000010 | Client rejected |
-| `evcClientNoRoom` | 0x00000020 | No room for client |
-| `evcClientException` | 0x00000040 | Client exception |
-| `evcClientDisconnected` | 0x00000080 | Client disconnected |
-| `evcClientTerminated` | 0x00000100 | Client terminated |
-| `evcClientsDropped` | 0x00000200 | Clients dropped |
-| `evcPDUincoming` | 0x00010000 | Incoming PDU |
-| `evcDataRead` | 0x00020000 | Data read |
-| `evcDataWrite` | 0x00040000 | Data write |
-| `evcNegotiatePDU` | 0x00080000 | PDU negotiation |
-| `evcReadSZL` | 0x00100000 | SZL read |
-| `evcClock` | 0x00200000 | Clock event |
-| `evcUpload` | 0x00400000 | Upload |
-| `evcDownload` | 0x00800000 | Download |
-| `evcDirectory` | 0x01000000 | Directory |
-| `evcSecurity` | 0x02000000 | Security |
-| `evcControl` | 0x04000000 | Control |
+| `PlcStatus.Unknown` | 0x00 | Status not known |
+| `PlcStatus.Run` | 0x08 | CPU running |
+| `PlcStatus.Stop` | 0x04 | CPU stopped |
 
-### Event subcodes
+### Client parameters
 | Name | Value | Description |
 |:-----|:----:|:------------|
-| `evsUnknown` | 0x00000000 | Unknown |
-| `evsStartUpload` | 0x00000001 | Start upload |
-| `evsStartDownload` | 0x00000002 | Start download |
-| `evsGetBlockList` | 0x00000003 | Get block list |
-| `evsStartListBoT` | 0x00000004 | Start list BoT |
-| `evsListBoT` | 0x00000005 | List BoT |
-| `evsGetBlockInfo` | 0x00000006 | Get block info |
-| `evsGetClock` | 0x00000007 | Get clock |
-| `evsSetClock` | 0x00000008 | Set clock |
-| `evsSetPassword` | 0x00000009 | Set password |
-| `evsClrPassword` | 0x0000000A | Clear password |
-
-### Event control codes
-| Name | Value | Description |
-|:-----|:----:|:------------|
-| `CodeControlUnknown` | 0x00 | Unknown control |
-| `CodeControlColdStart` | 0x01 | Cold start |
-| `CodeControlWarmStart` | 0x02 | Warm start |
-| `CodeControlStop` | 0x03 | Stop |
-| `CodeControlCompress` | 0x04 | Compress |
-| `CodeControlCpyRamRom` | 0x05 | Copy RAM to ROM |
-| `CodeControlInsDel` | 0x06 | Insert/Delete |
-
-### Event results
-| Name | Value | Description |
-|:-----|:----:|:------------|
-| `evrNoError` | 0x00000000 | No error |
-| `evrFragmentRejected` | 0x00000001 | Fragment rejected |
-| `evrMalformedPDU` | 0x00000002 | Malformed PDU |
-| `evrSparseBytes` | 0x00000003 | Sparse bytes |
-| `evrCannotHandlePDU` | 0x00000004 | Cannot handle PDU |
-| `evrNotImplemented` | 0x00000005 | Not implemented |
-| `evrErrException` | 0x00000006 | Exception |
-| `evrErrAreaNotFound` | 0x00000007 | Area not found |
-| `evrErrOutOfRange` | 0x00000008 | Out of range |
-| `evrErrOverPDU` | 0x00000009 | Over PDU |
-| `evrErrTransportSize` | 0x0000000A | Transport size error |
-| `evrInvalidGroupUData` | 0x0000000B | Invalid group UData |
-| `evrInvalidSZL` | 0x0000000C | Invalid SZL |
-| `evrDataSizeMismatch` | 0x0000000D | Data size mismatch |
-| `evrCannotUpload` | 0x0000000E | Cannot upload |
-| `evrCannotDownload` | 0x0000000F | Cannot download |
-| `evrUploadInvalidID` | 0x00000010 | Upload invalid ID |
-| `evrResNotFound` | 0x00000011 | Resource not found |
-
-### Error codes
-| Name | Value | Description |
-|:-----|:----:|:------------|
-| `errSrvCannotStart` | 0x00100000 | Cannot start server |
-| `errSrvDBNullPointer` | 0x00200000 | DB null pointer |
-| `errSrvAreaAlreadyExists` | 0x00300000 | Area already exists |
-| `errSrvUnknownArea` | 0x00400000 | Unknown area |
-| `errSrvInvalidParams` | 0x00500000 | Invalid params |
-| `errSrvTooManyDB` | 0x00600000 | Too many DBs |
-| `errSrvInvalidParamNumber` | 0x00700000 | Invalid param number |
-| `errSrvCannotChangeParam` | 0x00800000 | Cannot change param |
+| `ClientParameter.RemotePort` | 2 | Remote TSAP port |
+| `ClientParameter.PingTimeout` | 3 | Ping timeout (ms) |
+| `ClientParameter.SendTimeout` | 4 | Send timeout (ms) |
+| `ClientParameter.RecvTimeout` | 5 | Receive timeout (ms) |
+| `ClientParameter.SrcRef` | 7 | Source reference |
+| `ClientParameter.DstRef` | 8 | Destination reference |
+| `ClientParameter.SrcTSap` | 9 | Local TSAP |
+| `ClientParameter.PDURequest` | 10 | Requested PDU length |
 
 ---
 
 ## Type definitions
 
-### SrvEvent
+### BlocksList
 | Field | Type | Description |
 |:------|:-----|:------------|
-| `EvtTime` | Date | Event timestamp |
-| `EvtSender` | string | Sender IP |
-| `EvtCode` | number | Event code (see [Event codes](#event-codes)) |
-| `EvtRetCode` | number | Return code (see [Event results](#event-results)) |
-| `EvtParam1` | number | Event parameter 1 |
-| `EvtParam2` | number | Event parameter 2 |
-| `EvtParam3` | number | Event parameter 3 |
-| `EvtParam4` | number | Event parameter 4 |
+| `OBCount` | number | Organization blocks |
+| `FBCount` | number | Function blocks |
+| `FCCount` | number | Functions |
+| `SFBCount` | number | System function blocks |
+| `SFCCount` | number | System functions |
+| `DBCount` | number | Data blocks |
+| `SDBCount` | number | System data blocks |
 
-### S7Tag
+### BlockInfo
 | Field | Type | Description |
 |:------|:-----|:------------|
-| `Area` | number | Area code (see [Areas](#areas)) |
-| `DBNumber` | number | DB number (for DB areas) |
-| `Start` | number | Start offset |
-| `Size` | number | Number of elements |
-| `WordLen` | number | Word length code |
+| `BlkType` | number | Block type |
+| `BlkNumber` | number | Block number |
+| `BlkLang` | number | Language |
+| `BlkFlags` | number | Flags |
+| `MC7Size` | number | MC7 size |
+| `LoadSize` | number | Load size |
+| `LocalData` | number | Local data size |
+| `SBBLength` | number | SBB length |
+| `CheckSum` | number | Checksum |
+| `Version` | number | Version |
+| `CodeDate` | string | Code date |
+| `IntfDate` | string | Interface date |
+| `Author` | string | Author |
+| `Family` | string | Family |
+| `Header` | string | Header |
 
+### OrderCode
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Code` | string | Order code |
+| `V1` | number | Version major |
+| `V2` | number | Version minor |
+| `V3` | number | Version patch |
 
+### CpuInfo
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `ModuleTypeName` | string | Module type name |
+| `SerialNumber` | string | Serial number |
+| `ASName` | string | AS name |
+| `Copyright` | string | Copyright |
+| `ModuleName` | string | Module name |
 
+### CpInfo
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `MaxPduLength` | number | Max PDU length |
+| `MaxConnections` | number | Max connections |
+| `MaxMpiRate` | number | Max MPI rate |
+| `MaxBusRate` | number | Max bus rate |
+
+### Protection
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `sch_schal` | number | Switch-on protection |
+| `sch_par` | number | Parameter protection |
+| `sch_rel` | number | Release protection |
+| `bart_sch` | number |??? |
+| `anl_sch` | number |??? |
+
+### DateTimeObject
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `year` | number | Year |
+| `month` | number | Month (1-12) |
+| `day` | number | Day (1-31) |
+| `hour` | number | Hour (0-23) |
+| `minute` | number | Minute (0-59) |
+| `second` | number | Second (0-59) |
+| `millis` | number | Milliseconds (0-999) |
+
+### S7MultiVarReadResult
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Result` | number | Snap7 result code |
+| `Data` | Buffer \| null | Returned data for the item |
+
+### S7MultiVarWriteResult
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Result` | number | Snap7 result code |

@@ -1,6 +1,15 @@
-const snap7 = require('../lib/node-snap7');
+const {
+  S7Server,
+  S7Client,
+  ServerArea,
+  ServerParameter,
+  ClientParameter,
+  ServerError,
+  ServerStatus
+} = require('../lib/node-snap7');
 const { test, before, after } = require('node:test');
 const assert = require('assert');
+const net = require('net');
 
 const DB_NUMBER = 1;
 const SIZE = 16;
@@ -8,10 +17,8 @@ const SIZE = 16;
 let server, client, dynamicPort;
 let dbBuffer;
 
-before(async () => {
-  // Pick a free high port to avoid collisions when tests run concurrently in CI.
-  dynamicPort = await new Promise((resolve, reject) => {
-    const net = require('net');
+function getFreePort() {
+  return new Promise((resolve, reject) => {
     const s = net.createServer();
     s.on('error', reject);
     s.listen(0, '127.0.0.1', () => {
@@ -19,27 +26,32 @@ before(async () => {
       s.close(() => resolve(address.port));
     });
   });
+}
 
-  server = new snap7.S7Server();
+before(async () => {
+  // Pick a free high port to avoid collisions when tests run concurrently in CI.
+  dynamicPort = await getFreePort();
+
+  server = new S7Server();
   server.SetResourceless(false);
 
   dbBuffer = Buffer.alloc(SIZE, 0xAA);
 
   // Register DB area (server manages the buffer directly)
-  server.RegisterArea(server.srvAreaDB, DB_NUMBER, dbBuffer);
+  server.RegisterArea(ServerArea.DB, DB_NUMBER, dbBuffer);
 
-  server.SetParam(server.LocalPort, dynamicPort);
+  server.SetParam(ServerParameter.LocalPort, dynamicPort);
   await server.StartTo('127.0.0.1');
 });
 
 after(async () => {
   await server.Stop();
-  server.UnregisterArea(server.srvAreaDB, DB_NUMBER);
+  server.UnregisterArea(ServerArea.DB, DB_NUMBER);
 });
 
 test('resource server: write and read DB', async () => {
-  client = new snap7.S7Client();
-  client.SetParam(client.RemotePort, dynamicPort);
+  client = new S7Client();
+  client.SetParam(ClientParameter.RemotePort, dynamicPort);
   await client.ConnectTo('127.0.0.1', 0, 0);
 
   const writeBuf = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
@@ -54,6 +66,28 @@ test('resource server: write and read DB', async () => {
 test('server SetParam invalid throws Snap7 error', () => {
   assert.throws(
     () => server.SetParam(9999, 1),
-    (err) => err && err.errno === server.errSrvInvalidParamNumber && err.code === `SNAP7_SERVER_CODE_${server.errSrvInvalidParamNumber}`
+    (err) =>
+      err &&
+      err.errno === ServerError.InvalidParamNumber &&
+      err.code === `SNAP7_SERVER_CODE_${ServerError.InvalidParamNumber}`
   );
+});
+
+test('server StartToSync/StopSync works', async () => {
+  const srv = new S7Server();
+  const port = await getFreePort();
+
+  srv.SetParam(ServerParameter.LocalPort, port);
+  srv.RegisterArea(ServerArea.DB, DB_NUMBER, Buffer.alloc(SIZE));
+
+  try {
+    srv.StartToSync('127.0.0.1');
+    assert.strictEqual(srv.ServerStatus(), ServerStatus.SrvRunning);
+  } finally {
+    try {
+      srv.StopSync();
+    } catch (_) {
+      // ignore
+    }
+  }
 });

@@ -146,7 +146,7 @@ class IOWorkerServer : public Napi::AsyncWorker {
     S7Server* s7server;
     ServerIOFunction caller;
     void* pData = nullptr;
-    int returnValue = 0;
+    int ret = 0;
 };
 
 } // namespace node_snap7

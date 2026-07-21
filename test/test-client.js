@@ -1,4 +1,16 @@
-const snap7 = require('../lib/node-snap7');
+const {
+  S7Client,
+  S7Server,
+  ConnectionType,
+  ClientParameter,
+  ServerParameter,
+  ServerArea,
+  S7Area,
+  S7WordLen,
+  BlockType,
+  ClientError,
+  PlcStatus
+} = require('../lib/node-snap7');
 const { test, beforeEach, afterEach } = require('node:test');
 const assert = require('assert');
 
@@ -93,7 +105,7 @@ beforeEach(async () => {
     });
   });
 
-  server = new snap7.S7Server();
+  server = new S7Server();
 
   dbBuffer = Buffer.alloc(SIZE, 0xAA);
   peBuffer = Buffer.alloc(SIZE, 0xBB);
@@ -102,18 +114,18 @@ beforeEach(async () => {
   ctBuffer = Buffer.alloc(CT_SIZE, 0xEE);
   tmBuffer = Buffer.alloc(TM_SIZE, 0xFF);
 
-  server.RegisterArea(server.srvAreaPE, 0, peBuffer);
-  server.RegisterArea(server.srvAreaPA, 0, paBuffer);
-  server.RegisterArea(server.srvAreaMK, 0, mkBuffer);
-  server.RegisterArea(server.srvAreaDB, DB_NUMBER, dbBuffer);
-  server.RegisterArea(server.srvAreaCT, 0, ctBuffer);
-  server.RegisterArea(server.srvAreaTM, 0, tmBuffer);
+  server.RegisterArea(ServerArea.PE, 0, peBuffer);
+  server.RegisterArea(ServerArea.PA, 0, paBuffer);
+  server.RegisterArea(ServerArea.MK, 0, mkBuffer);
+  server.RegisterArea(ServerArea.DB, DB_NUMBER, dbBuffer);
+  server.RegisterArea(ServerArea.CT, 0, ctBuffer);
+  server.RegisterArea(ServerArea.TM, 0, tmBuffer);
 
-  server.SetParam(server.LocalPort, dynamicPort);
+  server.SetParam(ServerParameter.LocalPort, dynamicPort);
   await server.Start();
 
-  client = new snap7.S7Client();
-  client.SetParam(client.RemotePort, dynamicPort);
+  client = new S7Client();
+  client.SetParam(ClientParameter.RemotePort, dynamicPort);
   await client.ConnectTo('127.0.0.1', 0, 2);
 });
 
@@ -123,16 +135,60 @@ afterEach(async () => {
 
   await server.Stop();
 
-  server.UnregisterArea(server.srvAreaPE);
-  server.UnregisterArea(server.srvAreaPA);
-  server.UnregisterArea(server.srvAreaMK);
-  server.UnregisterArea(server.srvAreaDB, DB_NUMBER);
-  server.UnregisterArea(server.srvAreaCT);
-  server.UnregisterArea(server.srvAreaTM);
+  server.UnregisterArea(ServerArea.PE);
+  server.UnregisterArea(ServerArea.PA);
+  server.UnregisterArea(ServerArea.MK);
+  server.UnregisterArea(ServerArea.DB, DB_NUMBER);
+  server.UnregisterArea(ServerArea.CT);
+  server.UnregisterArea(ServerArea.TM);
 
   server = null;
 });
 // --- Connection Methods ---
+
+test('ConnectSync without params exposes Snap7 error fields or stays disconnected', () => {
+  const freshClient = new S7Client();
+  let err;
+  try {
+    freshClient.ConnectSync();
+  } catch (e) {
+    err = e;
+  }
+
+  if (err) {
+    assert.strictEqual(err.name, 'Snap7Error');
+    assert.ok(typeof err.errno === 'number');
+    assert.ok(typeof err.code === 'string');
+  } else {
+    assert.strictEqual(freshClient.Connected(), false);
+  }
+});
+test('Connect (Promise) without params exposes Snap7 error fields or stays disconnected', async () => {
+  const freshClient = new S7Client();
+  try {
+    await freshClient.Connect();
+    assert.strictEqual(freshClient.Connected(), false);
+  } catch (err) {
+    assert.strictEqual(err.name, 'Snap7Error');
+    assert.ok(typeof err.errno === 'number');
+    assert.ok(typeof err.code === 'string');
+  }
+});
+test('Connect (Callback) without params exposes Snap7 error fields or stays disconnected', (t, done) => {
+  const freshClient = new S7Client();
+  freshClient.Connect((err) => {
+    if (err) {
+      assert.strictEqual(err.name, 'Snap7Error');
+      assert.ok(typeof err.errno === 'number');
+      assert.ok(typeof err.code === 'string');
+      done();
+      return;
+    }
+
+    assert.strictEqual(freshClient.Connected(), false);
+    done();
+  });
+});
 test('ConnectToSync', () => {
   client.Disconnect();
   assert.strictEqual(client.Connected(), false);
@@ -140,7 +196,7 @@ test('ConnectToSync', () => {
   // Wait 1000ms synchronously to allow OS to release resources
   sleepSync(1000);
 
-  client.SetParam(client.RemotePort, dynamicPort);
+  client.SetParam(ClientParameter.RemotePort, dynamicPort);
 
   assert.doesNotThrow(() => client.ConnectToSync('127.0.0.1', 0, 2));
   assert.strictEqual(client.Connected(), true);
@@ -152,7 +208,7 @@ test('ConnectTo (Promise)', async () => {
   // Wait 1000ms after disconnect to allow OS to release resources
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  client.SetParam(client.RemotePort, dynamicPort);
+  client.SetParam(ClientParameter.RemotePort, dynamicPort);
 
   await client.ConnectTo('127.0.0.1', 0, 2);
   assert.strictEqual(client.Connected(), true);
@@ -163,7 +219,7 @@ test('ConnectTo (Callback)', (t, done) => {
   assert.strictEqual(client.Connected(), false);
 
   setTimeout(() => {
-    client.SetParam(client.RemotePort, dynamicPort);
+    client.SetParam(ClientParameter.RemotePort, dynamicPort);
 
     client.ConnectTo('127.0.0.1', 0, 2, (err) => {
       assert.ifError(err);
@@ -183,29 +239,29 @@ test('SetConnectionParams', () => {
   assert.doesNotThrow(() => client.SetConnectionParams('127.0.0.1', 0x0100, 0x0200));
 });
 test('SetConnectionType', () => {
-  assert.doesNotThrow(() => client.SetConnectionType(client.CONNTYPE_BASIC));
+  assert.doesNotThrow(() => client.SetConnectionType(ConnectionType.BASIC));
 });
 
 // --- Parameter Methods ---
 test('SetParam', () => {
-  assert.doesNotThrow(() => (client.SetParam(client.PDURequest, 480)));
+  assert.doesNotThrow(() => client.SetParam(ClientParameter.PDURequest, 480));
 });
 test('GetParam', () => {
-  const value = client.GetParam(client.PDURequest);
+  const value = client.GetParam(ClientParameter.PDURequest);
   assert.strictEqual(typeof value, 'number');
 });
 
 // --- Data I/O Methods (Sync/Promise/Callback) ---
 test('ReadAreaSync', () => {
-  const buf = client.ReadAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte);
+  const buf = client.ReadAreaSync(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte);
   assert.ok(Buffer.isBuffer(buf));
 });
 test('ReadArea (Promise)', async () => {
-  const buf = await client.ReadArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte);
+  const buf = await client.ReadArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte);
   assert.ok(Buffer.isBuffer(buf));
 });
 test('ReadArea (Callback)', (t, done) => {
-  client.ReadArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, (err, buf) => {
+  client.ReadArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte, (err, buf) => {
     assert.ifError(err);
     assert.ok(Buffer.isBuffer(buf));
     done();
@@ -213,54 +269,82 @@ test('ReadArea (Callback)', (t, done) => {
 });
 test('WriteAreaSync', () => {
   const buf = Buffer.alloc(SIZE, 0x11);
-  assert.doesNotThrow(() => client.WriteAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, buf));
+  assert.doesNotThrow(() => client.WriteAreaSync(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte, buf));
 });
 test('WriteArea (Promise)', async () => {
   const buf = Buffer.alloc(SIZE, 0x12);
-  await client.WriteArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, buf);
+  await client.WriteArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte, buf);
 });
 test('WriteArea (Callback)', (t, done) => {
   const buf = Buffer.alloc(SIZE, 0x13);
-  client.WriteArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, client.S7WLByte, buf, (err) => {
+  client.WriteArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte, buf, (err) => {
     assert.ifError(err);
     done();
   });
 });
 test('ReadArea rejects invalid WordLen', () => {
   assert.throws(
-    () => client.ReadAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, -1),
+    () => client.ReadAreaSync(S7Area.DB, DB_NUMBER, 0, SIZE, -1),
     { name: 'TypeError', message: /Invalid WordLen/ }
   );
   assert.throws(
-    () => client.ReadArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, -1),
+    () => client.ReadArea(S7Area.DB, DB_NUMBER, 0, SIZE, -1),
     { name: 'TypeError', message: /Invalid WordLen/ }
   );
 });
 test('WriteArea rejects invalid WordLen', () => {
   const buf = Buffer.alloc(SIZE, 0x13);
   assert.throws(
-    () => client.WriteAreaSync(client.S7AreaDB, DB_NUMBER, 0, SIZE, -1, buf),
+    () => client.WriteAreaSync(S7Area.DB, DB_NUMBER, 0, SIZE, -1, buf),
     { name: 'TypeError', message: /Invalid WordLen/ }
   );
   assert.throws(
-    () => client.WriteArea(client.S7AreaDB, DB_NUMBER, 0, SIZE, -1, buf),
+    () => client.WriteArea(S7Area.DB, DB_NUMBER, 0, SIZE, -1, buf),
     { name: 'TypeError', message: /Invalid WordLen/ }
   );
 });
 
+test('WriteArea async sends buffer snapshot', async () => {
+  const original = Buffer.alloc(SIZE, 0x11);
+  const writePromise = client.WriteArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte, original);
+
+  // Mutate after scheduling; implementation should have copied already.
+  original.fill(0x22);
+
+  await writePromise;
+  const readBack = await client.ReadArea(S7Area.DB, DB_NUMBER, 0, SIZE, S7WordLen.Byte);
+  assert.ok(readBack.equals(Buffer.alloc(SIZE, 0x11)), 'WriteArea should use original buffer contents');
+});
+
+test('WriteMultiVars async sends buffer snapshot', async () => {
+  const original = Buffer.alloc(SIZE, 0x33);
+  const items = [
+    { Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: original }
+  ];
+
+  const writePromise = client.WriteMultiVars(items);
+
+  // Mutate after scheduling; implementation should have copied already.
+  original.fill(0x44);
+
+  await writePromise;
+  const readBack = await client.DBRead(DB_NUMBER, 0, SIZE);
+  assert.ok(readBack.equals(Buffer.alloc(SIZE, 0x33)), 'WriteMultiVars should use original buffer contents');
+});
+
 // --- MultiVar Methods ---
 test('ReadMultiVarsSync', () => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
   const res = client.ReadMultiVarsSync(items);
   assert.ok(Array.isArray(res));
 });
 test('ReadMultiVars (Promise)', async () => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
   const res = await client.ReadMultiVars(items);
   assert.ok(Array.isArray(res));
 });
 test('ReadMultiVars (Callback)', (t, done) => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE }];
   client.ReadMultiVars(items, (err, res) => {
     assert.ifError(err);
     assert.ok(Array.isArray(res));
@@ -268,17 +352,17 @@ test('ReadMultiVars (Callback)', (t, done) => {
   });
 });
 test('WriteMultiVarsSync', () => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x21) }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x21) }];
   const res = client.WriteMultiVarsSync(items);
   assert.ok(Array.isArray(res));
 });
 test('WriteMultiVars (Promise)', async () => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x22) }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x22) }];
   const res = await client.WriteMultiVars(items);
   assert.ok(Array.isArray(res));
 });
 test('WriteMultiVars (Callback)', (t, done) => {
-  const items = [{ Area: client.S7AreaDB, WordLen: client.S7WLByte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x23) }];
+  const items = [{ Area: S7Area.DB, WordLen: S7WordLen.Byte, DBNumber: DB_NUMBER, Start: 0, Amount: SIZE, Data: Buffer.alloc(SIZE, 0x23) }];
   client.WriteMultiVars(items, (err, res) => {
     assert.ifError(err);
     assert.ok(Array.isArray(res));
@@ -524,15 +608,15 @@ test('ListBlocks (Callback)', (t, done) => {
   });
 });
 test('ListBlocksOfTypeSync', () => {
-  const res = client.ListBlocksOfTypeSync(client.Block_DB);
+  const res = client.ListBlocksOfTypeSync(BlockType.DB);
   assert.ok(Array.isArray(res));
 });
 test('ListBlocksOfType (Promise)', async () => {
-  const res = await client.ListBlocksOfType(client.Block_DB);
+  const res = await client.ListBlocksOfType(BlockType.DB);
   assert.ok(Array.isArray(res));
 });
 test('ListBlocksOfType (Callback)', (t, done) => {
-  client.ListBlocksOfType(client.Block_DB, (err, res) => {
+  client.ListBlocksOfType(BlockType.DB, (err, res) => {
     assert.ifError(err);
     assert.ok(Array.isArray(res));
     done();
@@ -542,25 +626,25 @@ test('ListBlocksOfType (Callback)', (t, done) => {
 // --- Upload/FullUpload/Download/Delete ---
 test('UploadSync', () => {
   try {
-    const res = client.UploadSync(client.Block_DB, DB_NUMBER, SIZE);
+    const res = client.UploadSync(BlockType.DB, DB_NUMBER, SIZE);
     assert.ok(Buffer.isBuffer(res));
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err.errno, ClientError.NeedPassword);
   }
 });
 test('Upload (Promise)', async () => {
   try {
-    const res = await client.Upload(client.Block_DB, DB_NUMBER, SIZE);
+    const res = await client.Upload(BlockType.DB, DB_NUMBER, SIZE);
     assert.ok(Buffer.isBuffer(res));
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err && err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err && err.errno, ClientError.NeedPassword);
   }
 });
 test('Upload (Callback)', (t, done) => {
-  client.Upload(client.Block_DB, DB_NUMBER, SIZE, (err, buf) => {
-    if (err && err.errno === client.errCliNeedPassword) {
+  client.Upload(BlockType.DB, DB_NUMBER, SIZE, (err, buf) => {
+    if (err && err.errno === ClientError.NeedPassword) {
       // Accept this error as a valid outcome
       done();
       return;
@@ -573,25 +657,25 @@ test('Upload (Callback)', (t, done) => {
 });
 test('FullUploadSync', () => {
   try {
-    const res = client.FullUploadSync(client.Block_DB, DB_NUMBER, SIZE);
+    const res = client.FullUploadSync(BlockType.DB, DB_NUMBER, SIZE);
     assert.ok(Buffer.isBuffer(res));
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err.errno, ClientError.NeedPassword);
   }
 });
 test('FullUpload (Promise)', async () => {
   try {
-    const res = await client.FullUpload(client.Block_DB, DB_NUMBER, SIZE);
+    const res = await client.FullUpload(BlockType.DB, DB_NUMBER, SIZE);
     assert.ok(Buffer.isBuffer(res));
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err && err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err && err.errno, ClientError.NeedPassword);
   }
 });
 test('FullUpload (Callback)', (t, done) => {
-  client.FullUpload(client.Block_DB, DB_NUMBER, SIZE, (err, buf) => {
-    if (err && err.errno === client.errCliNeedPassword) {
+  client.FullUpload(BlockType.DB, DB_NUMBER, SIZE, (err, buf) => {
+    if (err && err.errno === ClientError.NeedPassword) {
       // Accept this error as a valid outcome
       done();
       return;
@@ -607,7 +691,7 @@ test('DownloadSync', () => {
     client.DownloadSync(DB_NUMBER, blockBuf);
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err.errno, ClientError.NeedPassword);
   }
 });
 test('Download (Promise)', async () => {
@@ -615,12 +699,12 @@ test('Download (Promise)', async () => {
     await client.Download(DB_NUMBER, blockBuf);
   } catch (err) {
     // Accept this error as a valid outcome
-    assert.strictEqual(err && err.errno, client.errCliNeedPassword);
+    assert.strictEqual(err && err.errno, ClientError.NeedPassword);
   }
 });
 test('Download (Callback)', (t, done) => {
   client.Download(DB_NUMBER, blockBuf, (err) => {
-    if (err && err.errno === client.errCliNeedPassword) {
+    if (err && err.errno === ClientError.NeedPassword) {
       // Accept this error as a valid outcome
       done();
       return;
@@ -630,14 +714,31 @@ test('Download (Callback)', (t, done) => {
     done();
   });
 });
+
+test('Download async sends buffer snapshot', async () => {
+  const original = Buffer.from(blockBuf);
+  const downloadPromise = client.Download(DB_NUMBER, original);
+
+  // Mutate after scheduling; implementation should have copied already.
+  original.fill(0x99);
+
+  try {
+    await downloadPromise;
+    const uploaded = await client.Upload(BlockType.DB, DB_NUMBER, original.length);
+    assert.ok(uploaded.equals(blockBuf), 'Download should use original buffer contents');
+  } catch (err) {
+    // Accept NeedPassword here as well (same as other download tests)
+    assert.strictEqual(err && err.errno, ClientError.NeedPassword);
+  }
+});
 test('DeleteSync', () => {
-  assert.doesNotThrow(() => client.DeleteSync(client.Block_DB, DB_NUMBER));
+  assert.doesNotThrow(() => client.DeleteSync(BlockType.DB, DB_NUMBER));
 });
 test('Delete (Promise)', async () => {
-  await assert.doesNotReject(client.Delete(client.Block_DB, DB_NUMBER));
+  await assert.doesNotReject(client.Delete(BlockType.DB, DB_NUMBER));
 });
 test('Delete (Callback)', (t, done) => {
-  client.Delete(client.Block_DB, DB_NUMBER, (err) => {
+  client.Delete(BlockType.DB, DB_NUMBER, (err) => {
     assert.ifError(err);
     done();
   });
@@ -738,16 +839,16 @@ test('Compress (Callback)', (t, done) => {
 
 // --- PlcStatus/GetProtection ---
 test('PlcStatusSync', () => {
-  assert.ok([client.S7CpuStatusRun, client.S7CpuStatusStop, client.S7CpuStatusUnknown].includes(client.PlcStatusSync()));
+  assert.ok([PlcStatus.Run, PlcStatus.Stop, PlcStatus.Unknown].includes(client.PlcStatusSync()));
 });
 test('PlcStatus (Promise)', async () => {
   const status = await client.PlcStatus();
-  assert.ok([client.S7CpuStatusRun, client.S7CpuStatusStop, client.S7CpuStatusUnknown].includes(status));
+  assert.ok([PlcStatus.Run, PlcStatus.Stop, PlcStatus.Unknown].includes(status));
 });
 test('PlcStatus (Callback)', (t, done) => {
   client.PlcStatus((err, status) => {
     assert.ifError(err);
-    assert.ok([client.S7CpuStatusRun, client.S7CpuStatusStop, client.S7CpuStatusUnknown].includes(status));
+    assert.ok([PlcStatus.Run, PlcStatus.Stop, PlcStatus.Unknown].includes(status));
     done();
   });
 });
@@ -903,13 +1004,13 @@ test('GetOrderCode (Callback)', (t, done) => {
 
 // --- Block Info ---
 test('GetAgBlockInfoSync', () => {
-  assert.ok(typeof client.GetAgBlockInfoSync(client.Block_DB, DB_NUMBER) === 'object');
+  assert.ok(typeof client.GetAgBlockInfoSync(BlockType.DB, DB_NUMBER) === 'object');
 });
 test('GetAgBlockInfo (Promise)', async () => {
-  assert.ok(typeof (await client.GetAgBlockInfo(client.Block_DB, DB_NUMBER)) === 'object');
+  assert.ok(typeof (await client.GetAgBlockInfo(BlockType.DB, DB_NUMBER)) === 'object');
 });
 test('GetAgBlockInfo (Callback)', (t, done) => {
-  client.GetAgBlockInfo(client.Block_DB, DB_NUMBER, (err, info) => {
+  client.GetAgBlockInfo(BlockType.DB, DB_NUMBER, (err, info) => {
     assert.ifError(err);
     assert.ok(typeof info === 'object');
     done();
@@ -937,18 +1038,21 @@ test('SetParam invalid throws Snap7 error with errno/code', () => {
     () => client.SetParam(9999, 1),
     (err) =>
       err &&
-      err.errno === client.errCliInvalidParamNumber &&
-      err.code === `SNAP7_CLIENT_CODE_${client.errCliInvalidParamNumber}`
+      err.errno === ClientError.InvalidParamNumber &&
+      err.code === `SNAP7_CLIENT_CODE_${ClientError.InvalidParamNumber}`
   );
 });
 test('Upload (Promise) exposes Snap7 error fields', async () => {
   await assert.rejects(
-    client.Upload(client.Block_DB, DB_NUMBER, SIZE),
-    (err) => err && err.errno === client.errCliNeedPassword && err.code === `SNAP7_CLIENT_CODE_${client.errCliNeedPassword}`
+    client.Upload(BlockType.DB, DB_NUMBER, SIZE),
+    (err) =>
+      err &&
+      err.errno === ClientError.NeedPassword &&
+      err.code === `SNAP7_CLIENT_CODE_${ClientError.NeedPassword}`
   );
 });
 test('Upload (Callback) exposes Snap7 error fields', (t, done) => {
-  client.Upload(client.Block_DB, DB_NUMBER, SIZE, (err) => {
+  client.Upload(BlockType.DB, DB_NUMBER, SIZE, (err) => {
     if (!err) {
       // Unexpected success in this environment
       t.fail('Expected error');
@@ -956,8 +1060,8 @@ test('Upload (Callback) exposes Snap7 error fields', (t, done) => {
       return;
     }
 
-    assert.strictEqual(err.errno, client.errCliNeedPassword);
-    assert.strictEqual(err.code, `SNAP7_CLIENT_CODE_${client.errCliNeedPassword}`);
+    assert.strictEqual(err.errno, ClientError.NeedPassword);
+    assert.strictEqual(err.code, `SNAP7_CLIENT_CODE_${ClientError.NeedPassword}`);
     done();
   });
 });

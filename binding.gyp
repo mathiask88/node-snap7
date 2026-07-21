@@ -8,6 +8,7 @@
             "./src/node_snap7.cpp",
             "./src/node_snap7_client.cpp",
             "./src/node_snap7_server.cpp",
+            "./src/node_snap7_partner.cpp",
             "./src/snap7.cpp"
         ],
         "defines": ["NODE_ADDON_API_DISABLE_DEPRECATED"],
