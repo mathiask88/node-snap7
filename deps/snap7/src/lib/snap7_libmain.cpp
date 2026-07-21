@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.4.1 |
+|  PROJECT SNAP7                                                         1.4.3 |
 |==============================================================================|
-|  Copyright (C) 2013, 2015 Davide Nardella                                    |
+|  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -542,7 +542,7 @@ int S7API Cli_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrCliText(Error, Text, TextLen);
-		Text[TextLen - 1] = '\0';
+		Text[TextLen-1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -894,7 +894,7 @@ int S7API Srv_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrSrvText(Error, Text, TextLen);
-		Text[TextLen - 1] = '\0';
+		Text[TextLen-1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -906,7 +906,7 @@ int S7API Srv_EventText(TSrvEvent &Event, char *Text, int TextLen)
 {
 	try{
 		EvtSrvText(Event, Text, TextLen);
-		Text[TextLen - 1] = '\0';
+		//Text[TextLen] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;
@@ -1186,7 +1186,7 @@ int S7API Par_ErrorText(int Error, char *Text, int TextLen)
 {
 	try{
 		ErrParText(Error, Text, TextLen);
-        Text[TextLen - 1] = '\0';
+		Text[TextLen - 1] = '\0';
 	}
 	catch (...){
 		return errLibInvalidParam;

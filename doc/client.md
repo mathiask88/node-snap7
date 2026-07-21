@@ -1,865 +1,722 @@
- ## S7Client
- - [Control functions](#control-functions)
-   - [Connect()](#connect)
-   - [ConnectTo()](#connect-to)
-   - [SetConnectionParams()](#set-connection-params)
-   - [SetConnectionType()](#set-connection-type)
-   - [Disconnect()](#disconnect)
-   - [GetParam()](#get-param)
-   - [SetParam()](#set-param)
- - [Data I/O functions](#data-functions)
-   - [ReadArea()](#read-area)
-   - [WriteArea()](#write-area)
-   - [DBRead()](#dbread)
-   - [DBWrite()](#dbwrite)
-   - [ABRead()](#abread)
-   - [ABWrite()](#abwrite)
-   - [EBRead()](#ebread)
-   - [EBWrite()](#ebwrite)
-   - [MBRead()](#mbread)
-   - [MBWrite()](#mbwrite)
-   - [TMRead()](#tmread)
-   - [TMWrite()](#tmwrite)
-   - [CTRead()](#ctread)
-   - [CTWrite()](#ctwrite)
-   - [ReadMultiVars()](#read-multi-vars)
-   - [WriteMultiVars()](#write-multi-vars)
- - [Directory function](#directory-functions)
-   - [ListBlocks()](#list-blocks)
-   - [ListBlocksOfType()](#list-blocks-of-type)
-   - [GetAgBlockInfo()](#get-ag-blockinfo)
-   - [GetPgBlockInfo()](#get-pg-blockinfo)
- - [Block oriented functions](#block-functions)
-   - [FullUpload()](#full-upload)
-   - [Upload()](#upload)
-   - [Download()](#download)
-   - [Delete()](#delete)
-   - [DBGet()](#dbget)
-   - [DBFill()](#dbfill)
- - [Date/Time functions](#datetime-functions)
-   - [GetPlcDateTime()](#get-plc-datetime)
-   - [SetPlcDateTime()](#set-plc-datetime)
-   - [SetPlcSystemDateTime()](#set-plc-system-datetime)
- - [System info functions](#systeminfo-functions)
-   - [ReadSZL()](#read-szl)
-   - [ReadSZLList()](#read-szl-list)
-   - [GetOrderCode()](#get-order-code)
-   - [GetCpuInfo()](#get-cpu-info)
-   - [GetCpInfo()](#get-cp-info)
- - [PLC control functions](#control-functions)
-   - [PlcHotStart()](#plc-hot-start)
-   - [PlcColdStart()](#plc-cold-start)
-   - [PlcStop()](#plc-stop)
-   - [CopyRamToRom()](#copy-ram-to-rom)
-   - [Compress()](#compress)
- - [Security functions](#security-functions)
-   - [SetSessionPassword()](#set-session-password)
-   - [ClearSessionPassword()](#clear-session-password)
-   - [GetProtection()](#get-protection)
- - [Properties](#properties)
-   - [ExecTime()](#exec-time)
-   - [LastError()](#last-error)
-   - [PDURequested()](#pdu-requested)
-   - [PDULength()](#pdu-length)
-   - [PlcStatus()](#plc-status)
-   - [Connected()](#connected)
-   - [ErrorText()](#error-text)
+﻿# S7Client API
+
+High-level access to Siemens S7 PLCs via Snap7. Most methods support Promise and callback forms plus a `Sync` variant.
+
+- Promise form: resolves with the value below; rejects with `Snap7Error` (`code`, `errno`).
+- Callback form: pass `(err, result)` as the last argument; function returns `undefined`.
+- Sync form: `*Sync` variant returns the value or `undefined`, or throws `Snap7Error`.
+
+---
+
+## Table of Contents
+- [Usage basics](#usage-basics)
+- [Control functions](#control-functions)
+  - [Connect](#connect)
+  - [ConnectTo](#connectto)
+  - [SetConnectionParams](#setconnectionparams)
+  - [SetConnectionType](#setconnectiontype)
+  - [Disconnect](#disconnect)
+  - [GetParam](#getparam)
+  - [SetParam](#setparam)
+- [Data I/O functions](#data-io-functions)
+  - [ReadArea](#readarea)
+  - [WriteArea](#writearea)
+  - [DBRead](#dbread)
+  - [DBWrite](#dbwrite)
+  - [MBRead](#mbread)
+  - [MBWrite](#mbwrite)
+  - [EBRead](#ebread)
+  - [EBWrite](#ebwrite)
+  - [ABRead](#abread)
+  - [ABWrite](#abwrite)
+  - [TMRead](#tmread)
+  - [TMWrite](#tmwrite)
+  - [CTRead](#ctread)
+  - [CTWrite](#ctwrite)
+  - [ReadMultiVars](#readmultivars)
+  - [WriteMultiVars](#writemultivars)
+- [Directory functions](#directory-functions)
+  - [ListBlocks](#listblocks)
+  - [ListBlocksOfType](#listblocksoftype)
+  - [GetAgBlockInfo](#getagblockinfo)
+  - [GetPgBlockInfo](#getpgblockinfo)
+- [Block operations](#block-operations)
+  - [FullUpload](#fullupload)
+  - [Upload](#upload)
+  - [Download](#download)
+  - [Delete](#delete)
+  - [DBGet](#dbget)
+  - [DBFill](#dbfill)
+- [Date/Time functions](#datetime-functions)
+  - [GetPlcDateTime](#getplcdatetime)
+  - [SetPlcDateTime](#setplcdatetime)
+  - [SetPlcSystemDateTime](#setplcsystemdatetime)
+- [System info functions](#system-info-functions)
+  - [ReadSZL](#readszl)
+  - [ReadSZLList](#readszllist)
+  - [GetOrderCode](#getordercode)
+  - [GetCpuInfo](#getcpuinfo)
+  - [GetCpInfo](#getcpinfo)
+- [PLC control functions](#plc-control-functions)
+  - [PlcHotStart](#plchotstart)
+  - [PlcColdStart](#plccoldstart)
+  - [PlcStop](#plcstop)
+  - [CopyRamToRom](#copyramtorom)
+  - [Compress](#compress)
+  - [PlcStatus](#plcstatus)
+- [Security functions](#security-functions)
+  - [SetSessionPassword](#setsessionpassword)
+  - [ClearSessionPassword](#clearsessionpassword)
+  - [GetProtection](#getprotection)
+- [Properties & diagnostics](#properties--diagnostics)
+- [Constants](#constants)
+  - [Areas](#areas)
+  - [Word lengths](#word-lengths)
+  - [Connection types](#connection-types)
+  - [Block types](#block-types)
+  - [Block languages](#block-languages)
+  - [Sub block types](#sub-block-types)
+  - [PLC status codes](#plc-status-codes)
+  - [Client parameters](#client-parameters)
+- [Type definitions](#type-definitions)
+  - [BlocksList](#blockslist)
+  - [BlockInfo](#blockinfo)
+  - [OrderCode](#ordercode)
+  - [CpuInfo](#cpuinfo)
+  - [CpInfo](#cpinfo)
+  - [Protection](#protection)
+  - [DateTimeObject](#datetimeobject)
+  - [S7MultiVarReadResult](#s7multivarreadresult)
+  - [S7MultiVarWriteResult](#s7multivarwriteresult)
+
+---
+
+## Usage basics
+- Use grouped constants from [Constants](#constants), e.g. `const { S7Area, S7WordLen, ConnectionType } = require('node-snap7');`.
+- `start` is a byte offset unless `wordLen` is `S7WordLen.Bit`, in which case it is a bit index within the byte.
+- `amount` counts elements of the chosen `S7WordLen` (bytes for `S7WordLen.Byte`, words for `S7WordLen.Word`, etc.).
+- Buffers you pass must be large enough for `amount * S7WordLen` sized elements.
+
+---
+
+## Control functions
 
-### <a name="control-functions"></a>API - Control functions
-
-----------
-
-#### <a name="connect"></a>S7Client.Connect([callback])
-Connects the client to the PLC with the parameters specified in the previous call of `ConnectTo()` or `SetConnectionParams()`.
-
- - The optional `callback` parameter will be executed after connection attempt
-
-If `callback` is **not** set the function is **blocking** and  returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="connect-to"></a>S7Client.ConnectTo(ip, rack, slot[, callback])
-Connects the client to the hardware at `ip`, `rack`, `slot` coordinates.
-
-- `ip` PLC/Equipment IPV4 Address ex. “192.168.1.12”
-- `rack` PLC Rack number
-- `slot` PLC Slot number
-- The optional `callback` parameter will be executed after connection attempt
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="set-connection-params"></a>S7Client.SetConnectionParams(ip, localTSAP, remoteTSAP)
-Sets internally `ip`, `localTSAP`, `remoteTSAP` coordinates.
-
-- `ip` PLC/Equipment IPv4 address ex. “192.168.1.12”
-- `localTSAP` Local TSAP (PC TSAP)
-- `remoteTSAP`  Remote TSAP (PLC TSAP)
-
-Returns `true` on success or `false` on error.
-
-#### <a name="set-connection-type"></a>S7Client.SetConnectionType(type)
-Sets the connection resource type, i.e the way in which the Clients connects to a PLC.
-
-- `type`
-
-| ConnectionType            | Value      | Description |
-|:--------------------------|:----------:|:------------|
-| `S7Client.CONNTYPE_PG`    | 0x01       | PG
-| `S7Client.CONNTYPE_OP`    | 0x02       | OP
-| `S7Client.CONNTYPE_BASIC` | 0x03..0x10 | S7 Basic
-
-#### <a name="disconnect"></a>S7Client.Disconnect()
-Disconnects “gracefully” the Client from the PLC.
-
-Returns `true` on success or `false` on error.
-
-#### <a name="get-param"></a>S7Client.GetParam(paramNumber)
-Reads an internal Client object parameter.
-
- - `paramNumber` One from the parameter list below
-
-| Name                   | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Client.RemotePort`  | 2     | Socket remote Port
-| `S7Client.PingTimeout` | 3     | Client Ping timeout
-| `S7Client.SendTimeout` | 4     | Socket Send timeout
-| `S7Client.RecvTimeout` | 5     | Socket Recv timeout
-| `S7Client.SrcRef`      | 7     | ISOTcp Source reference
-| `S7Client.DstRef`      | 8     | ISOTcp Destination reference
-| `S7Client.SrcTSap`     | 9     | ISOTcp Source TSAP
-| `S7Client.PDURequest`  | 10    | Initial PDU length request
-
-Returns the `parameter value` on success or `false` on error.
-
-#### <a name="set-param"></a>S7Client.SetParam(paramNumber, value)
-Sets an internal Client object parameter.
-
- - `paramNumber` One from the parameter list above
- - `value` New parameter value
-
-Returns `true` on success or `false` on error.
-
-### <a name="data-functions"></a>API - Data I/O functions
-
-----------
-
-#### <a name="read-area"></a>S7Client.ReadArea(area, dbNumber, start, amount, wordLen[, callback])
-This is the main function to read data from a PLC. With it you can read DB, Inputs, Outputs, Merkers, Timers and Counters.
-
- - `area` Area identifier (see table [below](#table-area))
- - `dbNumber` DB number if area = S7AreaDB, otherwise ignored
- - `start` Offset to start
- - `amount` Amount of **words** to read
- - `wordLen` Word size (see table [below](#table-wordlen))
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="write-area"></a>S7Client.WriteArea(area, dbNumber, start, amount, wordLen, buffer[, callback])
-This is the main function to write data into a PLC.
-
- - `area` Area identifier (see table [below](#table-area))
- - `dbNumber` DB number if area = S7AreaDB, otherwise ignored
- - `start` Offset to start
- - `amount` Amount of **words** to write
- - `wordLen` Word size (see table [below](#table-wordlen))
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-<a name="table-area"></a>
-
-| Area                   | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Client.S7AreaPE`    | 0x81  | Process inputs
-| `S7Client.S7AreaPA`    | 0x82  | Process outputs
-| `S7Client.S7AreaMK`    | 0x83  | Merkers
-| `S7Client.S7AreaDB`    | 0x84  | DB
-| `S7Client.S7AreaCT`    | 0x1C  | Counters
-| `S7Client.S7AreaTM`    | 0x1D  | Timers
-
-<a name="table-wordlen"></a>
-
-| WordLen                | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Client.S7WLBit`     | 0x01  | Bit (inside a word)
-| `S7Client.S7WLByte`    | 0x02  | Byte (8 bit)
-| `S7Client.S7WLWord`    | 0x04  | Word (16 bit)
-| `S7Client.S7WLDWord`   | 0x06  | Double Word (32 bit)
-| `S7Client.S7WLReal`    | 0x08  | Real (32 bit float)
-| `S7Client.S7WLCounter` | 0x1C  | Counter (16 bit)
-| `S7Client.S7WLTimer`   | 0x1D  | Timer (16 bit)
-
-#### <a name="dbread"></a>S7Client.DBRead(dbNumber, start, size[, callback])
-This is a lean function of `ReadArea()` to read PLC DB.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
-
- - `dbNumber` DB number
- - `start` Offset to start
- - `size` Size to read (bytes)
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="dbwrite"></a>S7Client.DBWrite(dbNumber, start, size, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC DB.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaDB` and `wordLen = s7client.S7WLByte`.
-
- - `dbNumber` DB number
- - `start` Offset to start
- - `size` Size to write (bytes)
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="abread"></a>S7Client.ABRead(start, size[, callback])
-This is a lean function of `ReadArea()` to read PLC process outputs.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to read (bytes)
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="abwrite"></a>S7Client.ABWrite(start, size, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC process outputs.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPA` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to write (bytes)
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="ebread"></a>S7Client.EBRead(start, size[, callback])
-This is a lean function of `ReadArea()` to read PLC process inputs.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to read (bytes)
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="ebwrite"></a>S7Client.EBWrite(start, size, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC process inputs.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaPE` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to write (bytes)
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="mbread"></a>S7Client.MBRead(start, size[, callback])
-This is a lean function of `ReadArea()` to read PLC Merkers.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to read (bytes)
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="mbwrite"></a>S7Client.MBWrite(start, size, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC Merkers.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaMK` and `wordLen = s7client.S7WLByte`.
-
- - `start` Offset to start
- - `size` Size to write (bytes)
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="tmread"></a>S7Client.TMRead(start, amount[, callback])
-This is a lean function of `ReadArea()` to read PLC Timers.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaTM` and `wordLen = S7Client.S7WLTimer`.
-
- - `start` Offset to start
- - `amount` Number of timers
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="tmwrite"></a>S7Client.TMWrite(start, amount, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC Timers.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaTM` and `wordLen = S7Client.S7WLTimer`.
-
- - `start` Offset to start
- - `amount` Number of timers
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="ctread"></a>S7Client.CTRead(start, amount[, callback])
-This is a lean function of `ReadArea()` to read PLC Counters.
-It simply internally calls `ReadArea()` with `area = S7Client.S7AreaCT` and `wordLen = S7Client.S7WLCounter`.
-
- - `start` Offset to start
- - `amount` Number of counters
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="ctwrite"></a>S7Client.CTWrite(start, amount, buffer[, callback])
-This is a lean function of `WriteArea()` to write PLC Counters.
-It simply internally calls `WriteArea()` with `area = S7Client.S7AreaCT` and `wordLen = S7Client.S7WLCounter`.
-
- - `start` Offset to start
- - `amount` Number of counters
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="read-multi-vars"></a>S7Client.ReadMultiVars(multiVars[, callback])
-This is function allows to read different kind of variables from a PLC in a single call. With it you can read DB, Inputs, Outputs, Merkers, Timers and Counters.
-
- - `multiVars` Array of objects with read information (see structure below)
- - The optional `callback` parameter will be executed after read
-
-If `callback` is **not** set the function is **blocking** and returns an `array` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-// multiVars array structure
-[
-  {
-    "Area": S7Client.S7AreaDB,
-    "WordLen": S7Client.S7WLByte,
-    "DBNumber": 1,
-    "Start": 0,
-    "Amount": 1
-  },
-  {
-    "Area": S7Client.S7AreaCT,
-    "WordLen": S7Client.S7WLCounter,
-    "Start": 0,
-    "Amount": 8
-  },
-  {
-    "Area": S7Client.S7AreaPA,
-    "WordLen": S7Client.S7WLByte,
-    "Start": 0,
-    "Amount": 16
-  },
-  ...
-]
-// result array
-[
-  {
-    "Result": 0, // Error code
-    "Data": ...  // Buffer object or null if Result <> 0
-  },
-  ...
-]
+### Connect
 ```
-
-Since could happen that some variables are read, some other not because maybe they don't exist in PLC. It is important to check the single item result.
-
-Due the different kind of variables involved , there is no split feature available for this function, so the maximum data size must not exceed the PDU size.
-The advantage of this function becomes big when you have many small non-contiguous variables to be read.
-
-#### <a name="write-multi-vars"></a>S7Client.WriteMultiVars(multiVars[, callback])
-This is function allows to write different kind of variables into a PLC in a single call. With it you can write DB, Inputs, Outputs, Merkers, Timers and Counters.
-
- - `multiVars` Array of objects with write information (see structure below)
- - The optional `callback` parameter will be executed after write
-
-If `callback` is **not** set the function is **blocking** and returns an `array` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-// multiVars array structure
-[
-  {
-    "Area": S7Client.S7AreaDB,
-    "WordLen": S7Client.S7WLByte,
-    "DBNumber": 1,
-    "Start": 0,
-    "Amount": 1,
-    "Data": buffer1 // Buffer variable
-  },
-  {
-    "Area": S7Client.S7AreaCT,
-    "WordLen": S7Client.S7WLCounter,
-    "Start": 0,
-    "Amount": 8,
-    "Data": buffer2 // Buffer variable
-  },
-  {
-    "Area": S7Client.S7AreaPA,
-    "WordLen": S7Client.S7WLByte,
-    "Start": 0,
-    "Amount": 16,
-    "Data": buffer3 // Buffer variable
-  },
-  ...
-]
-// result array
-[
-  {
-    "Result": 0 // Error code
-  },
-  ...
-]
+Connect(): Promise<undefined>
+Connect(callback: (err: Snap7Error | null) => undefined): undefined
+ConnectSync(): undefined
 ```
+Connect using the parameters set via `ConnectTo` or `SetConnectionParams`.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
-### <a name="directory-functions"></a>API - Directory functions
-
-----------
-
-#### <a name="list-blocks"></a>S7Client.ListBlocks([callback])
-This function returns an object of the AG blocks amount divided by type.
-
-- The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `object` (see below) on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-{
-  "OBCount": 0,
-  "FBCount": 0,
-  "FCCount": 0,
-  "SFBCount": 0,
-  "SFCCount": 0,
-  "DBCount": 0,
-  "SDBCount": 0
-}
+### ConnectTo
 ```
-
-#### <a name="list-blocks-of-type"></a>S7Client.ListBlocksOfType(blockType[, callback])
-This function returns an array of the AG list of a specified block type.
-
- - `blockType` Type of block (see table below)
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `array` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Each item of the result array will contain a block number.
-
-<a name="table-blocktype"></a>
-
-| BlockType              | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Client.Block_OB`    | 0x38  | OB
-| `S7Client.Block_DB`    | 0x41  | DB
-| `S7Client.Block_SDB`   | 0x42  | SDB
-| `S7Client.Block_FC`    | 0x43  | FC
-| `S7Client.Block_SFC`   | 0x44  | SFC
-| `S7Client.Block_FB`    | 0x45  | FB
-| `S7Client.Block_SFB`   | 0x46  | SFB
-
-#### <a name="get-ag-blockinfo"></a>S7Client.GetAgBlockInfo(blockType, blockNum[, callback])
-Returns an object with detailed information about a given AG block.
-This function is very useful if you need to read or write data in a DB which you do not know the size in advance (see MC7Size field)
-
- - `blockType` Type of block (see table [above](#table-blocktype))
- - `blockNum` Number of block
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `object` (see below) on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-<a name="example-blockinfo"></a>
-```javascript
-{
-  "BlkType": ,   // Block Type (see SubBlkType table)
-  "BlkNumber": , // Block number
-  "BlkLang": ,   // Block Language (see LangType Table)
-  "BlkFlags": ,  // Block flags (bitmapped)
-  "MC7Size": ,   // The real size in bytes
-  "LoadSize": ,  // Load memory size
-  "LocalData": , // Local data
-  "SBBLength": , // SBB Length
-  "CheckSum": ,  // Checksum
-  "Version": ,   // Version (BCD 00<HI><LO>)
-  "CodeDate": ,  // Code date
-  "IntfDate": ,  // Interface date
-  "Author": ,    // Author
-  "Family": ,    // Family
-  "Header":      // Header
-}
+ConnectTo(ip: string, rack: number, slot: number): Promise<undefined>
+ConnectTo(ip: string, rack: number, slot: number, callback: (err: Snap7Error | null) => undefined): undefined
+ConnectToSync(ip: string, rack: number, slot: number): undefined
 ```
+Connect directly to the given IP, rack, and slot.
+- Parameters:
+  - `ip`: PLC IPv4 address
+  - `rack`: rack number
+  - `slot`: slot number
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
-| SubBlockType           | Value | Description |
-|:-----------------------|:-----:|:------------|
-| `S7Client.SubBlk_OB`   | 0x08  | OB
-| `S7Client.SubBlk_DB`   | 0x0A  | DB
-| `S7Client.SubBlk_SDB`  | 0x0B  | SDB
-| `S7Client.SubBlk_FC`   | 0x0C  | FC
-| `S7Client.SubBlk_SFC`  | 0x0D  | SFC
-| `S7Client.SubBlk_FB`   | 0x0E  | FB
-| `S7Client.SubBlk_SFB`  | 0x0F  | SFB
-
-| LangType                  | Value | Description |
-|:--------------------------|:-----:|:------------|
-| `S7Client.BlockLangAWL`   | 0x01  | AWL
-| `S7Client.BlockLangKOP`   | 0x02  | KOP
-| `S7Client.BlockLangFUP`   | 0x03  | FUP
-| `S7Client.BlockLangSCL`   | 0x04  | SCL
-| `S7Client.BlockLangDB`    | 0x05  | DB
-| `S7Client.BlockLangGRAPH` | 0x06  | GRAPH
-
-#### <a name="get-pg-blockinfo"></a>S7Client.GetPgBlockInfo(buffer)
-Returns detailed information about a block present in a user buffer. This function is usually used in conjunction with `FullUpload()`.
-An uploaded block saved to disk, could be loaded in a user buffer and checked with this function.
-
- - `buffer` User buffer
-
-Returns an `object` (see [example](#example-blockinfo) above) on success or `false`on error.
-
-### <a name="block-functions"></a>API - Block oriented functions
-
-----------
-
-#### <a name="full-upload"></a>S7Client.FullUpload(blockType, blockNum, size[, callback])
-Uploads a block from AG. The whole block (including header and footer) is copied into the user buffer.
-
- - `blockType` Type of block (see table [above](#table-blocktype))
- - `blockNum` Number of block
- - `size` Buffer size (if smaller than the data
-uploaded, only `size` bytes are copied and `errCliPartialDataRead` is returned)
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="upload"></a>S7Client.Upload(blockType, blockNum[, callback])
-Uploads a block body from AG. Only the block body (but header and footer) is copied into the user buffer.
-
- - `blockType` Type of block (see table [above](#table-blocktype))
- - `blockNum` Number of block
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="download"></a>S7Client.Download(blockNum, buffer[, callback])
-Downloads a block into AG. A whole block (including header and footer) must be available into the user buffer.
-
- - `blockNum` Number of block
- - `buffer` User buffer
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-If the parameter `blockNum` is `-1`, the block number is not changed else the block is downloaded with the provided number (just like a “Download As…”).
-
-#### <a name="delete"></a>S7Client.Delete(blockType, blockNum[, callback])
-Deletes a block into AG.
-
-    !!! There is no undo function available !!!
-
- - `blockType` Type of block (see table [above](#table-blocktype))
- - `blockNum` Number of block
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="dbget"></a>S7Client.DBGet(dbNumber[, callback])
-Uploads a DB from AG. This function is equivalent to `Upload()` with `BlockType = Block_DB` but it uses a different approach so it’s not subject to the security level set.
-
-Only data is uploaded.
-
- - `dbNumber` DB number
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns a `Buffer` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-This function first gathers the DB size via `GetAgBlockInfo()` then calls `DBRead()`.
-
-#### <a name="dbfill"></a>S7Client.DBFill(dbNumber, fillChar[, callback])
-Fills a DB in AG with a given byte without the need of specifying its size.
-
- - `dbNumber` DB number
- - `fillChar` char or char code
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-### <a name="datetime-functions"></a>API - Date/Time functions
-
-----------
-
-#### <a name="get-plc-datetime"></a>S7Client.GetPlcDateTime([callback])
-Reads PLC date and time.
-
-- The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns a javascript `Date()` object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="set-plc-datetime"></a>S7Client.SetPlcDateTime(dateTime[, callback])
-Sets the PLC date and time.
-
- - `dateTime`
- - The optional `callback` parameter will be executed after completion
-
-The `dateTime` argument can be a javascript `Date()` object or an object with the structure below.
-```javascript
-{
-  "year": 2015,  // year
-  "month": 4,    // months since January     0-11
-  "day": 3,      // day of the month         1-31
-  "hours": 19,   // hours since midnight     0-23
-  "minutes": 37, // minutes after the hour   0-59
-  "seconds": 0   // seconds after the minute 0-59
-}
+### SetConnectionParams
 ```
-
-If `callback` is **not** set the function is **blocking** and returns a `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="set-plc-system-datetime"></a>S7Client.SetPlcSystemDateTime([callback])
-Sets the PLC date and time in accord to the PC system Date/Time.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-### <a name="systeminfo-functions"></a>API - System info functions
-
-----------
-
-#### <a name="read-szl"></a>S7Client.ReadSZL(id, index[, callback])
-Reads a partial list of given `id`and `index`.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns a `buffer` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="read-szl-list"></a>S7Client.ReadSZLList([callback])
-Reads the directory of the partial lists.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `array` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-#### <a name="get-order-code"></a>S7Client.GetOrderCode([callback])
-Gets CPU order code and version info.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `object` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-{
-  "Code": , // Order Code
-  "V1": ,   // Version V1.V2.V3
-  "V2": ,
-  "V3":
-}
+SetConnectionParams(ip: string, localTSAP: number, remoteTSAP: number): undefined
 ```
+Set ISO-on-TCP parameters prior to connecting.
+- Parameters:
+  - `ip`: PLC IPv4 address
+  - `localTSAP`: local TSAP
+  - `remoteTSAP`: remote TSAP
+- Returns: `undefined`
 
-#### <a name="get-cpu-info"></a>S7Client.GetCpuInfo([callback])
-Gets CPU module name, serial number and other info.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `object` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-{
-  "ModuleTypeName": ,
-  "SerialNumber": ,
-  "ASName": ,
-  "Copyright": ,
-  "ModuleName":
-}
+### SetConnectionType
 ```
-
-#### <a name="get-cp-info"></a>S7Client.GetCpInfo([callback])
-Gets CP (communication processor) info.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns an `object` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-{
-  "MaxPduLength": ,
-  "MaxConnections": ,
-  "MaxMpiRate": ,
-  "MaxBusRate":
-}
+SetConnectionType(type: number): undefined
 ```
+Set the connection resource type.
+- Parameters:
+  - `type`: see [Connection types](#connection-types)
+- Returns: `undefined`
 
-### <a name="control-functions"></a>API - PLC control functions
-
-----------
-
-#### <a name="plc-hot-start"></a>S7Client.PlcHotStart([callback])
-Puts the CPU in RUN mode performing an HOT START.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="plc-cold-start"></a>S7Client.PlcColdStart([callback])
-Puts the CPU in RUN mode performing a COLD START.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="plc-stop"></a>S7Client.PlcStop([callback])
-Puts the CPU in STOP mode.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="copy-ram-to-rom"></a>S7Client.CopyRamToRom(timeout[, callback])
-Performs the Copy Ram to Rom action.
-
- - `timeout` Maximum time expected to complete the operation (ms)
- - The optional `callback` parameter will be executed after completion or on timeout
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-Not all CPUs support this operation.
-The CPU must be in STOP mode.
-
-#### <a name="compress"></a>S7Client.Compress(timeout[, callback])
-Performs the Memory compress action.
-
- - `timeout` Maximum time expected to complete the operation (ms)
- - The optional `callback` parameter will be executed after completion or on timeout
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-### <a name="security-functions"></a>API - Security functions
-
-----------
-
-#### <a name="set-session-password"></a>S7Client.SetSessionPassword(password[, callback])
-Send the password to the PLC to meet its security level.
-
- - `password` Password
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-A `password` accepted by a PLC is an 8 chars string, a longer password will be trimmed, and a shorter one will be "right space padded".
-
-#### <a name="clear-session-password"></a>S7Client.ClearSessionPassword([callback])
-Clears the password set for the current session (logout).
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns `true` on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` argument is given to the callback.
-
-#### <a name="get-protection"></a>S7Client.GetProtection([callback])
-Gets the CPU protection level info.
-
- - The optional `callback` parameter will be executed after completion
-
-If `callback` is **not** set the function is **blocking** and returns the protection object on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
-
-Example:
-```javascript
-{
-  "sch_schal": 1,
-  "sch_par": 0,
-  "sch_rel": 0,
-  "bart_sch": 1,
-  "anl_sch": 0
-}
+### Disconnect
 ```
+Disconnect(): undefined
+```
+Close the connection.
+- Returns: `undefined`
 
-| S7Protection | Values  | Description |
-|:-------------|:--------|:------------|
-| `sch_schal`  | 1,2,3   | Protection level set with the mode selector
-| `sch_par`    | 0,1,2,3 | Password level, 0 : no password
-| `sch_rel`    | 0,1,2,3 | Valid protection level of the CPU
-| `bart_sch`   | 1,2,3,4 | Mode selector setting (1:RUN, 2:RUN-P, 3:STOP, :MRES, 0:undefined or cannot be determined)
-| `anl_sch`    | 0,1,2   | Startup switch setting (1:CRST, 2:WRST, 0:undefined, does not exist of cannot be determined)
+### GetParam
+```
+GetParam(paramNumber: number): number
+```
+Read a client parameter.
+- Parameters:
+  - `paramNumber`: see [Client parameters](#client-parameters)
+- Returns: parameter value
 
-### <a name="properties"></a>API - Properties
+### SetParam
+```
+SetParam(paramNumber: number, value: number): undefined
+```
+Write a client parameter.
+- Parameters:
+  - `paramNumber`: see [Client parameters](#client-parameters)
+  - `value`: new value
+- Returns: `undefined`
 
-----------
+---
 
-#### <a name="exec-time"></a>S7Client.ExecTime()
-Returns the last job execution time in milliseconds or `false`on error.
+## Data I/O functions
 
-#### <a name="last-error"></a>S7Client.LastError()
-Returns the last job result.
+### ReadArea
+```
+ReadArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen): Promise<Buffer>
+ReadArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+ReadAreaSync(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen): Buffer
+```
+Read raw data from the PLC.
+- Parameters:
+  - `area`: memory area
+  - `dbNumber`: DB number (only for `S7Area.DB`)
+  - `start`: byte offset (bit index if `S7WordLen.Bit`)
+  - `amount`: element count in units of `wordLen`
+  - `wordLen`: element type/size
+- Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
 
-#### <a name="pdu-requested"></a>S7Client.PDURequested()
-Returns the PDU length requested by the client or `false` on error. The requested PDU length can be modified with [SetParam()](#set-param).
+### WriteArea
+```
+WriteArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer): Promise<undefined>
+WriteArea(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
+WriteAreaSync(area: S7Area, dbNumber: number, start: number, amount: number, wordLen: S7WordLen, buffer: Buffer): undefined
+```
+Write raw data to the PLC.
+- Parameters:
+  - `area`: memory area
+  - `dbNumber`: DB number (only for `S7Area.DB`)
+  - `start`: byte offset (bit index if `S7WordLen.Bit`)
+  - `amount`: element count in units of `wordLen`
+  - `wordLen`: element type/size
+  - `buffer`: data to write
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
 
-#### <a name="pdu-length"></a>S7Client.PDULength()
-Returns the PDU length negotiated between the client and the PLC during the connection or `false` on error.
+### Convenience read/write wrappers
+Each wrapper supports Promise/Callback/Sync variants like `Foo(...) -> Promise<...>`, `Foo(..., callback) -> undefined`, `FooSync(...) -> ...`.
+- DB: `DBRead`, `DBWrite`
+- Merker: `MBRead`, `MBWrite`
+- Inputs: `EBRead`, `EBWrite`
+- Outputs: `ABRead`, `ABWrite`
+- Timers: `TMRead`, `TMWrite`
+- Counters: `CTRead`, `CTWrite`
 
-It’s useful to know the PDU negotiated when we need to call `ReadMultivar()` or `WriteMultiVar()`. All other data transfer functions handle this information by themselves and split the telegrams automatically if needed.
+### ReadMultiVars
+```
+ReadMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[]): Promise<S7MultiVarReadResult[]>
+ReadMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[], callback: (err: Snap7Error | null, data: S7MultiVarReadResult[]) => undefined): undefined
+ReadMultiVarsSync(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number }[]): S7MultiVarReadResult[]
+```
+Read multiple addresses in one request.
+- Parameters:
+  - `items`: `{ Area: S7Area, WordLen: S7WordLen, DBNumber?, Start, Amount }`
+- Returns: Promise resolves with `S7MultiVarReadResult[]`; callback receives `(err, results)`; Sync returns `S7MultiVarReadResult[]` (throws on error)
 
-#### <a name="plc-status"></a>S7Client.PlcStatus([callback])
-Returns the CPU status (running/stopped).
+### WriteMultiVars
+```
+WriteMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): Promise<S7MultiVarWriteResult[]>
+WriteMultiVars(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[], callback: (err: Snap7Error | null, data: S7MultiVarWriteResult[]) => undefined): undefined
+WriteMultiVarsSync(items: { Area: S7Area; WordLen: S7WordLen; DBNumber?: number; Start: number; Amount: number; Data: Buffer }[]): S7MultiVarWriteResult[]
+```
+Write multiple addresses in one request.
+- Parameters:
+  - `items`: `{ Area: S7Area, WordLen: S7WordLen, DBNumber?, Start, Amount, Data: Buffer }`
+- Returns: Promise resolves with `S7MultiVarWriteResult[]`; callback receives `(err, results)`; Sync returns `S7MultiVarWriteResult[]` (throws on error)
 
- - The optional `callback` parameter will be executed after completion
+---
 
-If `callback` is **not** set the function is **blocking** and returns the CPU status on success or `false` on error.<br />
-If `callback` is set the function is **non-blocking** and an `error` and `result` argument is given to the callback.
+## Directory functions
 
-| Status                        | Value | Description |
-|:------------------------------|:-----:|:------------|
-| `S7Client.S7CpuStatusUnknown` | 0x00  | The CPU status is unknown
-| `S7Client.S7CpuStatusRun`     | 0x08  | The CPU is running
-| `S7Client.S7CpuStatusStop`    | 0x04  | The CPU is stopped
+### ListBlocks
+```
+ListBlocks(): Promise<BlocksList>
+ListBlocks(callback: (err: Snap7Error | null, data: BlocksList) => undefined): undefined
+ListBlocksSync(): BlocksList
+```
+Get a count of blocks on the PLC.
+- Returns: Promise resolves with `BlocksList`; callback receives `(err, blocks)`; Sync returns `BlocksList` (throws on error)
 
-#### <a name="connected"></a>S7Client.Connected()
-Returns the connection status.
+### ListBlocksOfType
+```
+ListBlocksOfType(blockType: BlockType): Promise<number[]>
+ListBlocksOfType(blockType: BlockType, callback: (err: Snap7Error | null, data: number[]) => undefined): undefined
+ListBlocksOfTypeSync(blockType: BlockType): number[]
+```
+List block numbers of a specific type.
+- Parameters:
+  - `blockType`: block type code
+- Returns: Promise resolves with `number[]`; callback receives `(err, numbers)`; Sync returns `number[]` (throws on error)
 
-#### <a name="error-text"></a>S7Client.ErrorText(errNum)
-Returns a textual explanation of a given error number.
+### GetAgBlockInfo
+```
+GetAgBlockInfo(blockType: BlockType, blockNum: number): Promise<BlockInfo>
+GetAgBlockInfo(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null, data: BlockInfo) => undefined): undefined
+GetAgBlockInfoSync(blockType: BlockType, blockNum: number): BlockInfo
+```
+Get metadata for a block on the PLC.
+- Parameters:
+  - `blockType`: block type code
+  - `blockNum`: block number
+- Returns: Promise resolves with `BlockInfo`; callback receives `(err, info)`; Sync returns `BlockInfo` (throws on error)
 
- - `errNum` Error number
+### GetPgBlockInfo
+```
+GetPgBlockInfo(buffer: Buffer): BlockInfo
+```
+Get metadata for a block stored in a buffer.
+- Parameters:
+  - `buffer`: block buffer
+- Returns: `BlockInfo` (throws on error)
+
+---
+
+## Block operations
+
+### FullUpload
+```
+FullUpload(blockType: BlockType, blockNum: number, size: number): Promise<Buffer>
+FullUpload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+FullUploadSync(blockType: BlockType, blockNum: number, size: number): Buffer
+```
+Download an entire block including headers.
+- Parameters:
+  - `blockType`: block type code
+  - `blockNum`: block number
+  - `size`: max bytes to read
+- Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
+
+### Upload
+```
+Upload(blockType: BlockType, blockNum: number, size: number): Promise<Buffer>
+Upload(blockType: BlockType, blockNum: number, size: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+UploadSync(blockType: BlockType, blockNum: number, size: number): Buffer
+```
+Download the MC7 code portion of a block.
+- Parameters:
+  - `blockType`: block type code
+  - `blockNum`: block number
+  - `size`: max bytes to read
+- Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
+
+### Download
+```
+Download(blockNum: number, buffer: Buffer): Promise<undefined>
+Download(blockNum: number, buffer: Buffer, callback: (err: Snap7Error | null) => undefined): undefined
+DownloadSync(blockNum: number, buffer: Buffer): undefined
+```
+Upload a compiled block buffer to the PLC.
+- Parameters:
+  - `blockNum`: block number
+  - `buffer`: compiled block data
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### Delete
+```
+Delete(blockType: BlockType, blockNum: number): Promise<undefined>
+Delete(blockType: BlockType, blockNum: number, callback: (err: Snap7Error | null) => undefined): undefined
+DeleteSync(blockType: BlockType, blockNum: number): undefined
+```
+Delete a block on the PLC.
+- Parameters:
+  - `blockType`: block type code
+  - `blockNum`: block number
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### DBGet
+```
+DBGet(dbNumber: number): Promise<Buffer>
+DBGet(dbNumber: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+DBGetSync(dbNumber: number): Buffer
+```
+Fetch the raw content of a DB.
+- Parameters:
+  - `dbNumber`: DB number
+- Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
+
+### DBFill
+```
+DBFill(dbNumber: number, fillChar: number | string): Promise<undefined>
+DBFill(dbNumber: number, fillChar: number | string, callback: (err: Snap7Error | null) => undefined): undefined
+DBFillSync(dbNumber: number, fillChar: number | string): undefined
+```
+Fill an entire DB with a byte or character.
+- Parameters:
+  - `dbNumber`: DB number
+  - `fillChar`: fill byte or single-character string
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+---
+
+## Date/Time functions
+
+### GetPlcDateTime
+```
+GetPlcDateTime(): Promise<Date>
+GetPlcDateTime(callback: (err: Snap7Error | null, data: Date) => undefined): undefined
+GetPlcDateTimeSync(): Date
+```
+Read the PLC system clock.
+- Returns: Promise resolves with `Date`; callback receives `(err, date)`; Sync returns `Date` (throws on error)
+
+### SetPlcDateTime
+```
+SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject)): Promise<undefined>
+SetPlcDateTime(dateTime: Date | [DateTimeObject](#datetimeobject), callback: (err: Snap7Error | null) => undefined): undefined
+SetPlcDateTimeSync(dateTime: Date | [DateTimeObject](#datetimeobject)): undefined
+```
+Set the PLC system clock.
+- Parameters:
+  - `dateTime`: desired time (Date or [DateTimeObject](#datetimeobject))
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### SetPlcSystemDateTime
+```
+SetPlcSystemDateTime(): Promise<undefined>
+SetPlcSystemDateTime(callback: (err: Snap7Error | null) => undefined): undefined
+SetPlcSystemDateTimeSync(): undefined
+```
+Set the PLC system clock to the host time.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+---
+
+## System info functions
+
+### ReadSZL
+```
+ReadSZL(id: number, index: number): Promise<Buffer>
+ReadSZL(id: number, index: number, callback: (err: Snap7Error | null, data: Buffer) => undefined): undefined
+ReadSZLSync(id: number, index: number): Buffer
+```
+Read a System-Zustands-Listen (SZL) record.
+- Parameters:
+  - `id`: SZL ID
+  - `index`: SZL index
+- Returns: Promise resolves with `Buffer`; callback receives `(err, buffer)`; Sync returns `Buffer` (throws on error)
+
+### ReadSZLList
+```
+ReadSZLList(): Promise<number[]>
+ReadSZLList(callback: (err: Snap7Error | null, data: number[]) => undefined): undefined
+ReadSZLListSync(): number[]
+```
+List available SZL IDs.
+- Returns: Promise resolves with `number[]`; callback receives `(err, ids)`; Sync returns `number[]` (throws on error)
+
+### GetOrderCode
+```
+GetOrderCode(): Promise<OrderCode>
+GetOrderCode(callback: (err: Snap7Error | null, data: OrderCode) => undefined): undefined
+GetOrderCodeSync(): OrderCode
+```
+Retrieve the PLC order code.
+- Returns: Promise resolves with `OrderCode`; callback receives `(err, code)`; Sync returns `OrderCode` (throws on error)
+
+### GetCpuInfo
+```
+GetCpuInfo(): Promise<CpuInfo>
+GetCpuInfo(callback: (err: Snap7Error | null, data: CpuInfo) => undefined): undefined
+GetCpuInfoSync(): CpuInfo
+```
+Get CPU identification data.
+- Returns: Promise resolves with `CpuInfo`; callback receives `(err, info)`; Sync returns `CpuInfo` (throws on error)
+
+### GetCpInfo
+```
+GetCpInfo(): Promise<CpInfo>
+GetCpInfo(callback: (err: Snap7Error | null, data: CpInfo) => undefined): undefined
+GetCpInfoSync(): CpInfo
+```
+Get communication processor information.
+- Returns: Promise resolves with `CpInfo`; callback receives `(err, info)`; Sync returns `CpInfo` (throws on error)
+
+---
+
+## PLC control functions
+
+### PlcHotStart
+```
+PlcHotStart(): Promise<undefined>
+PlcHotStart(callback: (err: Snap7Error | null) => undefined): undefined
+PlcHotStartSync(): undefined
+```
+Warm-start the PLC.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### PlcColdStart
+```
+PlcColdStart(): Promise<undefined>
+PlcColdStart(callback: (err: Snap7Error | null) => undefined): undefined
+PlcColdStartSync(): undefined
+```
+Cold-start the PLC.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### PlcStop
+```
+PlcStop(): Promise<undefined>
+PlcStop(callback: (err: Snap7Error | null) => undefined): undefined
+PlcStopSync(): undefined
+```
+Stop the PLC CPU.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### CopyRamToRom
+```
+CopyRamToRom(timeout: number): Promise<undefined>
+CopyRamToRom(timeout: number, callback: (err: Snap7Error | null) => undefined): undefined
+CopyRamToRomSync(timeout: number): undefined
+```
+Copy RAM to ROM on the PLC.
+- Parameters:
+  - `timeout`: timeout in milliseconds
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### Compress
+```
+Compress(timeout: number): Promise<undefined>
+Compress(timeout: number, callback: (err: Snap7Error | null) => undefined): undefined
+CompressSync(timeout: number): undefined
+```
+Compress PLC memory.
+- Parameters:
+  - `timeout`: timeout in milliseconds
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### PlcStatus
+```
+PlcStatus(): Promise<PlcStatus>
+PlcStatus(callback: (err: Snap7Error | null, data: PlcStatus) => undefined): undefined
+PlcStatusSync(): PlcStatus
+```
+Read the current CPU status.
+- Returns: Promise resolves with `PlcStatus`; callback receives `(err, status)`; Sync returns `PlcStatus` (throws on error)
+
+---
+
+## Security functions
+
+### SetSessionPassword
+```
+SetSessionPassword(password: string): Promise<undefined>
+SetSessionPassword(password: string, callback: (err: Snap7Error | null) => undefined): undefined
+SetSessionPasswordSync(password: string): undefined
+```
+Set a session password for the current connection.
+- Parameters:
+  - `password`: session password
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### ClearSessionPassword
+```
+ClearSessionPassword(): Promise<undefined>
+ClearSessionPassword(callback: (err: Snap7Error | null) => undefined): undefined
+ClearSessionPasswordSync(): undefined
+```
+Clear the active session password.
+- Returns: Promise resolves with `undefined`; callback receives `(err)`; Sync returns `undefined` (throws on error)
+
+### GetProtection
+```
+GetProtection(): Promise<Protection>
+GetProtection(callback: (err: Snap7Error | null, data: Protection) => undefined): undefined
+GetProtectionSync(): Protection
+```
+Read the PLC protection levels.
+- Returns: Promise resolves with `Protection`; callback receives `(err, protection)`; Sync returns `Protection` (throws on error)
+
+---
+
+## Properties & diagnostics
+- `ExecTime() -> number` — execution time (ms) of the last job.
+- `PDURequested() -> number` — requested PDU length during negotiation.
+- `PDULength() -> number` — negotiated PDU length.
+- `Connected() -> boolean` — connection state.
+- `ErrorText(code: number) -> string` — human-readable text for a Snap7 error code.
+
+---
+
+## Constants
+
+All constants are grouped exports; use the object/property names below (e.g. `S7Area.DB`, `S7WordLen.Real`).
+
+### Areas
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `S7Area.PE` | 0x81 | Process inputs |
+| `S7Area.PA` | 0x82 | Process outputs |
+| `S7Area.MK` | 0x83 | Merkers |
+| `S7Area.CT` | 0x1C | Counters |
+| `S7Area.TM` | 0x1D | Timers |
+| `S7Area.DB` | 0x84 | Data blocks |
+
+### Word lengths
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `S7WordLen.Bit` | 0x01 | Bit |
+| `S7WordLen.Byte` | 0x02 | Byte |
+| `S7WordLen.Word` | 0x04 | Word (2 bytes) |
+| `S7WordLen.DWord` | 0x06 | Double word (4 bytes) |
+| `S7WordLen.Real` | 0x08 | Real (float) |
+| `S7WordLen.Counter` | 0x1C | Counter (word) |
+| `S7WordLen.Timer` | 0x1D | Timer (word) |
+
+### Connection types
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `ConnectionType.PG` | 0x0001 | Programming device |
+| `ConnectionType.OP` | 0x0002 | Operator panel |
+| `ConnectionType.BASIC` | 0x0003 | Basic connection |
+
+### Block types
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `BlockType.OB` | 0x38 | Organization block |
+| `BlockType.DB` | 0x41 | Data block |
+| `BlockType.SDB` | 0x42 | System data block |
+| `BlockType.FC` | 0x43 | Function |
+| `BlockType.SFC` | 0x44 | System function |
+| `BlockType.FB` | 0x45 | Function block |
+| `BlockType.SFB` | 0x46 | System function block |
+
+### Block languages
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `BlockLang.AWL` | 0x01 | AWL |
+| `BlockLang.KOP` | 0x02 | KOP |
+| `BlockLang.FUP` | 0x03 | FUP |
+| `BlockLang.SCL` | 0x04 | SCL |
+| `BlockLang.DB` | 0x05 | DB |
+| `BlockLang.GRAPH` | 0x06 | GRAPH |
+
+### Sub block types
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `SubBlockType.OB` | 0x08 | Organization sub-block |
+| `SubBlockType.DB` | 0x0A | Data sub-block |
+| `SubBlockType.SDB` | 0x0B | System data sub-block |
+| `SubBlockType.FC` | 0x0C | Function sub-block |
+| `SubBlockType.SFC` | 0x0D | System function sub-block |
+| `SubBlockType.FB` | 0x0E | Function block sub-block |
+| `SubBlockType.SFB` | 0x0F | System function block sub-block |
+
+### PLC status codes
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `PlcStatus.Unknown` | 0x00 | Status not known |
+| `PlcStatus.Run` | 0x08 | CPU running |
+| `PlcStatus.Stop` | 0x04 | CPU stopped |
+
+### Client parameters
+| Name | Value | Description |
+|:-----|:----:|:------------|
+| `ClientParameter.RemotePort` | 2 | Remote TSAP port |
+| `ClientParameter.PingTimeout` | 3 | Ping timeout (ms) |
+| `ClientParameter.SendTimeout` | 4 | Send timeout (ms) |
+| `ClientParameter.RecvTimeout` | 5 | Receive timeout (ms) |
+| `ClientParameter.SrcRef` | 7 | Source reference |
+| `ClientParameter.DstRef` | 8 | Destination reference |
+| `ClientParameter.SrcTSap` | 9 | Local TSAP |
+| `ClientParameter.PDURequest` | 10 | Requested PDU length |
+
+---
+
+## Type definitions
+
+### BlocksList
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `OBCount` | number | Organization blocks |
+| `FBCount` | number | Function blocks |
+| `FCCount` | number | Functions |
+| `SFBCount` | number | System function blocks |
+| `SFCCount` | number | System functions |
+| `DBCount` | number | Data blocks |
+| `SDBCount` | number | System data blocks |
+
+### BlockInfo
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `BlkType` | number | Block type |
+| `BlkNumber` | number | Block number |
+| `BlkLang` | number | Language |
+| `BlkFlags` | number | Flags |
+| `MC7Size` | number | MC7 size |
+| `LoadSize` | number | Load size |
+| `LocalData` | number | Local data size |
+| `SBBLength` | number | SBB length |
+| `CheckSum` | number | Checksum |
+| `Version` | number | Version |
+| `CodeDate` | string | Code date |
+| `IntfDate` | string | Interface date |
+| `Author` | string | Author |
+| `Family` | string | Family |
+| `Header` | string | Header |
+
+### OrderCode
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Code` | string | Order code |
+| `V1` | number | Version major |
+| `V2` | number | Version minor |
+| `V3` | number | Version patch |
+
+### CpuInfo
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `ModuleTypeName` | string | Module type name |
+| `SerialNumber` | string | Serial number |
+| `ASName` | string | AS name |
+| `Copyright` | string | Copyright |
+| `ModuleName` | string | Module name |
+
+### CpInfo
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `MaxPduLength` | number | Max PDU length |
+| `MaxConnections` | number | Max connections |
+| `MaxMpiRate` | number | Max MPI rate |
+| `MaxBusRate` | number | Max bus rate |
+
+### Protection
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `sch_schal` | number | Switch-on protection |
+| `sch_par` | number | Parameter protection |
+| `sch_rel` | number | Release protection |
+| `bart_sch` | number |??? |
+| `anl_sch` | number |??? |
+
+### DateTimeObject
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `year` | number | Year |
+| `month` | number | Month (1-12) |
+| `day` | number | Day (1-31) |
+| `hour` | number | Hour (0-23) |
+| `minute` | number | Minute (0-59) |
+| `second` | number | Second (0-59) |
+| `millis` | number | Milliseconds (0-999) |
+
+### S7MultiVarReadResult
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Result` | number | Snap7 result code |
+| `Data` | Buffer \| null | Returned data for the item |
+
+### S7MultiVarWriteResult
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `Result` | number | Snap7 result code |

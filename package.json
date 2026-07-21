@@ -1,12 +1,26 @@
 {
   "name": "node-snap7",
+  "version": "2.0.0-beta",
   "main": "./lib/node-snap7.js",
-  "version": "1.0.9",
+  "types": "./lib/node-snap7.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/node-snap7.js",
+      "import": "./lib/node-snap7.mjs",
+      "types": "./lib/node-snap7.d.ts"
+    }
+  },
   "description": "Native node.js addon/wrapper for snap7",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "gypfile": true,
   "homepage": "https://github.com/mathiask88/node-snap7",
   "repository": {
     "type": "git",
     "url": "git://github.com/mathiask88/node-snap7.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mathiask88/node-snap7/issues"
   },
   "keywords": [
     "snap7",
@@ -18,21 +32,35 @@
     "name": "Mathias Küsel"
   },
   "engines": {
-    "node": "16 || 18 || 20 || 22 || 24"
+    "node": ">=18"
   },
-  "license": "MIT",
-  "readmeFilename": "README.md",
   "dependencies": {
-    "nan": "^2.23.0",
-    "bindings": "^1.5.0",
-    "prebuild-install": "^7.1.2"
+    "node-gyp-build": "~4.8.4"
   },
   "devDependencies": {
-    "prebuild": "^13.0.1",
-    "prebuild-ci": "^4.0.0"
+    "electron": "^43.2.0",
+    "node-addon-api": "~8.9.0",
+    "node-gyp": "^13.0.1",
+    "prebuildify": "^6.0.1",
+    "prebuildify-ci": "^1.0.5",
+    "prebuildify-cross": "^5.1.1",
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3"
   },
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild",
-    "test": "prebuild-ci"
+    "install": "node-gyp-build",
+    "rebuild": "npm run install --build-from-source",
+    "prebuild": "prebuildify -t 18.20.8 --napi --strip",
+    "test": "node ./scripts/run-node-tests.js && npm run test:types",
+    "test:types": "tsc -p scripts/type-tests/tsconfig.json",
+    "test-electron": "node ./scripts/run-electron-tests.js",
+    "download-prebuilds": "prebuildify-ci download",
+    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64-lts -t 18.20.8 --napi --strip",
+    "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 18.20.8 --napi --strip",
+    "prebuild-linux-x64": "prebuildify-cross -i almalinux-devtoolset11 -i alpine -t 18.20.8 --napi --strip",
+    "prebuild-darwin-x64+arm64": "prebuildify -t 18.20.8 --napi --strip --arch x64+arm64",
+    "prebuild-win32-x86": "prebuildify -t 18.20.8 --napi --strip",
+    "prebuild-win32-x64": "prebuildify -t 18.20.8 --napi --strip",
+    "prebuild-win32-arm64": "prebuildify -t 22.21.1 --napi --strip --arch arm64"
   }
 }

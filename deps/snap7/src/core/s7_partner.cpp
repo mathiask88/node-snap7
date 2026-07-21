@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.3.0 |
+|  PROJECT SNAP7                                                         1.4.3 |
 |==============================================================================|
-|  Copyright (C) 2013, 2015 Davide Nardella                                    |
+|  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |
@@ -200,6 +200,7 @@ TConnectionServer::TConnectionServer()
     memset(Partners,0,sizeof(Partners));
     FRunning = false;
     PartnersCount = 0;
+    Destroying = false;
 }
 //------------------------------------------------------------------------------
 TConnectionServer::~TConnectionServer()
@@ -404,6 +405,7 @@ TSnap7Partner::TSnap7Partner(bool CreateActive)
     memset(&FRecvLast,0,sizeof(TRecvLast));
     FSendElapsed  = 0;
 	Destroying    = false;
+    Stopping      = false;
     // public
     Linked        =false;
     Running       =false;

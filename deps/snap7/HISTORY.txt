@@ -1,3 +1,67 @@
+======================================================================[2016-12-04]
+Version 1.4.3 - Small bugfix, repository change, repository split
+----------------------------------------------------------------------------------
+IMPORTANT: Previous releases are still in the old repository in sourceforge if you
+           need them (e.g. Legacy Windows 32 bit such as XP, NT, etc..). 
+----------------------------------------------------------------------------------
+[BIG Changes]
+- Changed repository to GitHub/davenardella
+- Package split: now you can find examples, Labview, rich-demos, utility into
+  separated repositories
+- Deleted mingw, now only VisualStudio (since the Community edition is free).
+  Anyway, if you don't need to chamge and rebuild it, latest dlls are supplied.
+
+[Changes]
+- Due to some strange behaviors of Windows 11 (for all software) snap_platform.h 
+  has been streamlined. Now VS2008 is no longer supported.
+
+[Added]
+- Visual Studio 2022 solution for Windows
+
+[Fixed]
+- Some bugfix in SZL
+
+======================================================================[2016-12-04]
+Version 1.4.2 - Platform release
+----------------------------------------------------------------------------------
+[Changed]
+- Removed all the dependencies on STL to start the project IoT.
+  Now the GNU compiled library is fully compatible also with projects made with
+  a cross-compiler.
+
+======================================================================[2016-10-23]
+Version 1.4.1 - Bugfix/Small changes release 
+----------------------------------------------------------------------------------
+[Added]
+- Client, Partner
+  Passing 0 as PingTimeout (via SetParam function) the ping is disabled.
+  This is useful for accessing a PLC via Internet or when a firewall blocks
+  ICMP packets.
+  Works only under Windows since Unix smart-connect mechanism is different (no
+  ICMP packet are used).
+
+- Visual Studio 2015 Solution for rebuilding Snap7.
+
+- Visual Studio example for embedding Snap7 in a cpp project (i.e. without using
+  snap7.dll)
+
+[Fixed]
+- Resourceless Server
+  An error occurred managing MultiRead Vars when NumItems>8
+- Client
+  An error in ListBlocksOfType occurred when the PDU>=480 and the blocks to be 
+  listed were high.
+  Thanks to Rade Nisevic.
+- .NET wrapper
+  Fixed an error in GetIntAt.
+  Thanks to Lukasz Stefanowicz
+- Server
+  Some local vars initialization to avoid a (wrong but blocking) error of "using
+  uninitialized var) in VS, GNU cpp didn't report it because the vars, when used
+  were initialized.
+  Thenks to Werner
+
+
 ======================================================================[2015-06-14]
 Version 1.4.0 - release for gourmets (fully compatible with 1.0.0)
 ----------------------------------------------------------------------------------
@@ -12,11 +76,11 @@ Version 1.4.0 - release for gourmets (fully compatible with 1.0.0)
 [Added]
 
 - Resourceless server
-  Now Snap7Server can work in "resourceless" mode, i.e. you don’t need to share 
-  resources (DB, E, A…) with it : On every read/write request a callback is 
+  Now Snap7Server can work in "resourceless" mode, i.e. you don t need to share 
+  resources (DB, E, A ) with it : On every read/write request a callback is 
   called passing it the TAG (Type of memory E,A,DB..,DB number if any, Start, 
   Size, WordLen), and a pointer to the internal server area to read/write your 
-  data “on demand”.
+  data  on demand .
 
   The 1.4.0 wrappers were updated to reflect this new mode and I wrote some 
   examples on how to use this feature, that however is very simple.
@@ -103,7 +167,7 @@ Comfort
 - .net S7Client.ReadMultivars (and Write) was improved.
   (Thanks to LanceL who made it)
 - S7Client now checks if it's connected before do anything.
-  (Thanks to Mathias Küsel for reporting it)
+  (Thanks to Mathias K sel for reporting it)
 
 
 [Latest OS]
@@ -195,10 +259,10 @@ Version 1.2.0 - New Minor platform release (fully compatible with 1.0.0)
 [fixed]
 
 - S7API directive missing for two functions in snap7_libmain.h
-  (Thanks to Mathias Küsel for reporting)
+  (Thanks to Mathias K sel for reporting)
 
 - fixed Snap7.S7Server.Srv_RegisterArea in snap7.net.cs
-  (Thanks to André for reporting).
+  (Thanks to Andr  for reporting).
 
 - Added a static var to contain the callback addresses into c# examples.
   The .net garbage collector *sometime* garbages the delegates (called by unmanaged

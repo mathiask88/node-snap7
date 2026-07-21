@@ -1,7 +1,7 @@
 /*=============================================================================|
-|  PROJECT SNAP7                                                         1.3.0 |
+|  PROJECT SNAP7                                                         1.4.3 |
 |==============================================================================|
-|  Copyright (C) 2013, 2015 Davide Nardella                                    |
+|  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
 |==============================================================================|
 |  SNAP7 is free software: you can redistribute it and/or modify               |

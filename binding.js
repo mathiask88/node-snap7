@@ -1,0 +1,1 @@
+module.exports = t = require('node-gyp-build')(__dirname);

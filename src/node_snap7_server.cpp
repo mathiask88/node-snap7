@@ -1,1357 +1,785 @@
 /*
- * Copyright (c) 2019, Mathias Küsel
+ * Copyright (c) 2025, Mathias Küsel
  * MIT License <https://github.com/mathiask88/node-snap7/blob/master/LICENSE>
  */
 
+#include <node_snap7_helpers.h>
 #include <node_snap7_server.h>
 
 namespace node_snap7 {
 
-static uv_async_t event_async_g;
-static uv_async_t rw_async_g;
-static uv_mutex_t mutex_rw;
-static uv_mutex_t mutex_event;
-static uv_sem_t sem_rw;
-static std::deque<TSrvEvent> event_list_g;
+Napi::Object S7Server::Init(Napi::Env env, Napi::Object exports) {
+    Napi::HandleScope scope(env);
 
-static struct rw_event_baton_t {
-  int Sender;
-  int Operation;
-  TS7Tag Tag;
-  void *pUsrData;
-} rw_event_baton_g;
+    Napi::Function func =
+        DefineClass(env,
+                    "S7Server",
+                    {
+                        // Setup the prototype
+                        InstanceMethod("_Start", &S7Server::Start),
+                        InstanceMethod("_StartTo", &S7Server::StartTo),
+                        InstanceMethod("_Stop", &S7Server::Stop),
+                        InstanceMethod("SetParam", &S7Server::SetParam),
+                        InstanceMethod("GetParam", &S7Server::GetParam),
+                        InstanceMethod("SetResourceless", &S7Server::SetResourceless),
+                        InstanceMethod("RegisterArea", &S7Server::RegisterArea),
+                        InstanceMethod("UnregisterArea", &S7Server::UnregisterArea),
+                        InstanceMethod("LockArea", &S7Server::LockArea),
+                        InstanceMethod("UnlockArea", &S7Server::UnlockArea),
+                        InstanceMethod("SetArea", &S7Server::SetArea),
+                        InstanceMethod("GetArea", &S7Server::GetArea),
+                        InstanceMethod("SetEventsMask", &S7Server::SetEventsMask),
+                        InstanceMethod("GetEventsMask", &S7Server::GetEventsMask),
+                        InstanceMethod("ErrorText", &S7Server::ErrorText),
+                        InstanceMethod("EventText", &S7Server::EventText),
+                        InstanceMethod("ServerStatus", &S7Server::ServerStatus),
+                        InstanceMethod("ClientsCount", &S7Server::ClientsCount),
+                        InstanceMethod("GetCpuStatus", &S7Server::GetCpuStatus),
+                        InstanceMethod("SetCpuStatus", &S7Server::SetCpuStatus),
+                    });
 
-void S7API EventCallBack(void *usrPtr, PSrvEvent PEvent, int Size) {
-  uv_mutex_lock(&mutex_event);
-  event_list_g.push_back(*PEvent);
-  uv_mutex_unlock(&mutex_event);
+    Napi::FunctionReference* constructor = new Napi::FunctionReference();
+    *constructor = Napi::Persistent(func);
+    env.SetInstanceData(constructor);
 
-  uv_async_send(&event_async_g);
+    exports.Set("S7Server", func);
+    return exports;
 }
 
-int S7API RWAreaCallBack(void *usrPtr, int Sender, int Operation, PS7Tag PTag
-  , void *pUsrData
-) {
-  uv_mutex_lock(&mutex_rw);
-  rw_event_baton_g.Sender = Sender;
-  rw_event_baton_g.Operation = Operation;
-  rw_event_baton_g.Tag = *PTag;
-  rw_event_baton_g.pUsrData = pUsrData;
+void S7API S7Server::EventCallBack(void* usrPtr, PSrvEvent PEvent, int Size) {
+    TSFN& tsfn = static_cast<S7Server*>(usrPtr)->tsfn;
+    PSrvEvent data = new TSrvEvent();
+    memcpy(data, PEvent, Size);
 
-  uv_async_send(&rw_async_g);
-
-  uv_sem_wait(&sem_rw);
-  uv_mutex_unlock(&mutex_rw);
-
-  return 0;
+    tsfn.Acquire();
+    tsfn.BlockingCall(data);
+    tsfn.Release();
 }
 
-Nan::Persistent<v8::FunctionTemplate> S7Server::constructor;
+int S7API
+S7Server::RWAreaCallBack(void* usrPtr, int Sender, int Operation, PS7Tag PTag, void* pUsrData) {
+    S7Server* s7server = static_cast<S7Server*>(usrPtr);
+    TSFNRW& tsfnrw = s7server->tsfnrw;
 
-NAN_MODULE_INIT(S7Server::Init) {
-  Nan::HandleScope scope;
+    PRWEvent RWEvent = new TRWEvent();
+    RWEvent->Sender = Sender;
+    RWEvent->Operation = Operation;
+    RWEvent->PTag = new TS7Tag();
+    memcpy(RWEvent->PTag, PTag, sizeof(TS7Tag));
+    RWEvent->pUsrData = pUsrData;
+    RWEvent->s7server = s7server;
 
-  v8::Local<v8::FunctionTemplate> tpl;
-  tpl = Nan::New<v8::FunctionTemplate>(S7Server::New);
+    tsfnrw.Acquire();
+    tsfnrw.BlockingCall(RWEvent);
+    s7server->sem_rw.acquire();
+    tsfnrw.Release();
 
-  v8::Local<v8::String> name = Nan::New<v8::String>("S7Server")
-    .ToLocalChecked();
-
-  tpl->SetClassName(name);
-  tpl->InstanceTemplate()->SetInternalFieldCount(1);
-
-  // Setup the prototype
-  Nan::SetPrototypeMethod(
-    tpl
-    , "Start"
-    , S7Server::Start);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "StartTo"
-    , S7Server::StartTo);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "Stop"
-    , S7Server::Stop);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetParam"
-    , S7Server::SetParam);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetParam"
-    , S7Server::GetParam);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetResourceless"
-    , S7Server::SetResourceless);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "RegisterArea"
-    , S7Server::RegisterArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "UnregisterArea"
-    , S7Server::UnregisterArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "LockArea"
-    , S7Server::LockArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "UnlockArea"
-    , S7Server::UnlockArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetArea"
-    , S7Server::SetArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetArea"
-    , S7Server::GetArea);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetEventMask"
-    , S7Server::SetEventsMask);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetEventsMask"
-    , S7Server::GetEventsMask);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ErrorText"
-    , S7Server::ErrorText);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "LastError"
-    , S7Server::LastError);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "EventText"
-    , S7Server::EventText);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ServerStatus"
-    , S7Server::ServerStatus);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "ClientsCount"
-    , S7Server::ClientsCount);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "GetCpuStatus"
-    , S7Server::GetCpuStatus);
-  Nan::SetPrototypeMethod(
-    tpl
-    , "SetCpuStatus"
-    , S7Server::SetCpuStatus);
-
-  // Error codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvCannotStart").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvCannotStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvDBNullPointer").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvDBNullPointer)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvAreaAlreadyExists").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvAreaAlreadyExists)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvUnknownArea").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvUnknownArea)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvInvalidParams").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvInvalidParams)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvTooManyDB").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvTooManyDB)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvInvalidParamNumber").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvInvalidParamNumber)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("errSrvCannotChangeParam").ToLocalChecked()
-    , Nan::New<v8::Uint32>(errSrvCannotChangeParam)
-    , v8::ReadOnly);
-
-  // Server area IDs
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaPE").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaPE)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaPA").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaPA)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaMK").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaMK)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaCT").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaCT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaTM").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaTM)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("srvAreaDB").ToLocalChecked()
-    , Nan::New<v8::Integer>(srvAreaDB)
-    , v8::ReadOnly);
-
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("operationWrite").ToLocalChecked()
-    , Nan::New<v8::Integer>(OperationWrite)
-    , v8::ReadOnly);
-
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("operationRead").ToLocalChecked()
-    , Nan::New<v8::Integer>(OperationRead)
-    , v8::ReadOnly);
-
-  // TCP server event codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcServerStarted").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcServerStarted)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcServerStopped").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcServerStopped)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcListenerCannotStart").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcListenerCannotStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientAdded").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientAdded)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientRejected").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientRejected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientNoRoom").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientNoRoom)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientException").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientException)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientDisconnected").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientDisconnected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientTerminated").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientTerminated)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClientsDropped").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClientsDropped)
-    , v8::ReadOnly);
-
-  // S7 server event codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcPDUincoming").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcPDUincoming)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDataRead").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDataRead)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDataWrite").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDataWrite)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcNegotiatePDU").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcNegotiatePDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcReadSZL").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcReadSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcClock").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcUpload").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDownload").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcDirectory").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcDirectory)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcSecurity").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcSecurity)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcControl").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcControl)
-    , v8::ReadOnly);
-
-  // Masks to enable/disable all events
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcAll").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcAll)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evcNone").ToLocalChecked()
-    , Nan::New<v8::Uint32>(evcNone)
-    , v8::ReadOnly);
-
-  // Event subcodes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartUpload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartDownload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetBlockList").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetBlockList)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsStartListBoT").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsStartListBoT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsListBoT").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsListBoT)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetBlockInfo").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetBlockInfo)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsGetClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsGetClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsSetClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsSetClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsSetPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsSetPassword)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evsClrPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(evsClrPassword)
-    , v8::ReadOnly);
-
-  // Event params : functions group
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grProgrammer").ToLocalChecked()
-    , Nan::New<v8::Integer>(grProgrammer)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grCyclicData").ToLocalChecked()
-    , Nan::New<v8::Integer>(grCyclicData)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grBlocksInfo").ToLocalChecked()
-    , Nan::New<v8::Integer>(grBlocksInfo)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grSZL").ToLocalChecked()
-    , Nan::New<v8::Integer>(grSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grPassword").ToLocalChecked()
-    , Nan::New<v8::Integer>(grPassword)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grBSend").ToLocalChecked()
-    , Nan::New<v8::Integer>(grBSend)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grClock").ToLocalChecked()
-    , Nan::New<v8::Integer>(grClock)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("grSecurity").ToLocalChecked()
-    , Nan::New<v8::Integer>(grSecurity)
-    , v8::ReadOnly);
-
-  // Event params : control codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlColdStart").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlColdStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlWarmStart").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlWarmStart)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlStop").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlStop)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlCompress").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlCompress)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlCpyRamRom").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlCpyRamRom)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("CodeControlInsDel").ToLocalChecked()
-    , Nan::New<v8::Integer>(CodeControlInsDel)
-    , v8::ReadOnly);
-
-  // Event results
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrNoError").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrNoError)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrFragmentRejected").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrFragmentRejected)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrMalformedPDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrMalformedPDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrSparseBytes").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrSparseBytes)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotHandlePDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotHandlePDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrNotImplemented").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrNotImplemented)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrException").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrException)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrAreaNotFound").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrAreaNotFound)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrOutOfRange").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrOutOfRange)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrOverPDU").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrOverPDU)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrErrTransportSize").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrErrTransportSize)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrInvalidGroupUData").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrInvalidGroupUData)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrInvalidSZL").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrInvalidSZL)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrDataSizeMismatch").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrDataSizeMismatch)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotUpload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotUpload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrCannotDownload").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrCannotDownload)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrUploadInvalidID").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrUploadInvalidID)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("evrResNotFound").ToLocalChecked()
-    , Nan::New<v8::Integer>(evrResNotFound)
-    , v8::ReadOnly);
-
-  // Server parameter
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("LocalPort").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_u16_LocalPort)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("WorkInterval").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_WorkInterval)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("PDURequest").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_PDURequest)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("MaxClients").ToLocalChecked()
-    , Nan::New<v8::Integer>(p_i32_MaxClients)
-    , v8::ReadOnly);
-
-  // CPU status codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusUnknown").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusUnknown)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusRun").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusRun)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("S7CpuStatusStop").ToLocalChecked()
-    , Nan::New<v8::Integer>(S7CpuStatusStop)
-    , v8::ReadOnly);
-
-  // Server status codes
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvStopped").ToLocalChecked()
-    , Nan::New<v8::Integer>(0)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvRunning").ToLocalChecked()
-    , Nan::New<v8::Integer>(1)
-    , v8::ReadOnly);
-  Nan::SetPrototypeTemplate(
-    tpl
-    , Nan::New<v8::String>("SrvError").ToLocalChecked()
-    , Nan::New<v8::Integer>(2)
-    , v8::ReadOnly);
-
-  constructor.Reset(tpl);
-  Nan::Set(target, name, Nan::GetFunction(tpl).ToLocalChecked());
+    return 0;
 }
 
-NAN_METHOD(S7Server::New) {
-  if (info.IsConstructCall()) {
-    S7Server *s7Server = new S7Server(info.This());
+void CallJsEvent(Napi::Env env, Napi::Function callback, Context* context, DataTypeEvent* data) {
+    if (!callback.IsEmpty()) {
+        in_addr sin;
+        sin.s_addr = data->EvtSender;
+        char addr[INET_ADDRSTRLEN] = {0};
+#ifdef _WIN32
+        InetNtopA(AF_INET, &sin, addr, sizeof(addr));
+#else
+        inet_ntop(AF_INET, &sin, addr, sizeof(addr));
+#endif
+        double time = static_cast<double>(data->EvtTime * 1000);
 
-    s7Server->Wrap(info.This());
-  info.GetReturnValue().Set(info.This());
-  } else {
-    v8::Local<v8::FunctionTemplate> constructorHandle;
-    constructorHandle = Nan::New<v8::FunctionTemplate>(constructor);
-    info.GetReturnValue().Set(
-      Nan::NewInstance(Nan::GetFunction(constructorHandle).ToLocalChecked()).ToLocalChecked());
-  }
+        Napi::Object event_obj = Napi::Object::New(env);
+        event_obj.Set("EvtTime", Napi::Date::New(env, time));
+        event_obj.Set("EvtSender", Napi::String::New(env, addr));
+        event_obj.Set("EvtCode", Napi::Number::New(env, data->EvtCode));
+        event_obj.Set("EvtRetCode", Napi::Number::New(env, data->EvtRetCode));
+        event_obj.Set("EvtParam1", Napi::Number::New(env, data->EvtParam1));
+        event_obj.Set("EvtParam2", Napi::Number::New(env, data->EvtParam2));
+        event_obj.Set("EvtParam3", Napi::Number::New(env, data->EvtParam3));
+        event_obj.Set("EvtParam4", Napi::Number::New(env, data->EvtParam4));
+
+        callback.Call(context->Value(), {Napi::String::New(env, "event"), event_obj});
+        if (env.IsExceptionPending()) {
+            Napi::Error err = env.GetAndClearPendingException();
+            err.ThrowAsJavaScriptException();
+        }
+    }
+
+    if (data != nullptr) {
+        delete data;
+    }
 }
 
-S7Server::S7Server(v8::Local<v8::Object> resource)
-  : async_resource("S7Server:emit", resource) {
-  lastError = 0;
-  snap7Server = new TS7Server();
+void CallJsRW(Napi::Env env, Napi::Function callback, Context* context, DataTypeRW* data) {
+    if (!callback.IsEmpty()) {
+        in_addr sin;
+        sin.s_addr = data->Sender;
+        char addr[INET_ADDRSTRLEN] = {0};
+#ifdef _WIN32
+        InetNtopA(AF_INET, &sin, addr, sizeof(addr));
+#else
+        inet_ntop(AF_INET, &sin, addr, sizeof(addr));
+#endif
 
-  event_async_g.data = rw_async_g.data = this;
+        Napi::Object rw_tag_obj = Napi::Object::New(env);
+        rw_tag_obj.Set("Area", Napi::Number::New(env, data->PTag->Area));
+        rw_tag_obj.Set("DBNumber", Napi::Number::New(env, data->PTag->DBNumber));
+        rw_tag_obj.Set("Start", Napi::Number::New(env, data->PTag->Start));
+        rw_tag_obj.Set("Size", Napi::Number::New(env, data->PTag->Size));
+        rw_tag_obj.Set("WordLen", Napi::Number::New(env, data->PTag->WordLen));
 
-  uv_async_init(uv_default_loop(), &event_async_g, S7Server::HandleEvent);
-  uv_async_init(uv_default_loop(), &rw_async_g, S7Server::HandleReadWriteEvent);
+        int byteCount;
+        size_t size;
+        byteCount = S7Server::GetByteCountFromWordLen(data->PTag->WordLen);
+        size = byteCount * data->PTag->Size;
+        int operation = data->Operation;
+        void* pUsrData = data->pUsrData;
+        S7Server* s7server = data->s7server;
 
-  uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-  uv_unref(reinterpret_cast<uv_handle_t *>(&rw_async_g));
-  uv_mutex_init(&mutex);
-  uv_mutex_init(&mutex_rw);
-  uv_mutex_init(&mutex_event);
-  uv_sem_init(&sem_rw, 0);
+        Napi::Buffer<char> buffer;
+        if (operation == OperationWrite) {
+            // Copy into a Node-managed buffer so JS handlers can't outlive the native storage.
+            buffer = Napi::Buffer<char>::Copy(env, static_cast<char*>(pUsrData), size);
+        } else {
+            buffer = Napi::Buffer<char>::New(env, size);
+        }
 
-  snap7Server->SetEventsCallback(&EventCallBack, NULL);
+        callback.Call(context->Value(),
+                      {Napi::String::New(env, "readWrite"),
+                       Napi::String::New(env, addr),
+                       Napi::Number::New(env, operation),
+                       rw_tag_obj,
+                       buffer,
+                       Napi::Function::New(
+                           env,
+                           [pUsrData, s7server, size, operation](const Napi::CallbackInfo& info) {
+                               Napi::Env env = info.Env();
+
+                               if (operation == OperationRead) {
+                                   bool copied = false;
+                                   size_t actualLength = 0;
+
+                                   if (info.Length() > 0 && info[0].IsBuffer()) {
+                                       Napi::Buffer<char> buf = info[0].As<Napi::Buffer<char>>();
+                                       actualLength = buf.Length();
+                                       if (actualLength >= size) {
+                                           memcpy(pUsrData, buf.Data(), size);
+                                           copied = true;
+                                       }
+                                   }
+
+                                   if (!copied) {
+                                       // Surface the misuse but don't throw, to keep the server
+                                       // running.
+                                       Napi::Error err =
+                                           Napi::Error::New(env,
+                                                            "readWrite callback provided no buffer "
+                                                            "or one smaller than expected");
+                                       err.Set("name", Napi::String::New(env, "Snap7RWError"));
+                                       err.Set("expectedLength", Napi::Number::New(env, size));
+                                       err.Set("actualLength",
+                                               Napi::Number::New(env, actualLength));
+
+                                       Napi::Value emitVal = s7server->Value().Get("emit");
+                                       if (emitVal.IsFunction()) {
+                                           emitVal.As<Napi::Function>().Call(
+                                               s7server->Value(),
+                                               {Napi::String::New(env, "error"), err.Value()});
+                                       }
+                                   }
+                               }
+
+                               s7server->sem_rw.release();
+                               return env.Undefined();
+                           })});
+        if (env.IsExceptionPending()) {
+            Napi::Error err = env.GetAndClearPendingException();
+            err.ThrowAsJavaScriptException();
+        }
+    }
+
+    if (data->PTag != nullptr) {
+        delete data->PTag;
+    }
+
+    if (data != nullptr) {
+        delete data;
+    }
+}
+
+S7Server::S7Server(const Napi::CallbackInfo& info) : Napi::ObjectWrap<S7Server>(info) {
+    Napi::Env env = info.Env();
+
+    snap7Server = new TS7Server();
+
+    Napi::Function Emit = info.This().As<Napi::Object>().Get("emit").As<Napi::Function>();
+    Napi::Reference<Napi::Value>* TsfnEventCtx =
+        new Napi::Reference<Napi::Value>(Napi::Persistent(info.This()));
+    Napi::Reference<Napi::Value>* TsfnEventRWCtx =
+        new Napi::Reference<Napi::Value>(Napi::Persistent(info.This()));
+
+    tsfn = TSFN::New(
+        env,         // Environment
+        Emit,        // JS function from caller
+        "TsfnEvent", // Resource name
+        0,           // Max queue size (0 = unlimited).
+        1,           // Initial thread count
+        TsfnEventCtx,
+        [](Napi::Env, void* finalizeData, Napi::Reference<Napi::Value>* ctx) { delete ctx; });
+
+    tsfnrw = TSFNRW::New(
+        env,           // Environment
+        Emit,          // JS function from caller
+        "TsfnEventRW", // Resource name
+        0,             // Max queue size (0 = unlimited).
+        1,             // Initial thread count
+        TsfnEventRWCtx,
+        [](Napi::Env, void* finalizeData, Napi::Reference<Napi::Value>* ctx) { delete ctx; });
+
+    tsfn.Unref(env);
+    tsfnrw.Unref(env);
+
+    snap7Server->SetEventsCallback(reinterpret_cast<pfn_SrvCallBack>(&EventCallBack), this);
 }
 
 S7Server::~S7Server() {
-  snap7Server->Stop();
-  delete snap7Server;
+    snap7Server->Stop();
+    snap7Server->SetEventsCallback(nullptr, nullptr);
+    snap7Server->SetRWAreaCallback(nullptr, nullptr);
 
-  constructor.Reset();
+    for (auto& areaEntry : area2buffer) {
+        for (auto& bufferEntry : areaEntry.second) {
+            delete[] bufferEntry.second.pBuffer;
+        }
+    }
+    area2buffer.clear();
 
-  uv_close(reinterpret_cast<uv_handle_t *>(&event_async_g), 0);
-  uv_close(reinterpret_cast<uv_handle_t *>(&rw_async_g), 0);
-  uv_sem_destroy(&sem_rw);
-  uv_mutex_destroy(&mutex_event);
-  uv_mutex_destroy(&mutex_rw);
-  uv_mutex_destroy(&mutex);
+    delete snap7Server;
 }
 
 int S7Server::GetByteCountFromWordLen(int WordLen) {
-  switch (WordLen) {
-  case S7WLBit:
-  case S7WLByte:
-    return 1;
-  case S7WLWord:
-  case S7WLCounter:
-  case S7WLTimer:
-    return 2;
-  case S7WLReal:
-  case S7WLDWord:
-    return 4;
-  default:
-    return 0;
-  }
-}
-
-NAN_METHOD(S7Server::RWBufferCallback) {
-  Nan::HandleScope scope;
-
-  if (rw_event_baton_g.Operation == OperationRead) {
-    if (!node::Buffer::HasInstance(info[0])) {
-      return Nan::ThrowTypeError("Wrong argument");
+    switch (WordLen) {
+    case S7WLBit:
+    case S7WLByte:
+        return 1;
+    case S7WLWord:
+    case S7WLCounter:
+    case S7WLTimer:
+        return 2;
+    case S7WLReal:
+    case S7WLDWord:
+        return 4;
+    default:
+        return 0;
     }
+}
 
-    int byteCount, size;
-    byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
-    size = byteCount * rw_event_baton_g.Tag.Size;
-
-    if (node::Buffer::Length(info[0].As<v8::Object>()) < size) {
-      return Nan::ThrowTypeError("Buffer length too small");
+Napi::Error S7Server::MakeError(Napi::Env env, const std::string& context, int code) {
+    std::string text = SrvErrorText(code);
+    std::ostringstream msg;
+    msg << context << " (" << code << ")";
+    if (!text.empty()) {
+        msg << ": " << text;
     }
-
-    memcpy(
-        rw_event_baton_g.pUsrData
-      , node::Buffer::Data(info[0].As<v8::Object>())
-      , size);
-  }
-
-  uv_sem_post(&sem_rw);
-}
-
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-void S7Server::HandleEvent(uv_async_t* handle) {
-#else
-void S7Server::HandleEvent(uv_async_t* handle, int status) {
-#endif
-  Nan::HandleScope scope;
-
-  S7Server *s7server = static_cast<S7Server*>(handle->data);
-
-  uv_mutex_lock(&mutex_event);
-  while (!event_list_g.empty()) {
-    PSrvEvent Event = &event_list_g.front();
-    in_addr sin;
-    sin.s_addr = Event->EvtSender;
-    double time = static_cast<double>(Event->EvtTime * 1000);
-
-    v8::Local<v8::Object> event_obj = Nan::New<v8::Object>();
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()
-      , Nan::New<v8::Date>(time).ToLocalChecked());
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()
-      , Nan::New<v8::String>(inet_ntoa(sin)).ToLocalChecked());
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()
-      , Nan::New<v8::Uint32>(Event->EvtCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()
-      , Nan::New<v8::Integer>(Event->EvtRetCode));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()
-      , Nan::New<v8::Integer>(Event->EvtParam1));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()
-      , Nan::New<v8::Integer>(Event->EvtParam2));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()
-      , Nan::New<v8::Integer>(Event->EvtParam3));
-    Nan::Set(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()
-      , Nan::New<v8::Integer>(Event->EvtParam4));
-
-    v8::Local<v8::Value> argv[2] = {
-      Nan::New("event").ToLocalChecked(),
-      event_obj
-    };
-
-    s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 2, argv);
-    event_list_g.pop_front();
-  }
-  uv_mutex_unlock(&mutex_event);
-}
-
-#if NODE_VERSION_AT_LEAST(0, 11, 13)
-void S7Server::HandleReadWriteEvent(uv_async_t* handle) {
-#else
-void S7Server::HandleReadWriteEvent(uv_async_t* handle, int status) {
-#endif
-  Nan::HandleScope scope;
-
-  S7Server *s7server = static_cast<S7Server*>(handle->data);
-  in_addr sin;
-  sin.s_addr = rw_event_baton_g.Sender;
-
-  v8::Local<v8::Object> rw_tag_obj = Nan::New<v8::Object>();
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Area").ToLocalChecked()
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Area));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("DBNumber").ToLocalChecked()
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.DBNumber));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Start").ToLocalChecked()
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Start));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("Size").ToLocalChecked()
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.Size));
-  Nan::Set(rw_tag_obj, Nan::New<v8::String>("WordLen").ToLocalChecked()
-    , Nan::New<v8::Integer>(rw_event_baton_g.Tag.WordLen));
-
-  int byteCount, size;
-  byteCount = S7Server::GetByteCountFromWordLen(rw_event_baton_g.Tag.WordLen);
-  size = byteCount * rw_event_baton_g.Tag.Size;
-
-  v8::Local<v8::Object> buffer;
-
-  if (rw_event_baton_g.Operation == OperationWrite) {
-    buffer = Nan::CopyBuffer(
-      static_cast<char*>(rw_event_baton_g.pUsrData),
-      size).ToLocalChecked();
-  } else {
-    buffer = Nan::NewBuffer(size).ToLocalChecked();
-    memset(node::Buffer::Data(buffer), 0, size);
-  }
-
-  v8::Local<v8::Value> argv[6] = {
-    Nan::New("readWrite").ToLocalChecked(),
-    Nan::New<v8::String>(inet_ntoa(sin)).ToLocalChecked(),
-    Nan::New<v8::Integer>(rw_event_baton_g.Operation),
-    rw_tag_obj,
-    buffer,
-    Nan::New<v8::Function>(S7Server::RWBufferCallback)
-  };
-
-  s7server->async_resource.runInAsyncScope(s7server->handle(), "emit", 6, argv);
+    Napi::Error err = Napi::Error::New(env, msg.str());
+    err.Set("name", Napi::String::New(env, "Snap7Error"));
+    err.Set("code", Napi::String::New(env, "SNAP7_SERVER_CODE_" + std::to_string(code)));
+    err.Set("errno", Napi::Number::New(env, code));
+    return err;
 }
 
 void IOWorkerServer::Execute() {
-  uv_mutex_lock(&s7server->mutex);
+    std::lock_guard<std::mutex> lock(s7server->mutex);
 
-  switch (caller) {
-  case STARTTO:
-    ret = s7server->snap7Server->StartTo(
-      **static_cast<Nan::Utf8String*>(pData));
+    switch (caller) {
+    case ServerIOFunction::STARTTO:
+        ret = s7server->snap7Server->StartTo(static_cast<std::string*>(pData)->c_str());
+        break;
+
+    case ServerIOFunction::START:
+        ret = s7server->snap7Server->Start();
+        break;
+
+    case ServerIOFunction::STOP:
+        ret = s7server->snap7Server->Stop();
+        break;
+    }
+}
+
+void IOWorkerServer::OnOK() {
+    switch (caller) {
+    case ServerIOFunction::STARTTO:
+        delete static_cast<std::string*>(pData);
+        break;
+
+    case ServerIOFunction::START:
+    case ServerIOFunction::STOP:
+        break;
+    }
 
     if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-    break;
-
-  case START:
-    ret = s7server->snap7Server->Start();
-
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-    break;
-
-  case STOP:
-    ret = s7server->snap7Server->Stop();
-
-    if (ret == 0) {
-      uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
-    }
-    break;
-  }
-
-  uv_mutex_unlock(&s7server->mutex);
-}
-
-void IOWorkerServer::HandleOKCallback() {
-  Nan::HandleScope scope;
-
-  v8::Local<v8::Value> argv1[1];
-  v8::Local<v8::Value> argv2[2];
-
-  if (ret == 0) {
-    argv2[0] = argv1[0] = Nan::Null();
-  } else {
-    argv2[0] = argv1[0] = Nan::New<v8::Integer>(ret);
-  }
-
-  switch (caller) {
-  case STARTTO:
-    delete static_cast<Nan::Utf8String*>(pData);
-    callback->Call(1, argv1, async_resource);
-    break;
-
-  case START:
-  case STOP:
-    callback->Call(1, argv1, async_resource);
-    break;
-  }
-}
-
-NAN_METHOD(S7Server::Start) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsFunction()) {
-    int ret = s7server->snap7Server->Start();
-
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
+        m_deferred.Resolve(Env().Null());
+        return;
     }
 
-    s7server->lastError = ret;
-
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-  } else {
-    Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, START));
-    info.GetReturnValue().SetUndefined();
-  }
+    Napi::Error err = S7Server::MakeError(Env(), "Snap7 Server operation failed", ret);
+    m_deferred.Reject(err.Value());
 }
 
-NAN_METHOD(S7Server::StartTo) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::Start(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (info.Length() < 1) {
-    return Nan::ThrowTypeError("Wrong number of arguments");
-  }
+    bool isAsyncCall = info.Length() > 0 && info[info.Length() - 1].IsFunction();
 
-  if (!info[0]->IsString()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  Nan::Utf8String *address = new Nan::Utf8String(info[0]);
-  if (!info[1]->IsFunction()) {
-    int ret = s7server->snap7Server->StartTo(**address);
-    delete address;
-
-    if (ret == 0) {
-      uv_ref(reinterpret_cast<uv_handle_t *>(&event_async_g));
+    if (!isAsyncCall) {
+        std::lock_guard<std::mutex> lock(mutex);
+        int ret = snap7Server->Start();
+        if (ret != 0) {
+            MakeError(env, "Start failed", ret).ThrowAsJavaScriptException();
+        }
+        return env.Undefined();
     }
 
-    s7server->lastError = ret;
+    IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::START);
+    worker->Queue();
 
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-  } else {
-    Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, STARTTO
-      , address));
-    info.GetReturnValue().SetUndefined();
-  }
+    return worker->GetPromise();
 }
 
-NAN_METHOD(S7Server::Stop) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::StartTo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsFunction()) {
-    int ret = s7server->snap7Server->Stop();
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsString);
 
-    if (ret == 0) {
-      uv_unref(reinterpret_cast<uv_handle_t *>(&event_async_g));
+    bool isAsyncCall = info.Length() > 1 && info[info.Length() - 1].IsFunction();
+
+    if (!isAsyncCall) {
+        std::string address = info[0].As<Napi::String>().Utf8Value();
+        std::lock_guard<std::mutex> lock(mutex);
+        int ret = snap7Server->StartTo(address.c_str());
+        if (ret != 0) {
+            MakeError(env, "StartTo failed", ret).ThrowAsJavaScriptException();
+        }
+        return env.Undefined();
     }
 
-    s7server->lastError = ret;
+    std::string* address = new std::string(info[0].As<Napi::String>().Utf8Value());
+    IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::STARTTO, address);
+    worker->Queue();
 
-    info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-  } else {
-    Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
-    Nan::AsyncQueueWorker(new IOWorkerServer(callback, s7server, STOP));
-    info.GetReturnValue().SetUndefined();
-  }
+    return worker->GetPromise();
 }
 
-NAN_METHOD(S7Server::SetResourceless) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::Stop(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsBoolean()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+    bool isAsyncCall = info.Length() > 0 && info[info.Length() - 1].IsFunction();
 
-  bool resourceless = Nan::To<bool>(info[0]).FromJust();
-
-  int ret;
-  if (resourceless) {
-    ret = s7server->snap7Server->SetRWAreaCallback(&RWAreaCallBack, NULL);
-  } else {
-    ret = s7server->snap7Server->SetRWAreaCallback(NULL, NULL);
-  }
-  s7server->lastError = ret;
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-}
-
-NAN_METHOD(S7Server::GetParam) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int pData;
-  int ret = s7server->snap7Server->GetParam(Nan::To<int32_t>(info[0]).FromJust()
-    , &pData);
-  s7server->lastError = ret;
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-}
-
-NAN_METHOD(S7Server::SetParam) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!(info[0]->IsInt32() || info[1]->IsInt32())) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int pData = Nan::To<int32_t>(info[1]).FromJust();
-  int ret = s7server->snap7Server->SetParam(Nan::To<int32_t>(info[0]).FromJust(), &pData);
-  s7server->lastError = ret;
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-}
-
-NAN_METHOD(S7Server::GetEventsMask) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  int ret = s7server->snap7Server->GetEventsMask();
-
-  info.GetReturnValue().Set(Nan::New<v8::Uint32>(ret));
-}
-
-NAN_METHOD(S7Server::SetEventsMask) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsUint32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  s7server->snap7Server->SetEventsMask(Nan::To<uint32_t>(info[0]).FromJust());
-  info.GetReturnValue().SetUndefined();
-}
-
-NAN_METHOD(S7Server::RegisterArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int index;
-  char *pBuffer;
-  size_t len;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
-
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Nan::ThrowTypeError("Wrong arguments");
+    if (!isAsyncCall) {
+        std::lock_guard<std::mutex> lock(mutex);
+        int ret = snap7Server->Stop();
+        if (ret != 0) {
+            MakeError(env, "Stop failed", ret).ThrowAsJavaScriptException();
+        }
+        return env.Undefined();
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
-    len = node::Buffer::Length(info[2].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
-  } else if (!node::Buffer::HasInstance(info[1])) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  } else {
-    index = 0;
-    len = node::Buffer::Length(info[1].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
-  }
+    IOWorkerServer* worker = new IOWorkerServer(env, this, ServerIOFunction::STOP);
+    worker->Queue();
 
-  if (len > 0xFFFF) {
-    return Nan::ThrowRangeError("Max area buffer size is 65535");
-  }
-
-  word size = static_cast<word>(len);
-  char *data = new char[size];
-  memcpy(data, pBuffer, size);
-
-  int ret = s7server->snap7Server->RegisterArea(area, index, data, size);
-  s7server->lastError = ret;
-
-  if (ret == 0) {
-    s7server->area2buffer[area][index].pBuffer = data;
-    s7server->area2buffer[area][index].size = size;
-  } else {
-    delete[] data;
-  }
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    return worker->GetPromise();
 }
 
-NAN_METHOD(S7Server::UnregisterArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::SetResourceless(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsBoolean);
 
-  int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+    bool resourceless = info[0].ToBoolean().Value();
 
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
-    }
-
-    index = Nan::To<int32_t>(info[1]).FromJust();
-  }
-
-  int ret = s7server->snap7Server->UnregisterArea(area, index);
-  s7server->lastError = ret;
-
-  if (ret == 0) {
-    delete[] s7server->area2buffer[area][index].pBuffer;
-    s7server->area2buffer[area].erase(index);
-  }
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
-}
-
-NAN_METHOD(S7Server::SetArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int area = Nan::To<int32_t>(info[0]).FromJust();
-  if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Unknown area");
-  }
-
-  int index;
-  char *pBuffer;
-  size_t len;
-
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32() || !node::Buffer::HasInstance(info[2])) {
-      return Nan::ThrowTypeError("Wrong arguments");
-    }
-
-    index = Nan::To<int32_t>(info[1]).FromJust();
-    if (!s7server->area2buffer[area].count(index)) {
-      return Nan::ThrowError("DB index not found");
-    }
-
-    len = node::Buffer::Length(info[2].As<v8::Object>());
-    pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
-  } else {
-    index = 0;
-    if (node::Buffer::HasInstance(info[1])) {
-      len = node::Buffer::Length(info[1].As<v8::Object>());
-      pBuffer = node::Buffer::Data(info[1].As<v8::Object>());
-    } else if (node::Buffer::HasInstance(info[2])) {
-      len = node::Buffer::Length(info[2].As<v8::Object>());
-      pBuffer = node::Buffer::Data(info[2].As<v8::Object>());
+    int ret;
+    if (resourceless) {
+        ret = snap7Server->SetRWAreaCallback(reinterpret_cast<pfn_RWAreaCallBack>(&RWAreaCallBack),
+                                             this);
     } else {
-      return Nan::ThrowTypeError("Wrong arguments");
-    }
-  }
-
-  if (len != s7server->area2buffer[area][index].size) {
-    return Nan::ThrowError("Wrong buffer length");
-  }
-
-  s7server->snap7Server->LockArea(area, index);
-
-  memcpy(
-    s7server->area2buffer[area][index].pBuffer
-    , pBuffer, s7server->area2buffer[area][index].size);
-
-  s7server->snap7Server->UnlockArea(area, index);
-
-  info.GetReturnValue().SetUndefined();
-}
-
-NAN_METHOD(S7Server::GetArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
-
-  if (!s7server->area2buffer.count(area)) {
-    return Nan::ThrowError("Unknown area");
-  }
-
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+        ret = snap7Server->SetRWAreaCallback(nullptr, nullptr);
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
-    if (!s7server->area2buffer[area].count(index)) {
-      return Nan::ThrowError("DB index not found");
-    }
-  }
-
-  s7server->snap7Server->LockArea(area, index);
-
-  v8::Local<v8::Object> buffer = Nan::CopyBuffer(
-      s7server->area2buffer[area][index].pBuffer
-    , s7server->area2buffer[area][index].size).ToLocalChecked();
-
-  s7server->snap7Server->UnlockArea(area, index);
-
-  info.GetReturnValue().Set(buffer);
-}
-
-NAN_METHOD(S7Server::LockArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
-
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
-
-  int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
-
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+    if (ret == 0) {
+        return env.Undefined();
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
-  }
-
-  int ret = s7server->snap7Server->LockArea(area, index);
-  s7server->lastError = ret;
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    MakeError(env, "SetResourceless failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::UnlockArea) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::GetParam(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
 
-  int index = 0;
-  int area = Nan::To<int32_t>(info[0]).FromJust();
+    int pData;
+    int ret = snap7Server->GetParam(info[0].ToNumber().Int32Value(), &pData);
 
-  if (area == srvAreaDB) {
-    if (!info[1]->IsInt32()) {
-      return Nan::ThrowTypeError("Wrong arguments");
+    if (ret == 0) {
+        return Napi::Number::New(env, pData);
     }
 
-    index = Nan::To<int32_t>(info[1]).FromJust();
-  }
-
-  int ret = s7server->snap7Server->UnlockArea(area, index);
-  s7server->lastError = ret;
-
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    MakeError(env, "GetParam failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::ServerStatus) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::SetParam(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->ServerStatus();
-  if ((ret == 0) || (ret == 1) || (ret == 2)) {
-    s7server->lastError = 0;
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
-  } else {
-    s7server->lastError = ret;
-    info.GetReturnValue().Set(Nan::False());
-  }
+    REQUIRE_MIN_ARGS(env, info, 2);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+    REQUIRE_ARG(env, info, 1, IsNumber);
+
+    int pData = info[1].ToNumber().Int32Value();
+    int ret = snap7Server->SetParam(info[0].ToNumber().Int32Value(), &pData);
+
+    if (ret == 0) {
+        return env.Undefined();
+    }
+
+    MakeError(env, "SetParam failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::ClientsCount) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::GetEventsMask(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->ClientsCount();
-  info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
+    int ret = snap7Server->GetEventsMask();
+
+    return Napi::Number::New(env, ret);
 }
 
-NAN_METHOD(S7Server::GetCpuStatus) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::SetEventsMask(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  int ret = s7server->snap7Server->GetCpuStatus();
-  if ((ret == S7CpuStatusUnknown) ||
-    (ret == S7CpuStatusStop) ||
-    (ret == S7CpuStatusRun)) {
-    s7server->lastError = 0;
-    info.GetReturnValue().Set(Nan::New<v8::Integer>(ret));
-  } else {
-    s7server->lastError = ret;
-    info.GetReturnValue().Set(Nan::False());
-  }
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    snap7Server->SetEventsMask(info[0].ToNumber().Uint32Value());
+
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::SetCpuStatus) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::RegisterArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+    REQUIRE_MIN_ARGS(env, info, 3);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+    REQUIRE_ARG(env, info, 1, IsNumber);
+    REQUIRE_ARG(env, info, 2, IsBuffer);
 
-  int ret = s7server->snap7Server->SetCpuStatus(Nan::To<int32_t>(info[0]).FromJust());
-  s7server->lastError = ret;
+    int area = info[0].ToNumber().Int32Value();
+    int index = 0;
 
-  info.GetReturnValue().Set(Nan::New<v8::Boolean>(ret == 0));
+    char* pBuffer = info[2].As<Napi::Buffer<char>>().Data();
+    size_t len = info[2].As<Napi::Buffer<char>>().Length();
+
+    if (area == srvAreaDB) {
+        index = info[1].ToNumber().Int32Value();
+    }
+
+    word size = static_cast<word>(len);
+    char* data = new char[size];
+    memcpy(data, pBuffer, size);
+
+    int ret = snap7Server->RegisterArea(area, index, data, size);
+
+    if (ret == 0) {
+        area2buffer[area][index].pBuffer = data;
+        area2buffer[area][index].size = size;
+
+        return env.Undefined();
+    } else {
+        delete[] data;
+    }
+
+    MakeError(env, "RegisterArea failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::ErrorText) {
-  if (!info[0]->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+Napi::Value S7Server::UnregisterArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvErrorText(Nan::To<int32_t>(info[0]).FromJust()).c_str()).ToLocalChecked());
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    int area = info[0].ToNumber().Int32Value();
+    int index = 0;
+
+    if (!area2buffer.count(area)) {
+        Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    if (area == srvAreaDB) {
+        REQUIRE_MIN_ARGS(env, info, 2);
+        REQUIRE_ARG(env, info, 1, IsNumber);
+
+        index = info[1].ToNumber().Int32Value();
+        if (!area2buffer[area].count(index)) {
+            Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+    }
+
+    int ret = snap7Server->UnregisterArea(area, index);
+
+    if (ret == 0) {
+        delete[] area2buffer[area][index].pBuffer;
+        area2buffer[area].erase(index);
+
+        if (area2buffer[area].empty()) {
+            area2buffer.erase(area);
+        }
+    }
+
+    if (ret == 0) {
+        return env.Undefined();
+    }
+
+    MakeError(env, "UnregisterArea failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::EventText) {
-  TSrvEvent SrvEvent;
+Napi::Value S7Server::SetArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  if (!info[0]->IsObject()) {
-    return Nan::ThrowTypeError("Wrong arguments");
-  }
+    REQUIRE_MIN_ARGS(env, info, 3);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+    REQUIRE_ARG(env, info, 1, IsNumber);
+    REQUIRE_ARG(env, info, 2, IsBuffer);
 
-  v8::Local<v8::Object> event_obj = v8::Local<v8::Object>::Cast(info[0]);
-  if (!Nan::Has(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).FromJust() ||
-    !Nan::Has(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).FromJust()) {
-    return Nan::ThrowTypeError("Wrong argument structure");
-  }
+    int area = info[0].ToNumber().Int32Value();
+    int index = 0;
 
-  if (!Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked()->IsDate() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtSender").ToLocalChecked()).ToLocalChecked()->IsString() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()->IsUint32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()->IsInt32() ||
-    !Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()->IsInt32()) {
-    return Nan::ThrowTypeError("Wrong argument types");
-  }
+    if (!area2buffer.count(area)) {
+        Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
 
-  Nan::Utf8String *remAddress = new Nan::Utf8String(
-    Nan::Get(
-        event_obj
-      , Nan::New<v8::String>("EvtSender").ToLocalChecked()).ToLocalChecked());
+    char* pBuffer = info[2].As<Napi::Buffer<char>>().Data();
+    size_t len = info[2].As<Napi::Buffer<char>>().Length();
 
-  SrvEvent.EvtTime = static_cast<time_t>(Nan::To<double>(v8::Local<v8::Date>::Cast(Nan::Get(event_obj, Nan::New<v8::String>("EvtTime").ToLocalChecked()).ToLocalChecked())).FromJust() / 1000);
-  SrvEvent.EvtSender = inet_addr(**remAddress);
-  SrvEvent.EvtCode = Nan::To<uint32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtCode").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtRetCode = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtRetCode").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam1 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam1").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam2 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam2").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam3 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam3").ToLocalChecked()).ToLocalChecked()).FromJust();
-  SrvEvent.EvtParam4 = Nan::To<int32_t>(Nan::Get(event_obj, Nan::New<v8::String>("EvtParam4").ToLocalChecked()).ToLocalChecked()).FromJust();
+    if (area == srvAreaDB) {
+        index = info[1].ToNumber().Int32Value();
+        if (!area2buffer[area].count(index)) {
+            Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+    }
 
-  delete remAddress;
+    if (len != area2buffer[area][index].size) {
+        Napi::Error::New(env, "Wrong buffer length").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
 
-  info.GetReturnValue().Set(Nan::New<v8::String>(
-    SrvEventText(&SrvEvent).c_str()).ToLocalChecked());
+    int ret = snap7Server->LockArea(area, index);
+    if (ret != 0) {
+        MakeError(env, "SetArea failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    memcpy(area2buffer[area][index].pBuffer, pBuffer, area2buffer[area][index].size);
+
+    ret = snap7Server->UnlockArea(area, index);
+
+    if (ret == 0) {
+        return env.Undefined();
+    }
+
+    MakeError(env, "SetArea failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-NAN_METHOD(S7Server::LastError) {
-  S7Server *s7server = ObjectWrap::Unwrap<S7Server>(info.Holder());
+Napi::Value S7Server::GetArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
 
-  info.GetReturnValue().Set(Nan::New<v8::Integer>(s7server->lastError));
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    int area = info[0].ToNumber().Int32Value();
+    int index = 0;
+
+    if (!area2buffer.count(area)) {
+        Napi::Error::New(env, "Unknown area").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    if (area == srvAreaDB) {
+        REQUIRE_MIN_ARGS(env, info, 2);
+        REQUIRE_ARG(env, info, 1, IsNumber);
+
+        index = info[1].ToNumber().Int32Value();
+        if (!area2buffer[area].count(index)) {
+            Napi::Error::New(env, "DB index not found").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+    }
+
+    int ret = snap7Server->LockArea(area, index);
+    if (ret != 0) {
+        MakeError(env, "GetArea failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    Napi::Buffer<char> buffer;
+    buffer = Napi::Buffer<char>::Copy(env,
+                                      area2buffer[area][index].pBuffer,
+                                      area2buffer[area][index].size);
+
+    ret = snap7Server->UnlockArea(area, index);
+
+    if (ret == 0) {
+        return buffer;
+    }
+
+    MakeError(env, "GetArea failed", ret).ThrowAsJavaScriptException();
+    return env.Undefined();
 }
 
-}  // namespace node_snap7
+Napi::Value S7Server::LockArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    int index = 0;
+    int area = info[0].ToNumber().Int32Value();
+
+    if (area == srvAreaDB) {
+        REQUIRE_ARG(env, info, 1, IsNumber);
+
+        index = info[1].ToNumber().Int32Value();
+    }
+
+    int ret = snap7Server->LockArea(area, index);
+
+    if (ret != 0) {
+        MakeError(env, "LockArea failed", ret).ThrowAsJavaScriptException();
+    }
+    return env.Undefined();
+}
+
+Napi::Value S7Server::UnlockArea(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    int index = 0;
+    int area = info[0].ToNumber().Int32Value();
+
+    if (area == srvAreaDB) {
+        REQUIRE_ARG(env, info, 1, IsNumber);
+
+        index = info[1].ToNumber().Int32Value();
+    }
+
+    int ret = snap7Server->UnlockArea(area, index);
+
+    if (ret != 0) {
+        MakeError(env, "UnlockArea failed", ret).ThrowAsJavaScriptException();
+    }
+    return env.Undefined();
+}
+
+Napi::Value S7Server::ServerStatus(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    int ret = snap7Server->ServerStatus();
+    if ((ret == 0) || (ret == 1) || (ret == 2)) {
+        return Napi::Number::New(env, ret);
+    } else {
+        MakeError(env, "ServerStatus failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+}
+
+Napi::Value S7Server::ClientsCount(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    int ret = snap7Server->ClientsCount();
+    return Napi::Number::New(env, ret);
+}
+
+Napi::Value S7Server::GetCpuStatus(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    int ret = snap7Server->GetCpuStatus();
+    if ((ret == S7CpuStatusUnknown) || (ret == S7CpuStatusStop) || (ret == S7CpuStatusRun)) {
+        return Napi::Number::New(env, ret);
+    } else {
+        MakeError(env, "GetCpuStatus failed", ret).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+}
+
+Napi::Value S7Server::SetCpuStatus(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    int ret = snap7Server->SetCpuStatus(info[0].ToNumber().Int32Value());
+
+    return Napi::Boolean::New(env, ret == 0);
+}
+
+Napi::Value S7Server::ErrorText(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsNumber);
+
+    return Napi::String::New(env, SrvErrorText(info[0].ToNumber().Int32Value()).c_str());
+}
+
+Napi::Value S7Server::EventText(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    TSrvEvent SrvEvent;
+
+    REQUIRE_MIN_ARGS(env, info, 1);
+    REQUIRE_ARG(env, info, 0, IsObject);
+
+    Napi::Object event_obj = info[0].ToObject();
+    if (!event_obj.Has("EvtTime") || !event_obj.Has("EvtSender") || !event_obj.Has("EvtCode") ||
+        !event_obj.Has("EvtRetCode") || !event_obj.Has("EvtParam1") ||
+        !event_obj.Has("EvtParam2") || !event_obj.Has("EvtParam3") || !event_obj.Has("EvtParam4")) {
+        Napi::TypeError::New(env, "Wrong argument structure").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    if (!event_obj.Get("EvtTime").IsDate() || !event_obj.Get("EvtSender").IsString() ||
+        !event_obj.Get("EvtCode").IsNumber() || !event_obj.Get("EvtRetCode").IsNumber() ||
+        !event_obj.Get("EvtParam1").IsNumber() || !event_obj.Get("EvtParam2").IsNumber() ||
+        !event_obj.Get("EvtParam3").IsNumber() || !event_obj.Get("EvtParam4").IsNumber()) {
+        Napi::TypeError::New(env, "Wrong argument types").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    Napi::String remAddress = event_obj.Get("EvtSender").ToString();
+
+    SrvEvent.EvtTime =
+        static_cast<time_t>(event_obj.Get("EvtTime").As<Napi::Date>().ValueOf() / 1000);
+    SrvEvent.EvtSender = inet_addr(remAddress.Utf8Value().c_str());
+    SrvEvent.EvtCode = event_obj.Get("EvtCode").ToNumber().Uint32Value();
+    SrvEvent.EvtRetCode = event_obj.Get("EvtRetCode").ToNumber().Uint32Value();
+    SrvEvent.EvtParam1 = event_obj.Get("EvtParam1").ToNumber().Uint32Value();
+    SrvEvent.EvtParam2 = event_obj.Get("EvtParam2").ToNumber().Uint32Value();
+    SrvEvent.EvtParam3 = event_obj.Get("EvtParam3").ToNumber().Uint32Value();
+    SrvEvent.EvtParam4 = event_obj.Get("EvtParam4").ToNumber().Uint32Value();
+
+    return Napi::String::New(env, SrvEventText(&SrvEvent).c_str());
+}
+
+} // namespace node_snap7
